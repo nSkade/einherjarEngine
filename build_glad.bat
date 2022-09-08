@@ -1,0 +1,1 @@
+clang-cl glad.c -fuse-ld=llvm-lib

@@ -1,1 +1,1 @@
-clang main.cpp GPUTimer.cpp glad.c -o einherjarEngine.exe -Lfolder -lglad -lglfw3
+clang src/main.cpp src/GPUTimer.cpp glad/glad.c -o einherjarEngine.exe -Lfolder -lglad -lglfw3

@@ -17,9 +17,9 @@ LINK_DIRECTORIES(glfw3)
 
 # Fügen Sie der ausführbaren Datei dieses Projekts eine Quelle hinzu.
 add_executable (einherjarEngine
-	"main.cpp"
-	"GPUTimer.cpp"
-	"glad.c"
+	"src/main.cpp"
+	"src/GPUTimer.cpp"
+	"glad/glad.c"
 )
 
 target_link_libraries(einherjarEngine glfw3dll)

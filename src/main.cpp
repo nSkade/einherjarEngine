@@ -1,7 +1,7 @@
 //#include <glad/gl.h>
-#include "glad/glad.h"
+#include "../glad/glad.h"
 #define GLFW_INCLUDE_NONE
-#include "glfw3/glfw3.h"
+#include "../glfw3/glfw3.h"
  
 #include "linmath.h"
  
@@ -115,7 +115,7 @@ int main(void)
 	glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
 	glCompileShader(vertex_shader);
 	
-	std::ifstream t("tellu.frag");
+	std::ifstream t("assets/tellu.frag");
 	std::stringstream buffer;
 	buffer << t.rdbuf();
 	

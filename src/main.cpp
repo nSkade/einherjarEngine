@@ -1,8 +1,8 @@
-//#include <glad/gl.h>
 #include "../glad/glad.h"
 #define GLFW_INCLUDE_NONE
 #include "../glfw3/glfw3.h"
- 
+#include "../glm/vec3.hpp"
+
 #include "linmath.h"
  
 #include <stdlib.h>
@@ -12,7 +12,13 @@
 #include <fstream>
 #include <sstream>
 
-#include "GPUTimer.h"
+#include "GPUTimer.hpp"
+
+// enable optimus!
+extern "C" {
+	_declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+	_declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
+}
 
 static const struct
 {
@@ -68,6 +74,8 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main(void)
 {
+	glm::vec3 vec = glm::vec3(0.0f,1.0f,0.0f);
+	
 	GLFWwindow* window;
 	GLuint vertex_buffer, vertex_shader, fragment_shader, program;
 	GLint mvp_location, vpos_location, vcol_location;

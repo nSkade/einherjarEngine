@@ -1,4 +1,4 @@
-#include "GPUTimer.h"
+#include "GPUTimer.hpp"
 #include <iostream>
 
 void GPUTimer::startQuery() {

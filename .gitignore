@@ -1,5 +1,8 @@
 out/
 einherjarEngine.exe
+einherjarEngine.exp
+einherjarEngine.lib
+einherjarEngine.pdb
 
 
 

@@ -1,7 +1,10 @@
 #include "../glad/glad.h"
 #define GLFW_INCLUDE_NONE
 #include "../glfw3/glfw3.h"
-#include "../glm/vec3.hpp"
+#include "../glm/matrix.hpp"
+#include "../glm/ext/matrix_clip_space.hpp"
+#include "../glm/ext/matrix_projection.hpp"
+#include "../glm/ext/matrix_transform.hpp"
 
 #include "linmath.h"
  
@@ -33,32 +36,18 @@ static const struct
 	{  1.0f, -1.0f, 1.f, 0.f },
 	{  1.0f,  1.0f, 1.f, 1.f }
 };
- 
-static const char* vertex_shader_text =
-"#version 110\n"
-"uniform mat4 MVP;\n"
-"attribute vec2 vCol;\n"
-"attribute vec2 vPos;\n"
-"varying vec3 color;\n"
-"void main()\n"
-"{\n"
-"	gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
-"	color = vec3(1.0);\n"
-"}\n";
- 
-static const char* fragment_shader_text =
-"#version 110\n"
-"varying vec3 color;\n"
-"uniform float u_time;\n"
-"uniform vec2 u_resolution;\n"
-"void main()\n"
-"{\n"
-"	gl_FragColor = vec4(color*vec3(u_time), 1.0);\n"
-//"	for (int i = 0; i < 100000; i++) {\n"
-//"		gl_FragColor += mod(gl_FragColor*0.1, 1.0);\n"
-//"	}\n"
-"}\n";
- 
+
+uint32_t ehj_gl_err() {
+	unsigned int err = 0;
+	err = glGetError();
+	while ((err != 0)) {
+		std::cout << err << "\n";
+		err = glGetError();
+		return 1;
+	}
+	return 0;
+}
+
 static void error_callback(int error, const char* description)
 {
 	fprintf(stderr, "Error: %s\n", description);
@@ -119,33 +108,48 @@ int main(void)
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	
-	vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-	glCompileShader(vertex_shader);
-	
-	std::ifstream t("assets/tellu.frag");
 	std::stringstream buffer;
+	std::ifstream t("assets/basic_v.vert");
+	buffer << t.rdbuf();
+	std::string vertex_shader_text = buffer.str();
+	
+	vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+	const char* vertex_shader_c = vertex_shader_text.c_str();
+	std::cout << vertex_shader_c;
+	//return 0;
+	glShaderSource(vertex_shader, 1, &vertex_shader_c, NULL);
+	glCompileShader(vertex_shader);
+
+	t.clear();
+	t.close();
+	t = std::ifstream("assets/tellu.frag");
+	buffer.seekp(0);
+	buffer.clear();
 	buffer << t.rdbuf();
 	
 	std::string fileShaderS = buffer.str();
 	const char* fileShader = fileShaderS.c_str();
-	//std::cout << fileShader << "\n";
+	std::cout << fileShader << "\n";
 	
 	fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragment_shader, 1, &fileShader, NULL);
 	glCompileShader(fragment_shader);
-	
+
 	program = glCreateProgram();
 	glAttachShader(program, vertex_shader);
 	glAttachShader(program, fragment_shader);
 	glLinkProgram(program);
-
+	
+	
+	if (ehj_gl_err())
+		return -1;
 	mvp_location = glGetUniformLocation(program, "MVP");
 	vpos_location = glGetAttribLocation(program, "vPos");
 	vcol_location = glGetAttribLocation(program, "vCol");
 	GLint utime_location = glGetUniformLocation(program, "u_time");
 	GLint ures_location = glGetUniformLocation(program, "u_resolution");
 	
+	std::cout << mvp_location << vpos_location << vcol_location << utime_location << ures_location;
 	glEnableVertexAttribArray(vpos_location);
 	glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
 						sizeof(vertices[0]), (void*) 0);
@@ -155,18 +159,11 @@ int main(void)
 	
 	GPUTimer gpuTimer;
 	
-	unsigned int err = 0;
-	err = glGetError();
-	while ((err != 0)) {
-		std::cout << err << "\n";
-		err = glGetError();
-		return -1;
-	}
 	while (!glfwWindowShouldClose(window))
 	{
 		float ratio;
 		int width, height;
-		mat4x4 m, p, mvp;
+		//mat4x4 m, p, mvp;
 	
 		glfwGetFramebufferSize(window, &width, &height);
 		
@@ -174,14 +171,21 @@ int main(void)
 		
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT);
-	
-		mat4x4_identity(m);
+
+		glm::mat4 m = glm::mat4(1.0f); // identity
+		glm::rotate(m,(float) glfwGetTime(), glm::vec3(0.f,1.f,0.f));
+		glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
+		glm::mat4 mvp = p*m;
+
+		//mat4x4_identity(m);
 		//mat4x4_rotate_X(m, m, (float) glfwGetTime());
-		mat4x4_ortho(p, -1.0, 1.0, -1.f, 1.f, 1.f, -1.f);
-		mat4x4_mul(mvp, p, m);
+		//mat4x4_ortho(p, -1.0, 1.0, -1.f, 1.f, 1.f, -1.f);
+		
+		//mat4x4_mul(mvp, p, m);
 	
 		glUseProgram(program);
-		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
+		//glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) mvp);
+		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, &mvp[0][0]);
 		
 		auto elapsed = std::chrono::steady_clock::now() - chrStartTime;
 		GLfloat utime = double(std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count()*0.000001);

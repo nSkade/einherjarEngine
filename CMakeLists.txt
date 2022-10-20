@@ -19,6 +19,7 @@ LINK_DIRECTORIES(glfw3)
 add_executable (einherjarEngine
 	"src/main.cpp"
 	"src/GPUTimer.cpp"
+	"src/GLProgram.cpp"
 	"glad/glad.c"
 )
 

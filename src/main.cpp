@@ -16,6 +16,7 @@
 #include <sstream>
 
 #include "GPUTimer.hpp"
+#include "GLProgram.hpp"
 
 // enable optimus!
 extern "C" {
@@ -69,6 +70,8 @@ int main(void)
 	GLuint vertex_buffer, vertex_shader, fragment_shader, program;
 	GLint mvp_location, vpos_location, vcol_location;
 	
+	ehj::GLProgram mainGLProgram;
+
 	glfwSetErrorCallback(error_callback);
 	
 	std::chrono::steady_clock::time_point chrStartTime = std::chrono::steady_clock::now();
@@ -108,38 +111,42 @@ int main(void)
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	
-	std::stringstream buffer;
-	std::ifstream t("assets/basic_v.vert");
-	buffer << t.rdbuf();
-	std::string vertex_shader_text = buffer.str();
+	//std::stringstream buffer;
+	//std::ifstream t("assets/basic_v.vert");
+	//buffer << t.rdbuf();
+	//std::string vertex_shader_text = buffer.str();
 	
-	vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	const char* vertex_shader_c = vertex_shader_text.c_str();
-	std::cout << vertex_shader_c;
-	//return 0;
-	glShaderSource(vertex_shader, 1, &vertex_shader_c, NULL);
-	glCompileShader(vertex_shader);
+	//vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+	//const char* vertex_shader_c = vertex_shader_text.c_str();
+	//std::cout << vertex_shader_c;
+	////return 0;
+	//glShaderSource(vertex_shader, 1, &vertex_shader_c, NULL);
+	//glCompileShader(vertex_shader);
 
-	t.clear();
-	t.close();
-	t = std::ifstream("assets/tellu.frag");
-	buffer.seekp(0);
-	buffer.clear();
-	buffer << t.rdbuf();
+	//t.clear();
+	//t.close();
+	//t = std::ifstream("assets/tellu.frag");
+	//buffer.seekp(0);
+	//buffer.clear();
+	//buffer << t.rdbuf();
 	
-	std::string fileShaderS = buffer.str();
-	const char* fileShader = fileShaderS.c_str();
-	std::cout << fileShader << "\n";
+	//std::string fileShaderS = buffer.str();
+	//const char* fileShader = fileShaderS.c_str();
+	//std::cout << fileShader << "\n";
 	
-	fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment_shader, 1, &fileShader, NULL);
-	glCompileShader(fragment_shader);
+	//fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+	//glShaderSource(fragment_shader, 1, &fileShader, NULL);
+	//glCompileShader(fragment_shader);
 
-	program = glCreateProgram();
-	glAttachShader(program, vertex_shader);
-	glAttachShader(program, fragment_shader);
-	glLinkProgram(program);
+	//program = glCreateProgram();
+	//glAttachShader(program, vertex_shader);
+	//glAttachShader(program, fragment_shader);
+	//glLinkProgram(program);
 	
+	mainGLProgram.addSourceFromFile("assets/basic_v.vert", GL_VERTEX_SHADER);
+	mainGLProgram.addSourceFromFile("assets/tellu.frag",GL_FRAGMENT_SHADER);
+	mainGLProgram.createProgram();
+	program = mainGLProgram.getProgramID();
 	
 	if (ehj_gl_err())
 		return -1;

@@ -4,9 +4,6 @@
 
 namespace ehj
 {
-	//GLProgram::GLProgram() {
-	//
-	//}
 	void GLProgram::addSourceFromFile(std::string shaderPath, GLenum shaderType) {
 		std::stringstream buffer;
 		std::ifstream t(shaderPath);

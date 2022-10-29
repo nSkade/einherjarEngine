@@ -1,13 +1,14 @@
 #pragma once
-#include "../glad/glad.h"
+#include "../lib/glad/glad.h"
 
 class GPUTimer {
 	
 public:
-	void startQuery();
-	void printQuery();
+	void start();
+	void end();
+	void print();
 private:
 	GLuint m_queryID;
 	bool m_query_read = true;
+	double m_ms;
 };
-

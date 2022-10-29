@@ -1,31 +1,27 @@
-
 #pragma once
-#include "../glad/glad.h"
+#include "../lib/glad/glad.h"
 #include <string>
-#include <unordered_map>
+#include <map>
 
 namespace ehj
 {
 	class GLProgram
 	{
 	public:
-		//GLProgram();
-		//~GLProgram();
-
 		void addSourceFromFile(std::string shaderPath, GLenum shaderType);
 		void addSourceFromString(std::string shaderSource, GLenum shaderType);
 
 		void createProgram();
 		
-		void bind();
-		GLint getProgramID();
+		void bind(); //TODO remove?
+		GLint getProgramID(); //TODO remove?
 		GLuint getShaderID(GLenum shaderType);
 
 	private:
 		GLint m_programID = -1;
 		struct biMap {
-			std::unordered_map<GLuint,GLenum> toEnum;
-			std::unordered_map<GLenum,GLuint> toID;
+			std::map<GLuint,GLenum> toEnum;
+			std::map<GLenum,GLuint> toID;
 			void push_back(GLuint shaderID, GLenum shaderType) {
 				toEnum.insert({shaderID,shaderType});
 				toID.insert({shaderType,shaderID});

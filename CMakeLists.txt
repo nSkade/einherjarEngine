@@ -11,16 +11,16 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-include_directories(glad)
-include_directories(glfw3)
-LINK_DIRECTORIES(glfw3)
+include_directories(lib/glad)
+include_directories(lib/glfw3)
+LINK_DIRECTORIES(lib/glfw3)
 
 # Fügen Sie der ausführbaren Datei dieses Projekts eine Quelle hinzu.
 add_executable (einherjarEngine
 	"src/main.cpp"
 	"src/GPUTimer.cpp"
 	"src/GLProgram.cpp"
-	"glad/glad.c"
+	"lib/glad/glad.c"
 )
 
 target_link_libraries(einherjarEngine glfw3dll)

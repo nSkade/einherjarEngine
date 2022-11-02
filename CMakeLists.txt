@@ -13,6 +13,7 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 include_directories(lib/glad)
 include_directories(lib/glfw3)
+include_directories(lib/imgui-1.88)
 LINK_DIRECTORIES(lib/glfw3)
 
 # Fügen Sie der ausführbaren Datei dieses Projekts eine Quelle hinzu.
@@ -21,6 +22,7 @@ add_executable (einherjarEngine
 	"src/GPUTimer.cpp"
 	"src/GLProgram.cpp"
 	"lib/glad/glad.c"
+	"lib/imgui-1.88.cpp"
 )
 
 target_link_libraries(einherjarEngine glfw3dll)

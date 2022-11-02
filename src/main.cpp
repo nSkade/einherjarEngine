@@ -1,6 +1,11 @@
+
+#include "../lib/imgui/imgui.h"
+#include "../lib/imgui/backends/imgui_impl_glfw.h"
+#include "../lib/imgui/backends/imgui_impl_opengl3.h"
+
 #include "../lib/glad/glad.h"
 #define GLFW_INCLUDE_NONE
-#include "../lib/glfw3/glfw3.h"
+#include <GLFW/glfw3.h>
 
 #include "../lib/glm/glm.hpp"
 #include "../lib/glm/ext/matrix_clip_space.hpp"
@@ -133,6 +138,14 @@ int main(void)
 	
 	//glLineWidth(1.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO();
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(window,true);
+	ImGui_ImplOpenGL3_Init("#version 460");
+
 	
 	while (!glfwWindowShouldClose(window))
 	{
@@ -167,10 +180,27 @@ int main(void)
 		fragSTimer.end();
 		fragSTimer.print();
 
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		{
+			ImGui::Begin("Another Window");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+			ImGui::Text("Hello from another window!");
+			ImGui::End();
+		}
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 	
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
 	glfwDestroyWindow(window);
 	
 	glfwTerminate();

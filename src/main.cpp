@@ -66,6 +66,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 }
 
 #define FULLSCREEN false
+#define FRAME_CAP true
 
 int main(void)
 {
@@ -106,7 +107,8 @@ int main(void)
 	
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
-	glfwSwapInterval(0);
+	if (!FRAME_CAP)
+		glfwSwapInterval(0);
 	
 	glGenBuffers(1, &vertex_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -178,15 +180,19 @@ int main(void)
 		fragSTimer.start();
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		fragSTimer.end();
-		fragSTimer.print();
+		//fragSTimer.print();
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
 		{
-			ImGui::Begin("Another Window");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-			ImGui::Text("Hello from another window!");
+			ImGui::Begin("Render Info");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+			//ImGui::Text("Hello from another window!");
+			std::string fps = "fps: " + std::to_string(1.0/(fragSTimer.getMS()/1000.0));
+			std::string frameTime = "ms: " + std::to_string(fragSTimer.getMS());
+			ImGui::TextUnformatted(fps.c_str());
+			ImGui::TextUnformatted(frameTime.c_str());
 			ImGui::End();
 		}
 

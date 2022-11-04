@@ -8,6 +8,7 @@ void GPUTimer::start() {
 	}
 }
 
+// TODO do messaging system for printing
 void GPUTimer::end() {
 	if (m_query_read)
 		glEndQuery(GL_TIME_ELAPSED);
@@ -28,6 +29,10 @@ void GPUTimer::end() {
 
 void GPUTimer::print() {
 	std::cout << "fps: " << 1.0/(m_ms/1000.0) << " time for render took: " << m_ms << " id: " << m_queryID << "\n";
+}
+
+double GPUTimer::getMS() {
+	return m_ms;
 }
 
 //void GPUTimer::printQuery() {

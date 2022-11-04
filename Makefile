@@ -1,22 +1,30 @@
-all:
-	build.bat
 
 #TODO real makefile
-#CXX = clang
-#ARG = -c -Wall
+CXX = clang
+ARG = -c -Wall
+TEXTENSION = .exe
+TARGET = einherjarEngine
 
-#LIB = -Lfolder -lglad -lglfw3
+LIB = -Lfolder -lglad -lglfw3
+INC = -Ilib/imgui -Ilib/imgui/backends -Ilib/glfw3
 
-#SRC = src/main.cpp src/GPUTimer.cpp glad/glad.c
-#OBJ = $($(SRC:.cpp=.o):.c=.o)
+IMGUI = $(wildcard lib/imgui/*.cpp) lib/imgui/backends/imgui_impl_opengl3.cpp lib/imgui/backends/imgui_impl_glfw.cpp
+SRC = $(wildcard src/*.cpp) lib/glad/glad.c $(IMGUI)
+OBJ2 = $(SRC:.cpp=.o)
+OBJ = $(OBJ2:.c=.o)
 
-#all: $(TARGET)
+all: $(TARGET)
 
-#$(TARGET): $(OBJ)
-#	$(CXX) $(ARG) -o $(OBJ) $(LIB)
+%.o: %.c
+	$(CXX) $(ARG) $< -o $@ $(LIB) $(INC)
 
-#main.o: src/main.cpp
-#	$(CMPLR) $(ARG) out/main.cpp
+%.o: %.cpp
+	$(CXX) $(ARG) $< -o $@ $(LIB) $(INC)
+	
+$(TARGET): $(OBJ)
+	$(CXX) -Wall $(OBJ) -o $(TARGET)$(TEXTENSION) $(LIB) $(INC)
 
-#clean:
-#	del out/*.o
+.PHONY: clean
+clean:
+	erase /s *.o
+	del imgui.ini

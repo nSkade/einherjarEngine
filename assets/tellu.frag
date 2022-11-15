@@ -1,7 +1,8 @@
-
-uniform sampler2D u_noise;
-uniform vec2 u_resolution;
+//uniform sampler2D u_noise;
 uniform float u_time;
+uniform vec2 u_resolution;
+
+in vec3 color;
 
 #define M_PI 3.14159265358979
 
@@ -184,7 +185,7 @@ float distPlane(vec3 p, vec3 n) {
 
 float duneFunc(vec3 p) {
 	p = p.zyx*0.5;
-	vec3 u = 2.0*vec3(gradientNoise(p),0.0,gradientNoise(p.zx));
+	vec3 u = 2.0*vec3(gradientNoise(p.xy),0.0,gradientNoise(p.zx));
 	return -0.8+0.3*sin(u.x+cos(u.z))-(1.0-abs(sin(u.x+u.z+gradientNoise(u.zx)*0.5)))*0.5;
 }
 
@@ -364,12 +365,11 @@ Def raymarch(vec3 dir, vec3 origin) {
 	return def;
 }
 
-void main(void)
+void main()
 {
 	vec2 uv = viewIndepUV();
 	//vec2 uv = gl_FragCoord.xy/u_resolution.xy;
 	vec2 ndc = uv * 2.0 - vec2(1.0);
-	u_time *= 1.0;
 	CAMPOS.z -= 1.0;//+sin(u_time*0.5)*2.0;
 	CAMPOS.y -= 1.0;
 	CAMPOS.z += sin(u_time)*1.25;
@@ -379,7 +379,7 @@ void main(void)
 	vec3 lookat = normalize(scnSpherePos-CAMPOS);
 	//lookat = vec3(0.0);
 	
-	CAMDIR = vec3(ndc+lookat, 1.0);
+	CAMDIR = vec3(ndc+lookat.xy, 1.0);
 	CAMDIR = normalize(CAMDIR);
 	CAMDIR = rotationY(u_time*0.3) * CAMDIR;
 	Def def = raymarch(CAMDIR, CAMPOS);
@@ -388,7 +388,7 @@ void main(void)
 	//def.color *= scale;
 	vec3 bot = vec3(36.0/255.0,45.0/255.0,60.0/255.0);
 	vec3 top = vec3(30.0/255.0,34.0/255.0,45.0/255.0);
-	def.color += (scale > 0.0 || def.depth > MAXDIST) ? (uv.y*bot+(1.0-uv.y)*top)*(1.0-scale) : 0.0;
+	def.color += (scale > 0.0 || def.depth > MAXDIST) ? (uv.y*bot+(1.0-uv.y)*top)*(1.0-scale) : vec3(0.0);
 	
 	vec3 pos = def.worldPos;
 	// TODO make colors global
@@ -399,7 +399,7 @@ void main(void)
 	int particleSteps = 6;
 	vec3 camToWS = pos-CAMPOS;
 	for (int i = 0; i < particleSteps; i++) {
-		Spos += (normalize(camToWS)*8.0)/particleSteps;
+		Spos += (normalize(camToWS)*8.0)/float(particleSteps);
 		if (length(Spos-CAMPOS) > length(camToWS))
 			break;
 		float noise = d3Noise(Spos*30.0)-0.45;
@@ -409,7 +409,7 @@ void main(void)
 	Spos = CAMPOS;
 	//def.color = vec3(0.0);
 	for (int i = 0; i < particleSteps; i++) {
-		Spos += (normalize(camToWS)*8.0)/particleSteps;
+		Spos += (normalize(camToWS)*8.0)/float(particleSteps);
 		def.color += red*min(1.0,0.065/(exp(pow(length(Spos-scnSpherePos),1.75))));
 	}
 	vec4 col = vec4(def.color,1.0);

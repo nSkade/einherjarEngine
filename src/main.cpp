@@ -47,7 +47,7 @@ uint32_t ehj_gl_err() {
 	unsigned int err = 0;
 	err = glGetError();
 	while ((err != 0)) {
-		std::cout << err << "\n";
+		std::cout << "\nehj_gl_err: " << err << "\n";
 		err = glGetError();
 		return 1;
 	}
@@ -74,7 +74,7 @@ int main(void)
 	
 	GLFWwindow* window;
 	GLuint vertex_buffer, program;
-	GLint mvp_location, vpos_location, vcol_location;
+	GLint mvp_location;
 	
 	ehj::GLProgram mainGLProgram;
 
@@ -85,8 +85,8 @@ int main(void)
 	if (!glfwInit())
 		exit(EXIT_FAILURE);
 	
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	
 #if FULLSCREEN
 	window = glfwCreateWindow(1920, 1080, "Simple example", NULL, NULL);
@@ -110,36 +110,78 @@ int main(void)
 	if (!FRAME_CAP)
 		glfwSwapInterval(0);
 	
-	glGenBuffers(1, &vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	// deprecated (GL 2.0)
+	//glGenBuffers(1, &vertex_buffer);
+	//glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	//glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	GLuint attribPos = 0;
+	GLuint attribCol = 1;
+
+	uint32_t quadVBO; // vertex buffer object
+	glCreateBuffers(1,&quadVBO);
+	glNamedBufferStorage(quadVBO, sizeof(vertices), vertices, GL_DYNAMIC_STORAGE_BIT);
+
+	uint32_t quadVAO; // vertex array object
+	glCreateVertexArrays(1,&quadVAO);
+
+	GLuint vaoBindingPoint = 0;
+	glVertexArrayVertexBuffer(quadVAO,vaoBindingPoint,quadVBO,0,sizeof(float)*4);
+
+	glEnableVertexArrayAttrib(quadVAO,attribPos);
+	glEnableVertexArrayAttrib(quadVAO,attribCol);
+
+	glVertexArrayAttribFormat(quadVAO,attribPos,2,GL_FLOAT,false,0);
+	glVertexArrayAttribFormat(quadVAO,attribCol,2,GL_FLOAT,false,2*sizeof(float));
+
+	glVertexArrayAttribBinding(quadVAO,attribPos,vaoBindingPoint);
+	glVertexArrayAttribBinding(quadVAO,attribCol,vaoBindingPoint);
+
+	std::cout << "check0\n";
+	if (ehj_gl_err())
+		return -1;
+	
+	// tesselation maximum supported vertices
+	//GLint MaxPatchVertices = 0;
+	//glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);
+	//std::cout << "Max supported patch vertices "<< MaxPatchVertices << "\n";
+	glPatchParameteri(GL_PATCH_VERTICES, 3);
 	
 	mainGLProgram.addSourceFromFile("assets/basic_v.vert", GL_VERTEX_SHADER);
-	//mainGLProgram.addSourceFromFile("assets/tellu.frag",GL_FRAGMENT_SHADER);
-	mainGLProgram.addSourceFromFile("assets/basic_f.frag",GL_FRAGMENT_SHADER);
+	mainGLProgram.addSourceFromFile("assets/tellu.frag",GL_FRAGMENT_SHADER);
+	//mainGLProgram.addSourceFromFile("assets/basic_f.frag",GL_FRAGMENT_SHADER);
+	//mainGLProgram.addSourceFromFile("assets/basic_cs.glsl", GL_TESS_CONTROL_SHADER);
+
 	mainGLProgram.createProgram();
 	program = mainGLProgram.getProgramID();
 	
+	std::cout << "check1\n";
 	if (ehj_gl_err())
 		return -1;
 	mvp_location = glGetUniformLocation(program, "MVP");
-	vpos_location = glGetAttribLocation(program, "vPos");
-	vcol_location = glGetAttribLocation(program, "vCol");
+	//GLuint vpos_location = 0;//glGetAttribLocation(program, "vPos");
+	//GLuint vcol_location = 1;//glGetAttribLocation(program, "vCol");
 	GLint utime_location = glGetUniformLocation(program, "u_time");
 	GLint ures_location = glGetUniformLocation(program, "u_resolution");
+
+	GLint tessQ_location = glGetUniformLocation(program, "u_tessQ");
 	
-	std::cout << mvp_location << vpos_location << vcol_location << utime_location << ures_location;
-	glEnableVertexAttribArray(vpos_location);
-	glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
-						sizeof(vertices[0]), (void*) 0);
+	
+	//std::cout << mvp_location << vpos_location << vcol_location << utime_location << ures_location;
+	//glEnableVertexAttribArray(vpos_location);
+	//glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
+	//					sizeof(vertices[0]), (void*) 0);
 	//glEnableVertexAttribArray(vcol_location);
 	//glVertexAttribPointer(vcol_location, 2, GL_FLOAT, GL_FALSE,
 	//					sizeof(vertices[0]), (void*) (sizeof(float) * 2));
 	
+	std::cout << "check2\n";
+	if (ehj_gl_err())
+		return -1;
 	GPUTimer fragSTimer;
 	
 	//glLineWidth(1.0f);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -148,6 +190,7 @@ int main(void)
 	ImGui_ImplGlfw_InitForOpenGL(window,true);
 	ImGui_ImplOpenGL3_Init("#version 460");
 
+	int guiTess = 0.0f;
 	
 	while (!glfwWindowShouldClose(window))
 	{
@@ -162,8 +205,11 @@ int main(void)
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		glBindVertexArray(quadVAO);
+
 		glm::mat4 m = glm::mat4(1.0f); // identity
 		m = glm::rotate(m,(float) glfwGetTime(), glm::vec3(0.f,1.f,0.f));
+		//m = glm::translate(m,glm::vec3(0.0f,0.0f,0.0f));
 		glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
 		glm::mat4 mvp = p*m;
 		
@@ -176,6 +222,7 @@ int main(void)
 		
 		glUniform1f(utime_location, utime);
 		glUniform2f(ures_location, width, height);
+		glUniform1i(tessQ_location, (GLint) guiTess);
 		
 		fragSTimer.start();
 		glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -193,6 +240,7 @@ int main(void)
 			std::string frameTime = "ms: " + std::to_string(fragSTimer.getMS());
 			ImGui::TextUnformatted(fps.c_str());
 			ImGui::TextUnformatted(frameTime.c_str());
+			ImGui::SliderInt("tess", &guiTess,0,10);
 			ImGui::End();
 		}
 

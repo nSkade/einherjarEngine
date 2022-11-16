@@ -1,8 +1,9 @@
-
-#TODO real makefile
 CXX = clang
-ARG = -c -Wall
+#make sure to add a custom buildfolder to the .gitignore
+BUILDFOLDER = out/mf
 TEXTENSION = .exe
+
+ARG = -c -Wall
 TARGET = einherjarEngine
 
 LIB = -Lfolder -lglad -lglfw3
@@ -10,15 +11,19 @@ INC = -Ilib/imgui -Ilib/imgui/backends -Ilib/glfw3
 
 IMGUI = $(wildcard lib/imgui/*.cpp) lib/imgui/backends/imgui_impl_opengl3.cpp lib/imgui/backends/imgui_impl_glfw.cpp
 SRC = $(wildcard src/*.cpp) lib/glad/glad.c $(IMGUI)
-OBJ2 = $(SRC:.cpp=.o)
+
+OBJ3 = $(patsubst %, $(BUILDFOLDER)/%, $(SRC))
+OBJ2 = $(OBJ3:.cpp=.o)
 OBJ = $(OBJ2:.c=.o)
 
 all: $(TARGET)
 
-%.o: %.c
+$(BUILDFOLDER)/%.o: %.c
+	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
 	$(CXX) $(ARG) $< -o $@ $(LIB) $(INC)
 
-%.o: %.cpp
+$(BUILDFOLDER)/%.o: %.cpp
+	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
 	$(CXX) $(ARG) $< -o $@ $(LIB) $(INC)
 	
 $(TARGET): $(OBJ)
@@ -26,5 +31,4 @@ $(TARGET): $(OBJ)
 
 .PHONY: clean
 clean:
-	erase /s *.o
-	del imgui.ini
+	rmdir /s /q $(BUILDFOLDER)

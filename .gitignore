@@ -5,6 +5,7 @@ einherjarEngine.exe
 einherjarEngine.exp
 einherjarEngine.lib
 einherjarEngine.pdb
+imgui.ini
 
 *.o
 

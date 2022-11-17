@@ -22,6 +22,9 @@
 #include "GPUTimer.hpp"
 #include "GLProgram.hpp"
 
+#include <stdlib.h>
+#define sleep _sleep
+
 //TODO remove?
 // enable optimus!
 extern "C" {
@@ -41,6 +44,12 @@ static const struct
 	{ -1.0f, -1.0f, 0.f, 0.f },
 	{  1.0f, -1.0f, 1.f, 0.f },
 	{  1.0f,  1.0f, 1.f, 1.f }
+};
+
+static const int indices[4] = {
+	3,4,5,2
+	//0,1,2,
+	//3,4,5
 };
 
 uint32_t ehj_gl_err() {
@@ -73,7 +82,8 @@ int main(void)
 	glm::vec3 vec = glm::vec3(0.0f,1.0f,0.0f);
 	
 	GLFWwindow* window;
-	GLuint vertex_buffer, program;
+	//GLuint vertex_buffer;
+	GLuint program;
 	GLint mvp_location;
 	
 	ehj::GLProgram mainGLProgram;
@@ -137,6 +147,13 @@ int main(void)
 	glVertexArrayAttribBinding(quadVAO,attribPos,vaoBindingPoint);
 	glVertexArrayAttribBinding(quadVAO,attribCol,vaoBindingPoint);
 
+	uint32_t quadEBO; // element buffer object
+	glCreateBuffers(1,&quadEBO);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW); //TODO static draw?
+
+	glBindVertexArray(quadVAO);
 	std::cout << "check0\n";
 	if (ehj_gl_err())
 		return -1;
@@ -145,16 +162,20 @@ int main(void)
 	//GLint MaxPatchVertices = 0;
 	//glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);
 	//std::cout << "Max supported patch vertices "<< MaxPatchVertices << "\n";
-	glPatchParameteri(GL_PATCH_VERTICES, 3);
+	glPatchParameteri(GL_PATCH_VERTICES, 4);
 	
 	mainGLProgram.addSourceFromFile("assets/basic_v.vert", GL_VERTEX_SHADER);
-	mainGLProgram.addSourceFromFile("assets/tellu.frag",GL_FRAGMENT_SHADER);
-	//mainGLProgram.addSourceFromFile("assets/basic_f.frag",GL_FRAGMENT_SHADER);
-	//mainGLProgram.addSourceFromFile("assets/basic_cs.glsl", GL_TESS_CONTROL_SHADER);
+	//mainGLProgram.addSourceFromFile("assets/tellu.frag",GL_FRAGMENT_SHADER);
+	mainGLProgram.addSourceFromFile("assets/basic_f.frag",GL_FRAGMENT_SHADER);
+	mainGLProgram.addSourceFromFile("assets/basic_tcsQ.glsl", GL_TESS_CONTROL_SHADER);
+	mainGLProgram.addSourceFromFile("assets/basic_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
 
 	mainGLProgram.createProgram();
 	program = mainGLProgram.getProgramID();
-	
+	glUseProgram(program);
+
+	//sleep(2000);
+
 	std::cout << "check1\n";
 	if (ehj_gl_err())
 		return -1;
@@ -165,9 +186,9 @@ int main(void)
 	GLint ures_location = glGetUniformLocation(program, "u_resolution");
 
 	GLint tessQ_location = glGetUniformLocation(program, "u_tessQ");
+	std::cout << "\n tessQ: " << tessQ_location << "\n";
 	
-	
-	//std::cout << mvp_location << vpos_location << vcol_location << utime_location << ures_location;
+	std::cout << program << " " <<mvp_location << " " << utime_location << " " << ures_location;
 	//glEnableVertexAttribArray(vpos_location);
 	//glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
 	//					sizeof(vertices[0]), (void*) 0);
@@ -181,11 +202,12 @@ int main(void)
 	GPUTimer fragSTimer;
 	
 	//glLineWidth(1.0f);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO();
+	//for key and mouse buttons
+	//ImGuiIO& io = ImGui::GetIO();
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(window,true);
 	ImGui_ImplOpenGL3_Init("#version 460");
@@ -206,9 +228,10 @@ int main(void)
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glBindVertexArray(quadVAO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
 
 		glm::mat4 m = glm::mat4(1.0f); // identity
-		m = glm::rotate(m,(float) glfwGetTime(), glm::vec3(0.f,1.f,0.f));
+		//m = glm::rotate(m,(float) glfwGetTime(), glm::vec3(0.f,1.f,0.f));
 		//m = glm::translate(m,glm::vec3(0.0f,0.0f,0.0f));
 		glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
 		glm::mat4 mvp = p*m;
@@ -225,7 +248,10 @@ int main(void)
 		glUniform1i(tessQ_location, (GLint) guiTess);
 		
 		fragSTimer.start();
-		glDrawArrays(GL_TRIANGLES, 0, 6);
+		//glDrawArrays(GL_TRIANGLES, 0, 6);
+		//glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+		//glDrawArrays(GL_PATCHES,0,6);
+		glDrawElements(GL_PATCHES,4,GL_UNSIGNED_INT,0);
 		fragSTimer.end();
 		//fragSTimer.print();
 

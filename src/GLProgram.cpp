@@ -25,7 +25,6 @@ namespace ehj
 	}
 	void GLProgram::createProgram() {
 		m_programID = glCreateProgram();
-		
 		auto itr = m_shaders.toEnum.begin();
 		while (itr != m_shaders.toEnum.end()) {
 			glAttachShader(m_programID, itr->first);

@@ -3,9 +3,9 @@
 uniform float u_time;
 uniform vec2 u_resolution;
 
-in vec3 color;
+in vec3 normalTES;
 
 void main()
 {
-	gl_FragColor = vec4(vec3(1.0),1.0);
+	gl_FragColor = vec4(normalTES,1.0);
 };

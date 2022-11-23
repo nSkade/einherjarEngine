@@ -3,12 +3,19 @@
 // basic tesellation control shader
 
 layout(vertices=4) out;
-
 //TODO in vertex shader is no local to clip space (mul with world-view-proj) necessary
 
 uniform int u_tessQ;
 
+in vec3 colorV[];
+in vec3 normalV[];
+
+out vec3 colorTCS[];
+out vec3 normalTCS[];
+
 void main() {
+	colorTCS[gl_InvocationID] = colorV[gl_InvocationID];
+	normalTCS[gl_InvocationID] = normalV[gl_InvocationID];
 
 	if (gl_InvocationID==0) {
 		gl_TessLevelOuter[0] = u_tessQ;

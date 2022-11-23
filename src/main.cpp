@@ -32,24 +32,41 @@ extern "C" {
 	_declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
 }
 
+//static const struct
+//{
+//	float x, y;
+//	float u, v;
+//} vertices[6] =
+//{
+//	{ -1.0f, -1.0f, 0.f, 0.f },
+//	{  1.0f,  1.0f, 1.f, 1.f },
+//	{ -1.0f,  1.0f, 0.f, 1.f },
+//	{ -1.0f, -1.0f, 0.f, 0.f },
+//	{  1.0f, -1.0f, 1.f, 0.f },
+//	{  1.0f,  1.0f, 1.f, 1.f }
+//};
+//
+//static const int indices[4] = {
+//	3,4,5,2
+//	//0,1,2,
+//	//3,4,5
+//};
+
 static const struct
 {
 	float x, y;
 	float u, v;
-} vertices[6] =
+	float n1,n2,n3;
+} vertices[4] =
 {
-	{ -1.0f, -1.0f, 0.f, 0.f },
-	{  1.0f,  1.0f, 1.f, 1.f },
-	{ -1.0f,  1.0f, 0.f, 1.f },
-	{ -1.0f, -1.0f, 0.f, 0.f },
-	{  1.0f, -1.0f, 1.f, 0.f },
-	{  1.0f,  1.0f, 1.f, 1.f }
+	{ -1.0f, -1.0f, 0.f, 0.f,     0.0f,0.0f,1.0f },
+	{  1.0f, -1.0f, 1.f, 0.f,     0.0f,0.0f,1.0f },
+	{  1.0f,  1.0f, 1.f, 1.f,     0.0f,0.0f,1.0f },
+	{ -1.0f,  1.0f, 0.f, 1.f,     0.0f,0.0f,1.0f },
 };
 
 static const int indices[4] = {
-	3,4,5,2
-	//0,1,2,
-	//3,4,5
+	0,1,2,3
 };
 
 uint32_t ehj_gl_err() {
@@ -127,6 +144,7 @@ int main(void)
 
 	GLuint attribPos = 0;
 	GLuint attribCol = 1;
+	GLuint attribNrm = 2;
 
 	uint32_t quadVBO; // vertex buffer object
 	glCreateBuffers(1,&quadVBO);
@@ -136,16 +154,19 @@ int main(void)
 	glCreateVertexArrays(1,&quadVAO);
 
 	GLuint vaoBindingPoint = 0;
-	glVertexArrayVertexBuffer(quadVAO,vaoBindingPoint,quadVBO,0,sizeof(float)*4);
+	glVertexArrayVertexBuffer(quadVAO,vaoBindingPoint,quadVBO,0,sizeof(float)*7);
 
 	glEnableVertexArrayAttrib(quadVAO,attribPos);
 	glEnableVertexArrayAttrib(quadVAO,attribCol);
+	glEnableVertexArrayAttrib(quadVAO,attribNrm);
 
 	glVertexArrayAttribFormat(quadVAO,attribPos,2,GL_FLOAT,false,0);
 	glVertexArrayAttribFormat(quadVAO,attribCol,2,GL_FLOAT,false,2*sizeof(float));
+	glVertexArrayAttribFormat(quadVAO,attribNrm,3,GL_FLOAT,false,4*sizeof(float));
 
 	glVertexArrayAttribBinding(quadVAO,attribPos,vaoBindingPoint);
 	glVertexArrayAttribBinding(quadVAO,attribCol,vaoBindingPoint);
+	glVertexArrayAttribBinding(quadVAO,attribNrm,vaoBindingPoint);
 
 	uint32_t quadEBO; // element buffer object
 	glCreateBuffers(1,&quadEBO);
@@ -202,7 +223,10 @@ int main(void)
 	GPUTimer fragSTimer;
 	
 	//glLineWidth(1.0f);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CW);
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -266,7 +290,7 @@ int main(void)
 			std::string frameTime = "ms: " + std::to_string(fragSTimer.getMS());
 			ImGui::TextUnformatted(fps.c_str());
 			ImGui::TextUnformatted(frameTime.c_str());
-			ImGui::SliderInt("tess", &guiTess,0,10);
+			ImGui::SliderInt("tess", &guiTess,0,100);
 			ImGui::End();
 		}
 

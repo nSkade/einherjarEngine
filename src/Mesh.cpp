@@ -15,8 +15,12 @@ namespace ehj {
 		for (uint32_t i=0;i<faces.size();i++) {
 			ret.append("\nf");
 			for (uint32_t j=0;j<3;j++) {
-				ret.append(std::to_string(faces[i].verts[j]));
+				ret.append(std::to_string(faces[i].vertsI[j]));
 			}
 		}
 	}
+
+	//void Mesh::loadOBJ() {
+	//	
+	//}
 }

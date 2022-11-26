@@ -9,7 +9,11 @@ in vec3 normalTCS[];
 out vec3 colorTES;
 out vec3 normalTES;
 
+uniform mat4 MVP;
+uniform mat4 u_view;
+
 uniform float u_time;
+uniform mat4 u_ehjTrans[];
 
 mat3 rotationX(float angle) {
 	return mat3(	1.0,		0,			0,
@@ -36,11 +40,13 @@ void main() {
 
 	//vec4 p = u*p0+v*p1+w*p2;
 	vec4 p = triLinterp(p0,p1,p2,p3,u,v);
+	//p = u_ehjTrans[gl_PrimitiveID]*p;
+
 	mat3 m = rotationX(p.x+u_time);
 	normalTES = triLinterp(normalTCS[0].xyzz,normalTCS[1].xyzz,normalTCS[2].xyzz,normalTCS[3].xyzz,u,v).xyz;
 	normalTES = m*normalTES;
 
 	//gl_Position = p;
-	gl_Position = vec4(m*p.xyz,1.0);//vec4(gl_TessCoord,1.0);
+	gl_Position = MVP * u_view * vec4(m*p.xyz,1.0);//vec4(gl_TessCoord,1.0);
 	
 }

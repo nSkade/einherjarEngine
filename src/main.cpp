@@ -22,6 +22,7 @@
 
 #include "GPUTimer.hpp"
 #include "GLProgram.hpp"
+#include "Mesh.hpp"
 
 #include <stdlib.h>
 #define sleep _sleep
@@ -192,6 +193,10 @@ int main(void)
 	//glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	//glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
+	// load model
+	ehj::Mesh mesh;
+	mesh.loadOBJ("models/sst.obj");
+	
 	GLuint attribPos = 0;
 	GLuint attribCol = 1;
 	GLuint attribNrm = 2;
@@ -235,11 +240,12 @@ int main(void)
 	//std::cout << "Max supported patch vertices "<< MaxPatchVertices << "\n";
 	glPatchParameteri(GL_PATCH_VERTICES, 4);
 	
-	mainGLProgram.addSourceFromFile("assets/basic_v.vert", GL_VERTEX_SHADER);
+	mainGLProgram.addSourceFromFile("shaders/basic_v.vert", GL_VERTEX_SHADER);
 	//mainGLProgram.addSourceFromFile("assets/tellu.frag",GL_FRAGMENT_SHADER);
-	mainGLProgram.addSourceFromFile("assets/basic_f.frag",GL_FRAGMENT_SHADER);
-	mainGLProgram.addSourceFromFile("assets/basic_tcsQ.glsl", GL_TESS_CONTROL_SHADER);
-	mainGLProgram.addSourceFromFile("assets/basic_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
+	mainGLProgram.addSourceFromFile("shaders/basic_f.frag",GL_FRAGMENT_SHADER);
+	mainGLProgram.addSourceFromFile("shaders/basic_tcsQ.glsl", GL_TESS_CONTROL_SHADER);
+	//mainGLProgram.addSourceFromFile("assets/basic_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
+	mainGLProgram.addSourceFromFile("shaders/tellu_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
 
 	mainGLProgram.createProgram();
 	program = mainGLProgram.getProgramID();
@@ -274,11 +280,10 @@ int main(void)
 	GPUTimer fragSTimer;
 	
 	//glLineWidth(1.0f);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	//glEnable(GL_CULL_FACE);
 	//glCullFace(GL_BACK);
 	//glFrontFace(GL_CW);
-
 
 	//proj
 	glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)windowW/(float)windowH,0.0f,1000.0f);
@@ -343,7 +348,7 @@ int main(void)
 		glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
 		//glm::mat4 p = glm::perspectiveFov(45,10,10,0,1000);
 		glm::mat4 mvp = p*m;
-		mvp = proj;
+		//mvp = proj;
 		
 		glUseProgram(program);
 		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, &mvp[0][0]);
@@ -360,7 +365,7 @@ int main(void)
 		//float camX = sin(glfwGetTime()) * radius;
 		//float camZ = cos(glfwGetTime()) * radius;
 		//view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-
+		view = glm::mat4(1.0f);
 		glUniformMatrix4fv(uview_location,1,GL_FALSE,glm::value_ptr(view));
 		
 		fragSTimer.start();

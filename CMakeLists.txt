@@ -6,8 +6,6 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
-
 include_directories(lib/glad)
 include_directories(lib/imgui)
 include_directories(lib/glfw3)
@@ -18,6 +16,8 @@ add_executable (einherjarEngine
 	"src/main.cpp"
 	"src/GPUTimer.cpp"
 	"src/GLProgram.cpp"
+	"src/Mesh.cpp"
+
 	"lib/glad/glad.c"
 	
 	"lib/imgui/imgui.cpp"
@@ -28,5 +28,7 @@ add_executable (einherjarEngine
 	"lib/imgui/backends/imgui_impl_opengl3.cpp"
 	"lib/imgui/backends/imgui_impl_glfw.cpp"
 )
-
 target_link_libraries(einherjarEngine glfw3)
+
+set_target_properties (einherjarEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
+

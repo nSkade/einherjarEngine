@@ -18,12 +18,20 @@ void main() {
 	normalTCS[gl_InvocationID] = normalV[gl_InvocationID];
 
 	if (gl_InvocationID==0) {
-		gl_TessLevelOuter[0] = u_tessQ;
-		gl_TessLevelOuter[1] = 1;
-		gl_TessLevelOuter[2] = u_tessQ;
-		gl_TessLevelOuter[3] = 1;
+	//	gl_TessLevelOuter[0] = u_tessQ;
+	//	gl_TessLevelOuter[1] = 1;
+	//	gl_TessLevelOuter[2] = u_tessQ;
+	//	gl_TessLevelOuter[3] = 1;
 
-		gl_TessLevelInner[0] = 1;
+	//	gl_TessLevelInner[0] = 1;
+	//	gl_TessLevelInner[1] = u_tessQ;
+
+		gl_TessLevelOuter[0] = u_tessQ;
+		gl_TessLevelOuter[1] = u_tessQ;
+		gl_TessLevelOuter[2] = u_tessQ;
+		gl_TessLevelOuter[3] = u_tessQ;
+
+		gl_TessLevelInner[0] = u_tessQ;
 		gl_TessLevelInner[1] = u_tessQ;
 	}
 

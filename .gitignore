@@ -4,6 +4,8 @@ einherjarEngine.exe
 einherjarEngine.exp
 einherjarEngine.lib
 einherjarEngine.pdb
+einherjarEngine.ilk
+einherjarEngine.*
 imgui.ini
 
 ## Ignore Visual Studio temporary files, build results, and

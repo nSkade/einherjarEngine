@@ -1,0 +1,19 @@
+{
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "buildTest",
+			"command": "${workspaceFolder}\\.vscode\\buildvs.bat",
+			//"command": "make CXX = cl /EHsc /Zi /Fe",
+			"group":  {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal":"always"
+			},
+			"problemMatcher": "$msCompile"
+		}
+	],
+	"version": "2.0.0"
+}

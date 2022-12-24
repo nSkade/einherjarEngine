@@ -8,14 +8,17 @@ namespace ehj
 	class GLProgram
 	{
 	public:
-		void addSourceFromFile(std::string shaderPath, GLenum shaderType);
-		void addSourceFromString(std::string shaderSource, GLenum shaderType);
-
 		void createProgram();
 		
 		void bind(); //TODO remove?
 		GLint getProgramID(); //TODO remove?
 		GLuint getShaderID(GLenum shaderType);
+		
+		void addSourceFromString(std::string shaderSource, GLenum shaderType);
+		void addSourceFromFile(std::string shaderPath, GLenum shaderType);
+
+		void loadProgramFromFilename(std::string fileName);
+		void loadProgramFromFolder(std::string folderPath);
 
 	private:
 		GLint m_programID = -1;

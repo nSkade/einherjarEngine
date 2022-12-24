@@ -3,7 +3,12 @@ CXX = clang
 BUILDFOLDER = out/mf
 TEXTENSION = .exe
 
-ARG = -c -Wall
+space:= $(empty) $(empty)
+ARGO = -c -Wall
+ARGOP = -std=c++17 -c -Wall
+ARGF = -std=c++17 -Wall
+OUTC = -o$(space)
+OUTF = -o$(space)
 TARGET = einherjarEngine
 
 LIB = -Lfolder -lglad -lglfw3
@@ -20,15 +25,15 @@ all: $(TARGET)
 
 $(BUILDFOLDER)/%.o: %.c
 	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
-	$(CXX) $(ARG) $< -o $@ $(LIB) $(INC)
+	$(CXX) $(ARGO) $< $(OUTC)$@ $(LIB) $(INC)
 
 $(BUILDFOLDER)/%.o: %.cpp
 	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
-	$(CXX) $(ARG) $< -o $@ $(LIB) $(INC)
+	$(CXX) $(ARGOP) $< $(OUTC)$@ $(LIB) $(INC)
 	
 $(TARGET): $(OBJ)
-	$(CXX) -Wall $(OBJ) -o $(TARGET)$(TEXTENSION) $(LIB) $(INC)
+	$(CXX) $(ARGF) $(OBJ) $(OUTF)$(TARGET)$(TEXTENSION) $(LIB) $(INC)
 
 .PHONY: clean
 clean:
-	rmdir /s /q $(BUILDFOLDER)
+	rmdir /s /q "$(BUILDFOLDER)"

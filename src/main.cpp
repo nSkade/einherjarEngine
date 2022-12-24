@@ -192,42 +192,82 @@ int main(void)
 	//glGenBuffers(1, &vertex_buffer);
 	//glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	//glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
+	
+//	GLuint attribPos = 0;
+//	GLuint attribCol = 1;
+//	GLuint attribNrm = 2;
+//	
+//	uint32_t quadVBO; // vertex buffer object
+//	glCreateBuffers(1,&quadVBO);
+//	glNamedBufferStorage(quadVBO, sizeof(vertices), vertices, GL_DYNAMIC_STORAGE_BIT);
+//
+//	uint32_t quadVAO; // vertex array object
+//	glCreateVertexArrays(1,&quadVAO);
+//
+//	GLuint vaoBindingPoint = 0;
+//	glVertexArrayVertexBuffer(quadVAO,vaoBindingPoint,quadVBO,0,sizeof(float)*7);
+//
+//	glEnableVertexArrayAttrib(quadVAO,attribPos);
+//	glEnableVertexArrayAttrib(quadVAO,attribCol);
+//	glEnableVertexArrayAttrib(quadVAO,attribNrm);
+//
+//	glVertexArrayAttribFormat(quadVAO,attribPos,2,GL_FLOAT,false,0);
+//	glVertexArrayAttribFormat(quadVAO,attribCol,2,GL_FLOAT,false,2*sizeof(float));
+//	glVertexArrayAttribFormat(quadVAO,attribNrm,3,GL_FLOAT,false,4*sizeof(float));
+//
+//	glVertexArrayAttribBinding(quadVAO,attribPos,vaoBindingPoint);
+//	glVertexArrayAttribBinding(quadVAO,attribCol,vaoBindingPoint);
+//	glVertexArrayAttribBinding(quadVAO,attribNrm,vaoBindingPoint);
+//
+//	uint32_t quadEBO; // element buffer object
+//	glCreateBuffers(1,&quadEBO);
+//
+//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
+//	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW); //TODO static draw?
+	
 	// load model
 	ehj::Mesh mesh;
-	mesh.loadOBJ("models/sst.obj");
+	mesh.loadOBJ("models/ss100.obj");
 	
 	GLuint attribPos = 0;
-	GLuint attribCol = 1;
-	GLuint attribNrm = 2;
-
+	//GLuint attribCol = 1;
+	GLuint attribNrm = 1;
+	
+	std::vector<float> VAO = mesh.getVAOBuffer();
+	std::vector<int> EBO = mesh.getIndexBuffer();
+	
+	uint32_t BP = mesh.getBP();
+	uint32_t Dim = mesh.getDim();
+	uint32_t BPC = 1;
+	if (BP & ehj::Mesh::BP_NORMAL)
+		BPC++;
+	
+	int i = sizeof(vertices);
+	int j = sizeof(VAO[0]);
 	uint32_t quadVBO; // vertex buffer object
 	glCreateBuffers(1,&quadVBO);
-	glNamedBufferStorage(quadVBO, sizeof(vertices), vertices, GL_DYNAMIC_STORAGE_BIT);
+	glNamedBufferStorage(quadVBO, VAO.size()*sizeof(float), &VAO[0], GL_DYNAMIC_STORAGE_BIT);
 
 	uint32_t quadVAO; // vertex array object
 	glCreateVertexArrays(1,&quadVAO);
 
 	GLuint vaoBindingPoint = 0;
-	glVertexArrayVertexBuffer(quadVAO,vaoBindingPoint,quadVBO,0,sizeof(float)*7);
+	glVertexArrayVertexBuffer(quadVAO,vaoBindingPoint,quadVBO,0,sizeof(float)*Dim*BPC);
 
 	glEnableVertexArrayAttrib(quadVAO,attribPos);
-	glEnableVertexArrayAttrib(quadVAO,attribCol);
 	glEnableVertexArrayAttrib(quadVAO,attribNrm);
 
-	glVertexArrayAttribFormat(quadVAO,attribPos,2,GL_FLOAT,false,0);
-	glVertexArrayAttribFormat(quadVAO,attribCol,2,GL_FLOAT,false,2*sizeof(float));
-	glVertexArrayAttribFormat(quadVAO,attribNrm,3,GL_FLOAT,false,4*sizeof(float));
+	glVertexArrayAttribFormat(quadVAO,attribPos,3,GL_FLOAT,false,0);
+	glVertexArrayAttribFormat(quadVAO,attribNrm,3,GL_FLOAT,false,3*sizeof(float));
 
 	glVertexArrayAttribBinding(quadVAO,attribPos,vaoBindingPoint);
-	glVertexArrayAttribBinding(quadVAO,attribCol,vaoBindingPoint);
 	glVertexArrayAttribBinding(quadVAO,attribNrm,vaoBindingPoint);
 
 	uint32_t quadEBO; // element buffer object
 	glCreateBuffers(1,&quadEBO);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW); //TODO static draw?
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, EBO.size()*sizeof(int), &EBO[0], GL_DYNAMIC_DRAW); //TODO static draw?
 
 	glBindVertexArray(quadVAO);
 	std::cout << "check0\n";
@@ -241,11 +281,11 @@ int main(void)
 	glPatchParameteri(GL_PATCH_VERTICES, 4);
 	
 	mainGLProgram.addSourceFromFile("shaders/basic_v.vert", GL_VERTEX_SHADER);
-	//mainGLProgram.addSourceFromFile("assets/tellu.frag",GL_FRAGMENT_SHADER);
+	//mainGLProgram.addSourceFromFile("shaders/tellu.frag",GL_FRAGMENT_SHADER);
 	mainGLProgram.addSourceFromFile("shaders/basic_f.frag",GL_FRAGMENT_SHADER);
 	mainGLProgram.addSourceFromFile("shaders/basic_tcsQ.glsl", GL_TESS_CONTROL_SHADER);
-	//mainGLProgram.addSourceFromFile("assets/basic_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
-	mainGLProgram.addSourceFromFile("shaders/tellu_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
+	mainGLProgram.addSourceFromFile("shaders/basic_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
+	//mainGLProgram.addSourceFromFile("shaders/tellu_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
 
 	mainGLProgram.createProgram();
 	program = mainGLProgram.getProgramID();
@@ -280,7 +320,7 @@ int main(void)
 	GPUTimer fragSTimer;
 	
 	//glLineWidth(1.0f);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	//glEnable(GL_CULL_FACE);
 	//glCullFace(GL_BACK);
 	//glFrontFace(GL_CW);
@@ -372,7 +412,7 @@ int main(void)
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
 		//glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
 		//glDrawArrays(GL_PATCHES,0,6);
-		glDrawElements(GL_PATCHES,4,GL_UNSIGNED_INT,0);
+		glDrawElements(GL_PATCHES, EBO.size(),GL_UNSIGNED_INT,0);
 		fragSTimer.end();
 		//fragSTimer.print();
 

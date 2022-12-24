@@ -49,6 +49,6 @@ void main() {
 	colorTES = vec3(1.0f);
 
 	//gl_Position = p;
-	gl_Position = MVP * u_view * vec4(m*p.xyz,1.0);//vec4(gl_TessCoord,1.0);
+	gl_Position = MVP * u_view * vec4(p.xyz,1.0);//vec4(gl_TessCoord,1.0);
 	
 }

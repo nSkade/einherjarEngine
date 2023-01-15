@@ -44,13 +44,12 @@ namespace ehj {
 	}
 
 	void Mesh::loadOBJ(std::string path) {
-		
-		std::ifstream file(path);
+		std::ifstream file(path, std::ifstream::in);
 		std::string line;
 		m_BP -= BP_QUAD;
 		bool normals = false;
 
-		if (file.is_open()) {
+		if (file.good()) {
 			while (getline(file,line)) {
 				if (line[0]=='#') continue; // comment
 				else if (line.substr(0,2).compare("vn")==0) { // face normal?
@@ -123,5 +122,66 @@ namespace ehj {
 			}
 		}
 		return res;
+	}
+
+	SSMesh::SSMesh(bool triangles) {
+		m_BP |= BP_VRTNRM;
+		m_BP |= BP_NORMAL;
+		if (triangles) {
+			static const struct
+			{
+				float x, y;
+				float u, v;
+			} vertices[6] =
+			{
+				{ -1.0f, -1.0f, 0.f, 0.f },
+				{  1.0f,  1.0f, 1.f, 1.f },
+				{ -1.0f,  1.0f, 0.f, 1.f },
+				{ -1.0f, -1.0f, 0.f, 0.f },
+				{  1.0f, -1.0f, 1.f, 0.f },
+				{  1.0f,  1.0f, 1.f, 1.f }
+			};
+			
+			static const int indices[6] = {
+				0,1,2,
+				3,4,5
+			};
+
+			// add vertices
+			for (uint32_t i=0;i<6;++i) {
+				m_vertices.push_back(glm::vec4(vertices[i].x,vertices[i].y,0.0,1.0));
+				m_normals.push_back(glm::vec4(0.0f,0.0f,1.0f,1.0f));
+				m_texUVs.push_back(glm::vec4(vertices[i].u,vertices[i].v,0.0,1.0));
+			}
+			for (uint32_t i=0;i<2;++i) {
+				Face f;
+				f.vertsI = f.texUVI = f.normalI = {indices[i*3],indices[i*3+1],indices[i*3+2],0};
+				m_faces.push_back(f);
+			}
+
+		} else {
+			m_BP |= BP_QUAD;
+			static const struct
+			{
+				float x, y;
+				float u, v;
+				float n1,n2,n3;
+			} vertices[4] =
+			{
+				{ -1.0f, -1.0f, 0.f, 0.f,     0.0f,0.0f,1.0f },
+				{  1.0f, -1.0f, 1.f, 0.f,     0.0f,0.0f,1.0f },
+				{  1.0f,  1.0f, 1.f, 1.f,     0.0f,0.0f,1.0f },
+				{ -1.0f,  1.0f, 0.f, 1.f,     0.0f,0.0f,1.0f },
+			};
+			// add vertices
+			for (uint32_t i=0;i<4;++i) {
+				m_vertices.push_back(glm::vec4(vertices[i].x,vertices[i].y,0.0,1.0));
+				m_normals.push_back(glm::vec4(0.0f,0.0f,1.0f,1.0f));
+				m_texUVs.push_back(glm::vec4(vertices[i].u,vertices[i].v,0.0,1.0));
+			}
+			Face f;
+			f.vertsI = f.texUVI = f.normalI = {0,1,2,3};
+			m_faces.push_back(f);
+		}
 	}
 }

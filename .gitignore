@@ -1,11 +1,7 @@
 .vs/
 out/
-einherjarEngine.exe
-einherjarEngine.exp
-einherjarEngine.lib
-einherjarEngine.pdb
-einherjarEngine.ilk
 einherjarEngine.*
+einherjarEngineDbg.*
 imgui.ini
 
 ## Ignore Visual Studio temporary files, build results, and

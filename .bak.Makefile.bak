@@ -1,0 +1,91 @@
+CXX = clang
+CXXMMD = clang
+#make sure to add a custom buildfolder to the .gitignore
+BUILDFOLDER = out/mf
+TEXTENSION = .exe
+
+space:= $(empty) $(empty)
+ARGO = -c -Wall
+ARGOP = -std=c++17 -c -Wall
+ARGF = -std=c++17 -Wall
+OUTC = -o$(space)
+OUTF = -o$(space)
+TARGET = einherjarEngine
+MFID = -MM -MP
+NODEPS = clean cleanDBG
+
+LIB = -Lfolder -lglad -lglfw3
+INC = -Ilib/imgui -Ilib/imgui/backends -Ilib/glfw3
+
+IMGUI = $(wildcard lib/imgui/*.cpp) lib/imgui/backends/imgui_impl_opengl3.cpp lib/imgui/backends/imgui_impl_glfw.cpp
+SRC = $(wildcard src/*.cpp) $(wildcard src/scenes/*.cpp) lib/glad/glad.c $(IMGUI)
+
+OBJ3 = $(patsubst %, $(BUILDFOLDER)/%, $(SRC))
+OBJ2 = $(OBJ3:.cpp=.o)
+OBJ = $(OBJ2:.c=.o)
+
+DEPEN2 = $(patsubst %.cpp,%.d,$(OBJ3))
+DEPEN = $(patsubst %.c,%.d,$(DEPEN2))
+
+all: $(TARGET)
+
+#.PRECIOUS: $(BUILDFOLDER)/%.d
+
+#Don't create dependencies when we're cleaning, for instance
+#ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
+#Chances are, these files don't exist.  GMake will create them and
+#clean up automatically afterwards
+#	-include $(DEPEN)
+#endif
+
+$(BUILDFOLDER)/%.d: %.c Makefile
+	echo create dependecy c...
+	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
+	$(CXXMMD) -c $(MFID) $< -MF $@ $(LIB) $(INC)
+
+$(BUILDFOLDER)/%.d: %.cpp Makefile
+	echo create dependecy cpp...
+	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
+	$(CXXMMD) -c -std=c++17 $(MFID) $< -MF $@ $(LIB) $(INC)
+
+$(BUILDFOLDER)/%.o: %.c $(BUILDFOLDER)/%.d Makefile
+	echo compiling c...
+	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
+	$(CXX) $(ARGO) $< $(OUTC)$@ $(LIB) $(INC)
+
+$(BUILDFOLDER)/%.o: %.cpp $(BUILDFOLDER)/%.d Makefile
+#$(filter-out $(notdir $@):,$(subst $(space)/,$(space)\,$(shell type $(subst /,\\, $(subst .o,.d,$@)))))
+#$(shell type $(subst /,\\, $(subst .o,.d,$(BUILDFOLDER)/$(@F)))
+#$(filter-out $(notdir $(BUILDFOLDER)/$$(@F).o):,$(subst $(space)/,$(space)\,$(subst \,/,$(shell type $(subst /,\\,$(BUILDFOLDER)/$(@F).d)))))
+#$(filter-out $(@F):,$(subst $(space)/,$(space)\,$(subst \,/,$(shell type $(subst /,\\,$(subst .o,.d,$@))))))
+#$(filter-out $(notdir $@):,$(subst $(space)/,$(space)\,$(subst \,/,$(shell type $(subst /,\\,$(subst .o,.d,$@))))))
+#$(filter-out $(notdir $(BUILDFOLDER)/%.o):,$(subst $(space)/,$(space)\,$(subst \,/,$(shell type $(subst /,\\,$(BUILDFOLDER)/%.d)))))
+#	echo $(DEPEN)
+#	echo $(subst /,\\, $(subst .o,.d,$@))
+#echo $(filter-out $(notdir $@):,$(subst $(space)/,$(space)\,$(shell type $(subst /,\\, $(subst .o,.d,$@)))))
+#	echo $(BUILDFOLDER)/$*
+#	echo $($($($@):.o=.d):/=\\)
+#	echo $(filter-out $(@F):,$($($(shell type $($($@:.o=.d):/=\\)):/=\):$(space)/=$(space)\))
+#	echo $(filter-out $(@F):,$(subst $(space)/,$(space)\,$(subst \,/,$(shell type $(subst /,\\,$(BUILDFOLDER)/$*.d)))))
+#	echo $(filter-out $(notdir $@):,$(subst $(space)/,$(space)\,$(subst \,/,$(shell type $(subst /,\\,$(subst .o,.d,$@))))))
+	echo compile cpp...
+	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
+	$(CXX) $(ARGOP) $< $(OUTC)$@ $(LIB) $(INC)
+
+$(TARGET): $(OBJ) Makefile
+	echo link...
+	$(CXX) $(ARGF) $(OBJ) $(OUTF)$(TARGET)$(TEXTENSION) $(LIB) $(INC)
+
+.PHONY: clean
+clean:
+	rmdir /s /q "$(BUILDFOLDER)"
+
+.PHONY: cleanDBG
+cleanDBG:
+	rmdir /s /q "$(BUILDFOLDER)dbg"
+
+ifeq (0, $(words $(findstring $(MAKECMDGOALS), $(NODEPS))))
+#Chances are, these files don't exist.  GMake will create them and
+#clean up automatically afterwards
+	-include $(DEPEN)
+endif

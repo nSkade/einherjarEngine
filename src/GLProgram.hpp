@@ -3,6 +3,8 @@
 #include <string>
 #include <map>
 
+#include "GLUtils.hpp"
+
 namespace ehj
 {
 	class GLProgram
@@ -17,7 +19,7 @@ namespace ehj
 		void addSourceFromString(std::string shaderSource, GLenum shaderType);
 		void addSourceFromFile(std::string shaderPath, GLenum shaderType);
 
-		void loadProgramFromFilename(std::string fileName);
+		void loadProgramFromFilename(std::string folderPath, std::string programName);
 		void loadProgramFromFolder(std::string folderPath);
 
 	private:

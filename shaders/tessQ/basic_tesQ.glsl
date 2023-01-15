@@ -13,7 +13,7 @@ uniform mat4 MVP;
 uniform mat4 u_view;
 
 uniform float u_time;
-uniform mat4 u_ehjTrans[];
+//uniform mat4 u_ehjTrans[];
 
 mat3 rotationX(float angle) {
 	return mat3(	1.0,		0,			0,
@@ -48,7 +48,7 @@ void main() {
 
 	colorTES = vec3(1.0f);
 
-	//gl_Position = p;
-	gl_Position = MVP * u_view * vec4(p.xyz,1.0);//vec4(gl_TessCoord,1.0);
+	gl_Position = p;
+	//gl_Position = MVP * u_view * vec4(p.xyz,1.0);//vec4(gl_TessCoord,1.0);
 	
 }

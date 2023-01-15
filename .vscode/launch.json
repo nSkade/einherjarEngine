@@ -10,12 +10,14 @@
 			"type": "cppvsdbg",
 			"request": "launch",
 			//"program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
-			"program": "${workspaceFolder}\\einherjarEngine.exe",
+			"program": "${workspaceFolder}\\einherjarEngineDbg.exe",
 			"args": [],
 			"stopAtEntry": false,
-			"cwd": "${fileDirname}",
+			"cwd": "${workspaceFolder}",
 			"environment": [],
 			"console": "externalTerminal",
+			//"console": "internalConsole",
+			//"postDebugTask": "buildTestEnd",
 		}
 	]
 }

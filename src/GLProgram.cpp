@@ -18,9 +18,11 @@ namespace ehj
 		auto itr = m_shaders.toEnum.begin();
 		while (itr != m_shaders.toEnum.end()) {
 			glAttachShader(m_programID, itr->first);
+			ehj_gl_err();
 			itr++;
 		}
 		glLinkProgram(m_programID);
+		ehj_gl_err();
 	}
 
 	GLint GLProgram::getProgramID() {
@@ -52,14 +54,14 @@ namespace ehj
 		addSourceFromString(shaderString,shaderType);
 	}
 	
-	void loadProgramFromFilename(std::string folderPath, std::string fileName) {
+	void GLProgram::loadProgramFromFilename(std::string folderPath, std::string fileName) {
 		for (const auto & entry : fs::directory_iterator(folderPath)) {
 			std::cout << entry.path() << std::endl;
 		
 		}
 	}
 	
-	void loadProgramFromFolder(std::string folderPath) {
+	void GLProgram::loadProgramFromFolder(std::string folderPath) {
 		for (const auto & entry : fs::directory_iterator(folderPath)) {
 			std::cout << entry.path() << std::endl;
 

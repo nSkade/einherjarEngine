@@ -15,7 +15,7 @@ call %VS2019TOOLS%
 
 :: run the compiler with your arguments
 ::cl.exe /EHsc /Zi /Fe: test.exe test.cpp EditDistance\\terminal_ui.cpp EditDistance\\editdistance.cpp EditDistance\\elementOps.cpp EditDistance\\stringConstructor.cpp
-make "CXX = cl.exe /EHsc /Zi" "ARGO = /c" "ARGOP = /std:c++17 /c" "ARGF = /std:c++17" "OUTF = /link /out:" "OUTC = /Fo:" "INC = /Ilib/imgui /Ilib/imgui/backends /Ilib/glfw3" "LIB = lib/glad/glad.lib glfw3.lib /LIBPATH:"""C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\lib\x64""" /LIBPATH:"""C:\Program Files (x86)\Windows Kits\10\Lib\10.0.17763.0\um\x64""" /LIBPATH:"""C:\Program Files (x86)\Windows Kits\10\Lib\10.0.17763.0\ucrt\x64""""
+make "CXX = cl.exe /Od /EHsc /Zi" "BUILDFOLDER = out/mfdbg" "TARGET = einherjarEngineDbg" "ARGO = /c" "ARGOP = /std:c++17 /c" "ARGF = /std:c++17" "OUTF = /link /out:" "OUTC = /Fo:" "INC = /Ilib/imgui /Ilib/imgui/backends /Ilib/glfw3" "LIB = lib/glad/glad.lib glfw3.lib /LIBPATH:"""C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\lib\x64""" /LIBPATH:"""C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64""" /LIBPATH:"""C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\ucrt\x64""""
 ::"LIB = /Lfolder /lglad /lglfw3"
 
 exit

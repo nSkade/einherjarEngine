@@ -42,7 +42,9 @@ namespace ehj
 			shaderID = itr->second;
 		const char* shaderSourceC = shaderSource.c_str();
 		glShaderSource(shaderID, 1, &shaderSourceC, NULL);
+		ehj_gl_err();
 		glCompileShader(shaderID);
+		ehj_gl_err();
 		m_shaders.push_back(shaderID,shaderType);
 	}
 	

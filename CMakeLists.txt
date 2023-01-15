@@ -2,6 +2,8 @@
 
 project ("einherjarEngine")
 
+#set_property(TARGET einherjarEngine PROPERTY CXX_STANDARD 17)
+
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -11,12 +13,15 @@ include_directories(lib/imgui)
 include_directories(lib/glfw3)
 LINK_DIRECTORIES(lib/glad)
 LINK_DIRECTORIES(lib/glfw3)
+LINK_DIRECTORIES(/)
 
 add_executable (einherjarEngine
 	"src/main.cpp"
 	"src/GPUTimer.cpp"
 	"src/GLProgram.cpp"
 	"src/Mesh.cpp"
+	"src/GLUtils.cpp"
+	"src/SdfToMesh.cpp"
 
 	"lib/glad/glad.c"
 	
@@ -30,5 +35,6 @@ add_executable (einherjarEngine
 )
 target_link_libraries(einherjarEngine glfw3)
 
+set_target_properties (einherjarEngine PROPERTIES CXX_STANDARD 17)
 set_target_properties (einherjarEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 

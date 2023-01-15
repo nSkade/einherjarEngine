@@ -8,6 +8,16 @@ namespace ehj {
 		
 	}
 
+	Mesh::Mesh(Mesh& mesh) {
+		this->m_BP = mesh.m_BP;
+		this->m_colors = mesh.m_colors;
+		this->m_Dim = mesh.m_Dim;
+		this->m_faces = mesh.m_faces;
+		this->m_normals = mesh.m_normals;
+		this->m_texUVs = mesh.m_texUVs;
+		this->m_vertices = mesh.m_vertices;
+	}
+
 	void Mesh::clear() {
 		m_vertices.clear();
 		m_normals.clear();
@@ -55,7 +65,7 @@ namespace ehj {
 				else if (line.substr(0,2).compare("vn")==0) { // face normal?
 					normals = true;
 					std::istringstream iss(line);
-					char n;
+					std::string n;
 					float v1,v2,v3,v4 = 0.0f;
 					iss >> n >> v1 >> v2 >> v3;
 					m_normals.emplace_back(v1,v2,v3,v4);
@@ -122,6 +132,30 @@ namespace ehj {
 			}
 		}
 		return res;
+	}
+
+	void Mesh::toTriangles() {
+		Mesh mesh = Mesh(*this);
+		m_faces.clear();
+		for (uint32_t i=0;i<mesh.m_faces.size();++i) {
+			Face fq = mesh.m_faces[i];
+			Face t1,t2;
+			t1.vertsI = {fq.vertsI[0],fq.vertsI[1],fq.vertsI[2],-1};
+			t2.vertsI = {fq.vertsI[2],fq.vertsI[3],fq.vertsI[0],-1};
+
+			t1.normalI = {fq.normalI[0],fq.normalI[1],fq.normalI[2],-1};
+			t2.normalI = {fq.normalI[2],fq.normalI[3],fq.normalI[0],-1};
+
+			t1.colorI = {fq.colorI[0],fq.colorI[1],fq.colorI[2],-1};
+			t2.colorI = {fq.colorI[2],fq.colorI[3],fq.colorI[0],-1};
+
+			t1.texUVI = {fq.texUVI[0],fq.texUVI[1],fq.texUVI[2],-1};
+			t2.texUVI = {fq.texUVI[2],fq.texUVI[3],fq.texUVI[0],-1};
+
+			this->m_faces.push_back(t1);
+			this->m_faces.push_back(t2);
+		}
+		m_BP -= BP_QUAD;
 	}
 
 	SSMesh::SSMesh(bool triangles) {

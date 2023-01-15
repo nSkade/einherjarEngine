@@ -6,6 +6,7 @@ namespace ehj {
 	class Mesh {
 	public:
 		Mesh();
+		Mesh(Mesh& mesh);
 		void clear();
 
 		std::string convertOBJ();
@@ -20,10 +21,10 @@ namespace ehj {
 			//int32_t normalI[4];
 			//int32_t colorI[4];
 			//int32_t texUVI[4];
-			glm::uvec4 vertsI;
-			glm::uvec4 normalI;
-			glm::uvec4 colorI;
-			glm::uvec4 texUVI;
+			glm::ivec4 vertsI = {-1,-1,-1,-1};
+			glm::ivec4 normalI = {-1,-1,-1,-1};
+			glm::ivec4 colorI = {-1,-1,-1,-1};
+			glm::ivec4 texUVI = {-1,-1,-1,-1};
 		};
 		
 		// Buffer Flags
@@ -36,6 +37,8 @@ namespace ehj {
 		
 		uint32_t getBP();
 		uint32_t getDim();
+
+		void toTriangles();
 		
 	protected:
 		std::vector<glm::vec4> m_vertices;

@@ -10,13 +10,8 @@
 
 #include <stdlib.h>
 #define sleep _sleep
-
-//TODO remove?
-// enable optimus!
-extern "C" {
-	_declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
-	_declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
-}
+class SampleScene : IScene {
+public:
 
 //static const struct
 //{
@@ -38,7 +33,7 @@ extern "C" {
 //	//3,4,5
 //};
 
-static const struct
+static constexpr struct
 {
 	float x, y;
 	float u, v;
@@ -51,7 +46,7 @@ static const struct
 	{ -1.0f,  1.0f, 0.f, 1.f,     0.0f,0.0f,1.0f },
 };
 
-static const int indices[4] = {
+static constexpr int indices[4] = {
 	0,1,2,3
 };
 
@@ -112,14 +107,11 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 		pitch = -89.0f;
 };
 
-class SampleScene : IScene {
-public:
-	void setup() {
-		
-	}
-
-	int run() {
+void setup() {
 	
+}
+
+int run() {
 	glm::vec3 vec = glm::vec3(0.0f,1.0f,0.0f);
 	
 	GLFWwindow* window;
@@ -159,8 +151,10 @@ public:
 #endif
 
 	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPosCallback(window, mouse_callback);
-	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	
+	//TODO mouse callback not in class possible
+	//glfwSetCursorPosCallback(window, mouse_callback);
+	//glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetKeyCallback(window, key_callback);
 	
 	glfwMakeContextCurrent(window);
@@ -206,9 +200,9 @@ public:
 //	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_DYNAMIC_DRAW); //TODO static draw?
 	
 	// load model
-	//ehj::Mesh mesh;
-	ehj::Mesh mesh = ehj::SSMesh(true);
-	//mesh.loadOBJ("models/ssn.obj");
+	//ehj::Mesh mesh = ehj::SSMesh(false);
+	ehj::Mesh mesh; mesh.loadOBJ("models/ssn4.obj");
+	mesh.toTriangles();
 	
 	GLuint attribPos = 0;
 	//GLuint attribCol = 1;
@@ -223,8 +217,6 @@ public:
 	if (BP & ehj::Mesh::BP_NORMAL)
 		BPC++;
 	
-	int i = sizeof(vertices);
-	int j = sizeof(VAO[0]);
 	uint32_t quadVBO; // vertex buffer object
 	glCreateBuffers(1,&quadVBO);
 	glNamedBufferStorage(quadVBO, VAO.size()*sizeof(float), &VAO[0], GL_DYNAMIC_STORAGE_BIT);
@@ -238,8 +230,8 @@ public:
 	glEnableVertexArrayAttrib(quadVAO,attribPos);
 	glEnableVertexArrayAttrib(quadVAO,attribNrm);
 
-	glVertexArrayAttribFormat(quadVAO,attribPos,Dim,GL_FLOAT,false,0);
-	glVertexArrayAttribFormat(quadVAO,attribNrm,Dim,GL_FLOAT,false,Dim*sizeof(float));
+	glVertexArrayAttribFormat(quadVAO,attribPos,3,GL_FLOAT,GL_FALSE,0);
+	glVertexArrayAttribFormat(quadVAO,attribNrm,3,GL_FLOAT,GL_FALSE,3*sizeof(float));
 
 	glVertexArrayAttribBinding(quadVAO,attribPos,vaoBindingPoint);
 	glVertexArrayAttribBinding(quadVAO,attribNrm,vaoBindingPoint);
@@ -258,14 +250,16 @@ public:
 	//GLint MaxPatchVertices = 0;
 	//glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);
 	//std::cout << "Max supported patch vertices "<< MaxPatchVertices << "\n";
-	//glPatchParameteri(GL_PATCH_VERTICES, 4);
+	glPatchParameteri(GL_PATCH_VERTICES, 4);
 
 	//mainGLProgram.loadProgramFromFolder("shaders/tessQ");
 	ehj_gl_err();
 	mainGLProgram.addSourceFromFile("shaders/basic_v.vert", GL_VERTEX_SHADER);
+	//mainGLProgram.addSourceFromFile("shaders/tessQ/basic_v.vert", GL_VERTEX_SHADER);
 	ehj_gl_err();
 	//mainGLProgram.addSourceFromFile("shaders/tellu.frag",GL_FRAGMENT_SHADER);
 	mainGLProgram.addSourceFromFile("shaders/basic_f.frag",GL_FRAGMENT_SHADER);
+	//mainGLProgram.addSourceFromFile("shaders/tessQ/basic_f.frag",GL_FRAGMENT_SHADER);
 	ehj_gl_err();
 	//mainGLProgram.addSourceFromFile("shaders/tessQ/basic_tcsQ.glsl", GL_TESS_CONTROL_SHADER);
 	ehj_gl_err();
@@ -276,10 +270,12 @@ public:
 	mainGLProgram.createProgram();
 	ehj_gl_err();
 	program = mainGLProgram.getProgramID();
+	glBindAttribLocation(program,attribPos,"vPos");
+	glBindAttribLocation(program,attribNrm,"vNrm");
 	ehj_gl_err();
 	glUseProgram(program);
 
-	//sleep(2000);
+	sleep(2000);
 
 	std::cout << "check1\n";
 	ehj_gl_err();
@@ -295,18 +291,18 @@ public:
 	
 	std::cout << program << " " <<mvp_location << " " << utime_location << " " << ures_location;
 	//glEnableVertexAttribArray(vpos_location);
-	//glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
+	//glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE,
 	//					sizeof(vertices[0]), (void*) 0);
 	//glEnableVertexAttribArray(vcol_location);
-	//glVertexAttribPointer(vcol_location, 2, GL_FLOAT, GL_FALSE,
-	//					sizeof(vertices[0]), (void*) (sizeof(float) * 2));
+	//glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE,
+	//					sizeof(vertices[0]), (void*) (sizeof(float) * 3));
 	
 	std::cout << "check2\n";
 	ehj_gl_err();
 	GPUTimer fragSTimer;
 	
 	//glLineWidth(1.0f);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	//glEnable(GL_CULL_FACE);
 	//glCullFace(GL_BACK);
 	//glFrontFace(GL_CW);
@@ -394,17 +390,24 @@ public:
 		view = glm::mat4(1.0f);
 		glUniformMatrix4fv(uview_location,1,GL_FALSE,glm::value_ptr(view));
 		
+		ehj_gl_err();
+		
 		fragSTimer.start();
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
-		glDrawElements(GL_TRIANGLES,EBO.size(),GL_UNSIGNED_INT,0);
+		//glDrawElements(GL_TRIANGLES,EBO.size(),GL_UNSIGNED_INT,0);
 		//glDrawArrays(GL_PATCHES,0,6);
+		glDrawElements(GL_TRIANGLES,EBO.size(),GL_UNSIGNED_INT,0);
+		//glDrawArrays(GL_QUADS,0,EBO.size());
 		//glDrawElements(GL_PATCHES, EBO.size(),GL_UNSIGNED_INT,0);
 		fragSTimer.end();
 		//fragSTimer.print();
 
+		ehj_gl_err();
+
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
 
 		{
 			ImGui::Begin("Render Info");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)

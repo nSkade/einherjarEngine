@@ -15,8 +15,9 @@
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
 			"environment": [],
-			"console": "externalTerminal",
+			//"console": "externalTerminal",
 			//"console": "internalConsole",
+			"console": "integratedTerminal",
 			//"postDebugTask": "buildTestEnd",
 		}
 	]

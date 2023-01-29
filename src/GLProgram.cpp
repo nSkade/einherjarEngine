@@ -13,8 +13,15 @@ namespace fs = std::filesystem;
 
 namespace ehj
 {
-	void GLProgram::createProgram() {
+	GLProgram::GLProgram() {
 		m_programID = glCreateProgram();
+	}
+
+	GLProgram::~GLProgram() {
+		glDeleteProgram(m_programID);
+	}
+	
+	void GLProgram::createProgram() {
 		auto itr = m_shaders.toEnum.begin();
 		while (itr != m_shaders.toEnum.end()) {
 			glAttachShader(m_programID, itr->first);

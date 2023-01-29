@@ -10,6 +10,9 @@ namespace ehj
 	class GLProgram
 	{
 	public:
+		GLProgram();
+		~GLProgram();
+
 		void createProgram();
 		
 		void bind(); //TODO remove?

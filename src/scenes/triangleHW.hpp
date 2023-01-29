@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-class TriangleHW : IScene {
+class TriangleHWScene : IScene {
 public:
 
 static constexpr struct

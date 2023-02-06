@@ -1,9 +1,9 @@
 .vs/
 out/
+modelsOut/
 einherjarEngine.*
 einherjarEngineDbg.*
 imgui.ini
-b.bat
 a.exe
 
 ## Ignore Visual Studio temporary files, build results, and

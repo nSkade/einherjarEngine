@@ -18,6 +18,10 @@ namespace ehj {
 		this->m_vertices = mesh.m_vertices;
 	}
 
+	Mesh::Mesh(std::string path) {
+		loadOBJ(path);
+	}
+
 	void Mesh::clear() {
 		m_vertices.clear();
 		m_normals.clear();
@@ -33,24 +37,30 @@ namespace ehj {
 		return m_Dim;
 	}
 
-	std::string Mesh::convertOBJ() {
+	void Mesh::storeOBJ(std::string path) {
+		std::ofstream file(path, std::ostream::out | std::ostream::trunc);
 		std::string ret;
 		
 		for (uint32_t i=0;i<m_vertices.size();i++) {
-			
-			ret.append("\nv ");
+			if (i==0)
+				ret.append("v ");
+			else
+				ret.append("\nv ");
 			ret.append(std::to_string(m_vertices[i][0]).append(" "));
 			ret.append(std::to_string(m_vertices[i][1]).append(" "));
 			ret.append(std::to_string(m_vertices[i][2]));
 		}
 
 		for (uint32_t i=0;i<m_faces.size();i++) {
-			ret.append("\nf");
+			ret.append("\nf ");
 			for (uint32_t j=0;j<3;j++) {
-				ret.append(std::to_string(m_faces[i].vertsI[j]));
+				ret.append(std::to_string(m_faces[i].vertsI[j]+1)).append(" ");
 			}
+			if (m_BP & BP_QUAD)
+				ret.append(std::to_string(m_faces[i].vertsI[3]+1)).append(" ");
 		}
-		return "";
+		ret.append("\n");
+		file << ret;
 	}
 
 	void Mesh::loadOBJ(std::string path) {

@@ -436,4 +436,7 @@ int run() {
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
 	};
+	void cleanup() {
+
+	}
 };

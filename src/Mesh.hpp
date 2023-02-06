@@ -7,9 +7,10 @@ namespace ehj {
 	public:
 		Mesh();
 		Mesh(Mesh& mesh);
+		Mesh(std::string path);
 		void clear();
 
-		std::string convertOBJ();
+		void storeOBJ(std::string path);
 		void loadOBJ(std::string path);
 
 		//void buildBuffer();

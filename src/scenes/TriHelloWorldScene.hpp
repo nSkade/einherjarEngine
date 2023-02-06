@@ -138,5 +138,9 @@ int run(void)
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
+	return 0;
 };
+void cleanup() {
+
+}
 };

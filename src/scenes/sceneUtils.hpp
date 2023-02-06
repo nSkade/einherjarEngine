@@ -31,4 +31,5 @@ class IScene {
 public:
 	virtual void setup() = 0;
 	virtual int run() = 0;
+	virtual void cleanup() = 0;
 };

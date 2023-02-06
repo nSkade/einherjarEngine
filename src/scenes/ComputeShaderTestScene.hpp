@@ -251,4 +251,7 @@ public:
 		exit(EXIT_SUCCESS);
 		return 0;
 	}
+	void cleanup() {
+
+	}
 };

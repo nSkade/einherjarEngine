@@ -1,5 +1,4 @@
-#include "sceneUtils.hpp"
-#include "../GLUtils.hpp"
+#include "../suOGL.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -208,13 +207,13 @@ int run() {
 	//GLuint attribCol = 1;
 	GLuint attribNrm = 1;
 	
-	std::vector<float> VAO = mesh.getVAOBuffer();
+	std::vector<float> VAO = mesh.getVertexBuffer();
 	std::vector<int> EBO = mesh.getIndexBuffer();
 	
-	uint32_t BP = mesh.getBP();
+	uint32_t BP = mesh.getMP();
 	uint32_t Dim = mesh.getDim();
 	uint32_t BPC = 1;
-	if (BP & ehj::Mesh::BP_NORMAL)
+	if (BP & ehj::Mesh::MP_NORMAL)
 		BPC++;
 	
 	uint32_t quadVBO; // vertex buffer object

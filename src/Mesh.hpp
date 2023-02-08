@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 #include "../lib/glm/glm.hpp"
 #include <string>
@@ -14,7 +15,7 @@ namespace ehj {
 		void loadOBJ(std::string path);
 
 		//void buildBuffer();
-		std::vector<float> getVAOBuffer();
+		std::vector<float> getVertexBuffer();
 		std::vector<int> getIndexBuffer();
 		
 		struct Face {
@@ -29,14 +30,14 @@ namespace ehj {
 		};
 		
 		// Buffer Flags
-		enum BufferProperty {
-			BP_QUAD     = 1,
-			BP_NORMAL   = 2,
-			BP_VRTNRM   = 4,
-			BP_COLOR    = 8,
+		enum MeshProperty {
+			MP_QUAD     = 1,
+			MP_NORMAL   = 2,
+			MP_VRTNRM   = 4,
+			MP_COLOR    = 8,
 		};
 		
-		uint32_t getBP();
+		uint32_t getMP();
 		uint32_t getDim();
 
 		void toTriangles();
@@ -49,7 +50,7 @@ namespace ehj {
 		std::vector<Face> m_faces;
 		
 		// Buffer Properties
-		uint32_t m_BP = 0;
+		uint32_t m_MP = 0;
 		uint32_t m_Dim = 3; // dimension of object
 		
 		// float* m_pBuffer;

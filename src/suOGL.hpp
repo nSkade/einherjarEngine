@@ -1,3 +1,4 @@
+// Scene Utilities OpenGL
 #pragma once
 
 #include "../../lib/imgui/imgui.h"
@@ -16,9 +17,11 @@
 #include "../../lib/glm/ext/matrix_transform.hpp"
 #include "../../lib/glm/gtc/type_ptr.hpp"
 
-#include "../GPUTimer.hpp"
-#include "../GLProgram.hpp"
+#include "../GAPI/OGL/GPUTimer.hpp"
+#include "../GAPI/OGL/GLProgram.hpp"
+#include "../GAPI/OGL/GLUtils.hpp"
 #include "../Mesh.hpp"
+#include "../GAPI/OGL/OGLMesh.hpp"
 
 //TODO remove?
 // enable optimus!

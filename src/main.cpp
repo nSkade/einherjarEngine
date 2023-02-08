@@ -1,8 +1,9 @@
 #include "scenes/SampleScene.hpp"
 #include "scenes/TriHelloWorldScene.hpp"
 #include "scenes/ComputeShaderTestScene.hpp"
-#include "scenes/vulkanTest.hpp"
+#include "scenes/VulkanTest.hpp"
 #include "scenes/ADFtestScene.hpp"
+#include "scenes/EnvirScene.hpp"
 
 int main(void)
 {
@@ -10,7 +11,8 @@ int main(void)
 	//SampleScene scene;
 	//ComputeShaderTestScene scene;
 	//VulkanTestScene scene;
-	ADFtestScene scene;
+	//ADFtestScene scene;
+	EnvirScene scene;
 
 	scene.setup();
 	scene.run();

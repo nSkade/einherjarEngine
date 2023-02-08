@@ -27,9 +27,9 @@ TEXTENSION = .exe
 LIB = -Lfolder -lglad -lglfw3
 INC = -Ilib/imgui -Ilib/imgui/backends -Ilib/glfw3 -Ilib
 
-SRC = $(wildcard src/*.cpp) $(wildcard src/scenes/*.cpp) lib/glad/glad.c
+SRC = $(wildcard src/*.cpp) $(wildcard src/*/*.cpp) $(wildcard src/*/*/*.cpp) lib/glad/glad.c
 HEAD = $(wildcard src/*.hpp)
-HSCENE = $(wildcard src/scenes/*.hpp)
+HSCENE = $(wildcard src/scenes/*.hpp) $(wildcard src/Structures/*.hpp)
 
 ########################## vulkan
 ifeq ($(VULKAN_ENABLED),$(TRUE))

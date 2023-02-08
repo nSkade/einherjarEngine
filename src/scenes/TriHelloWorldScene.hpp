@@ -1,4 +1,4 @@
-#include "sceneUtils.hpp"
+#include "../suOGL.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>

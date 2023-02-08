@@ -3,7 +3,7 @@
 #include <string>
 #include <map>
 
-#include "GLUtils.hpp"
+#include "GLUtils.hpp" //TODO remove
 
 namespace ehj
 {
@@ -33,6 +33,16 @@ namespace ehj
 			void push_back(GLuint shaderID, GLenum shaderType) {
 				toEnum.insert({shaderID,shaderType});
 				toID.insert({shaderType,shaderID});
+			}
+			void clear() {
+				toEnum.clear();
+				toID.clear();
+			}
+			void remove(GLuint id) {
+				auto e = toEnum.find(id);
+				auto i = toID.find(e->second);
+				toEnum.erase(e);
+				toID.erase(i);
 			}
 		} m_shaders;
 	};

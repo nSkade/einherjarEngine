@@ -9,7 +9,7 @@ namespace ehj {
 	}
 
 	Mesh::Mesh(Mesh& mesh) {
-		this->m_BP = mesh.m_BP;
+		this->m_MP = mesh.m_MP;
 		this->m_colors = mesh.m_colors;
 		this->m_Dim = mesh.m_Dim;
 		this->m_faces = mesh.m_faces;
@@ -30,8 +30,8 @@ namespace ehj {
 		m_faces.clear();
 	}
 	
-	uint32_t Mesh::getBP() {
-		return m_BP;
+	uint32_t Mesh::getMP() {
+		return m_MP;
 	}
 	uint32_t Mesh::getDim() {
 		return m_Dim;
@@ -56,7 +56,7 @@ namespace ehj {
 			for (uint32_t j=0;j<3;j++) {
 				ret.append(std::to_string(m_faces[i].vertsI[j]+1)).append(" ");
 			}
-			if (m_BP & BP_QUAD)
+			if (m_MP & MP_QUAD)
 				ret.append(std::to_string(m_faces[i].vertsI[3]+1)).append(" ");
 		}
 		ret.append("\n");
@@ -66,7 +66,6 @@ namespace ehj {
 	void Mesh::loadOBJ(std::string path) {
 		std::ifstream file(path, std::ifstream::in);
 		std::string line;
-		m_BP -= BP_QUAD;
 		bool normals = false;
 
 		if (file.good()) {
@@ -98,7 +97,7 @@ namespace ehj {
 					else
 						iss >> x >> v[0] >> v[1] >> v[2];
 					if (iss.tellg()!=line.length()) { // guys we have a quad!
-						m_BP |= BP_QUAD;
+						m_MP |= MP_QUAD;
 						iss >> v[3];
 						if (normals)
 							iss >> x >> x >> n[3];
@@ -116,13 +115,13 @@ namespace ehj {
 		}
 	}
 
-	std::vector<float> Mesh::getVAOBuffer() {
+	std::vector<float> Mesh::getVertexBuffer() {
 		std::vector<float> res;
 		for (uint32_t i=0;i<m_vertices.size();++i) {
 			for (uint32_t j=0;j<m_Dim;++j) {
 				res.emplace_back(m_vertices[i][j]);
 			}
-			if (m_BP & BP_NORMAL) {
+			if (m_MP & MP_NORMAL) {
 				for (uint32_t j=0;j<m_Dim;++j) {
 					res.emplace_back(m_normals[0][j]); //TODO fix
 				}
@@ -135,7 +134,7 @@ namespace ehj {
 		std::vector<int> res;
 		for (uint32_t i=0;i<m_faces.size();++i) {
 			uint32_t s = 3; // triangle std
-			if (m_BP & BP_QUAD)
+			if (m_MP & MP_QUAD)
 				s = 4;
 			for (uint32_t j=0;j<s;++j) {
 				res.emplace_back(m_faces[i].vertsI[j]);
@@ -165,12 +164,12 @@ namespace ehj {
 			this->m_faces.push_back(t1);
 			this->m_faces.push_back(t2);
 		}
-		m_BP -= BP_QUAD;
+		m_MP -= MP_QUAD;
 	}
 
 	SSMesh::SSMesh(bool triangles) {
-		m_BP |= BP_VRTNRM;
-		m_BP |= BP_NORMAL;
+		m_MP |= MP_VRTNRM;
+		m_MP |= MP_NORMAL;
 		if (triangles) {
 			static const struct
 			{
@@ -204,7 +203,7 @@ namespace ehj {
 			}
 
 		} else {
-			m_BP |= BP_QUAD;
+			m_MP |= MP_QUAD;
 			static const struct
 			{
 				float x, y;

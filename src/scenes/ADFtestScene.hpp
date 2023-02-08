@@ -1,4 +1,5 @@
-#include "sceneUtils.hpp"
+#include "../suOGL.hpp"
+#include "../Structures/ADF.hpp"
 
 class ADFtestScene : IScene {
 public:
@@ -7,8 +8,17 @@ public:
 	}
 	int run() {
 		
-		ehj::Mesh mesh("models/ssn4.obj");
-		mesh.storeOBJ("modelsOut/ssn4.obj");
+		//ehj::Mesh mesh("models/ssn4.obj");
+		//mesh.toTriangles();
+		ehj::Mesh mesh;
+		
+		
+		ADF adf;
+		adf.test();
+		
+		
+		
+		//mesh.storeOBJ("modelsOut/sdfc.obj");
 		return 0;
 	}
 	void cleanup() {

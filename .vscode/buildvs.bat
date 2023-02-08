@@ -14,8 +14,6 @@ if not exist %VS2019TOOLS% (
 call %VS2019TOOLS%
 
 :: run the compiler with your arguments
-::cl.exe /EHsc /Zi /Fe: test.exe test.cpp EditDistance\\terminal_ui.cpp EditDistance\\editdistance.cpp EditDistance\\elementOps.cpp EditDistance\\stringConstructor.cpp
-make "CXX = cl.exe /Od /EHsc /Zi" "BUILDFOLDER = out/mfdbg" "TARGET = einherjarEngineDbg" "ARGO = /c" "ARGOP = /std:c++17 /c" "ARGF = /std:c++17" "OUTF = /link /out:" "OUTC = /Fo:" "INC = /Ilib/imgui /Ilib/imgui/backends /Ilib/glfw3" "LIB = lib/glad/glad.lib glfw3.lib /LIBPATH:"""C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\lib\x64""" /LIBPATH:"""C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64""" /LIBPATH:"""C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\ucrt\x64""""
-::"LIB = /Lfolder /lglad /lglfw3"
+make "CXX = cl.exe /Od /EHsc /Zi" "BUILDFOLDER = out/mfdbg" "TARGET = einherjarEngineDbg" "ARGO = /c" "ARGOP = /std:c++17 /c" "ARGF = /std:c++17" "OUTF = /link /out:" "OUTC = /Fo:" "INC = /Ilib/imgui /Ilib/imgui/backends /Ilib/glfw3 /Ilib" "LIB = lib/glad/glad.lib glfw3.lib /LIBPATH:"""C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\lib\x64""" /LIBPATH:"""C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64""" /LIBPATH:"""C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\ucrt\x64"""" "VULKAN_INC = /I$(VULKAN_PATH)/Include" "VULKAN_LIB = $(VULKAN_PATH)/Lib/vulkan-1.lib"
 
 exit

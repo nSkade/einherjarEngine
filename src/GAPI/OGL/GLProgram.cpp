@@ -29,6 +29,10 @@ namespace ehj
 			itr++;
 		}
 		glLinkProgram(m_programID);
+		for (auto id : m_shaders.toEnum) {
+			//glDeleteShader(id.first);
+		}
+		m_shaders.clear();
 		ehj_gl_err();
 	}
 
@@ -43,10 +47,12 @@ namespace ehj
 	void GLProgram::addSourceFromString(std::string shaderSource, GLenum shaderType) {
 		auto itr = m_shaders.toID.find(shaderType);
 		GLuint shaderID;
-		if (itr == m_shaders.toID.end()) { // shader does not exist
-			shaderID = glCreateShader(shaderType);
-		} else
-			shaderID = itr->second;
+		if (itr != m_shaders.toID.end()) { // shader does already exist
+			GLuint oldID = itr->second;
+			//glDeleteShader(oldID);
+			m_shaders.remove(oldID);
+		}
+		shaderID = glCreateShader(shaderType);
 		const char* shaderSourceC = shaderSource.c_str();
 		glShaderSource(shaderID, 1, &shaderSourceC, NULL);
 		ehj_gl_err();
@@ -63,6 +69,7 @@ namespace ehj
 		addSourceFromString(shaderString,shaderType);
 	}
 	
+	//TODO not implemented
 	void GLProgram::loadProgramFromFilename(std::string folderPath, std::string fileName) {
 		for (const auto & entry : fs::directory_iterator(folderPath)) {
 			std::cout << entry.path() << std::endl;
@@ -72,8 +79,29 @@ namespace ehj
 	
 	void GLProgram::loadProgramFromFolder(std::string folderPath) {
 		for (const auto & entry : fs::directory_iterator(folderPath)) {
+			if (entry.is_directory())
+				continue;
 			std::cout << entry.path() << std::endl;
+			GLenum shaderType = GL_INVALID_ENUM;
+			
+			std::string name = entry.path().filename().string();
 
+			if (name.find("vert") != std::string::npos |
+			    name.find("_v.") != std::string::npos);
+				shaderType = GL_FRAGMENT_SHADER;
+			
+			if (name.find("frag") != std::string::npos |
+			    name.find("_f.") != std::string::npos);
+				shaderType = GL_FRAGMENT_SHADER;
+
+			if (name.find("tcs") != std::string::npos)
+				shaderType = GL_TESS_CONTROL_SHADER;
+
+			if (name.find("tes") != std::string::npos)
+				shaderType = GL_TESS_EVALUATION_SHADER;
+			
+			if (shaderType != GL_INVALID_ENUM)
+				addSourceFromFile(entry.path().string(),shaderType);
 		}
 	}
 }

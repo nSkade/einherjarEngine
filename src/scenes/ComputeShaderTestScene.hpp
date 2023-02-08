@@ -1,4 +1,4 @@
-#include "sceneUtils.hpp"
+#include "../suOGL.hpp"
 
 //TODO remove obsolete includes
 #include <stdlib.h>

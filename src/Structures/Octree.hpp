@@ -45,17 +45,10 @@ public:
 			nc->idx = i;
 
 			AABB bb;
-			glm::vec4 diag = c->aabb.max-c->aabb.min;
-			bb.min.x = c->aabb.min.x + diag.x*0.5f * float(bool(i&1));
-			bb.min.y = c->aabb.min.y + diag.y*0.5f * float(bool(i&2));
-			bb.min.z = c->aabb.min.z + diag.z*0.5f * float(bool(i&4));
-			
-			bb.max.x = bb.min.x + diag.x*0.5f;
-			bb.max.y = bb.min.y + diag.y*0.5f;
-			bb.max.z = bb.min.z + diag.z*0.5f;
-
-			bb.min.w = 0.0f;
-			bb.max.w = 0.0f;
+			glm::vec3 diag = c->aabb.max-c->aabb.min;
+			glm::vec3 off = glm::vec3(bool(i&1),bool(i&2),bool(i&4));
+			bb.min = c->aabb.min + diag*0.5f*off;
+			bb.max = bb.min + diag*0.5f;
 			
 			nc->aabb = bb;
 

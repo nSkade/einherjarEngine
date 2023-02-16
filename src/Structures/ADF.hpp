@@ -1,5 +1,6 @@
 #include "Octree.hpp"
 #include <cmath>
+#include <iostream>
 
 class ADF {
 public:
@@ -21,7 +22,7 @@ public:
 		return glm::length(pos-c)-r;
 	}
 
-	float sdfFunc(glm::vec3 p) {
+	float sdfFuncTest(glm::vec3 p) {
 		return sdfCircle(p, glm::vec3(0.0f,0.0f,0.0f),1.0f);
 	}
 
@@ -33,7 +34,7 @@ public:
 			p.x = c->aabb.min.x + d.x*float(bool(i&1));
 			p.y = c->aabb.min.y + d.y*float(bool(i&2));
 			p.z = c->aabb.min.z + d.z*float(bool(i&4));
-			float sdf = sdfFunc(p);
+			float sdf = m_sdfFunc(p);
 			c->data.cornerSDV[i] = sdf;
 		}
 		c->data.set = true;
@@ -105,7 +106,7 @@ public:
 			p.y += d.y*my;
 			p.z += d.z*mz;
 			
-			if (std::abs(evaluateCell(c,p)-sdfFunc(p)) > m_tolerance)
+			if (std::abs(evaluateCell(c,p)-m_sdfFunc(p)) > m_tolerance)
 				sc = true;
 		}
 		return sc;
@@ -139,9 +140,27 @@ public:
 		std::cout << "finished\n";
 	}
 
+	void setSDFFunc(float (*sdfFunc)(glm::vec3 p)) {
+		m_sdfFunc = sdfFunc;
+	}
+	
+	void setAABB(AABB aabb) {
+		m_root->aabb = aabb;
+	}
+
+	void setTolerance(float t) {
+		m_tolerance = t;
+	}
+	
+	void setMaxDepth(uint32_t d) {
+		m_maxDepth = d;
+	}
+
 private:
-	uint32_t m_maxDepth = 8;
-	float m_tolerance = 0.003;
+	uint32_t m_maxDepth = 4;
+	float m_tolerance = 0.03;
+
+	float (*m_sdfFunc)(glm::vec3 p);
 
 	Octree<Data> m_octree;
 	Octree<Data>::Cell* m_root;

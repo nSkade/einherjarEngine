@@ -22,7 +22,11 @@ LINK_DIRECTORIES(/)
 add_executable (einherjarEngine
 	"src/main.cpp"
 	"src/Mesh.cpp"
-	"src/SdfToMesh.cpp"
+	"src/Input.cpp"
+	"src/Camera.cpp"
+
+	"src/Structures/ADF.cpp"
+	"src/MeshProcessing/DCADF.cpp"
 
 	"src/GAPI/OGL/GPUTimer.cpp"
 	"src/GAPI/OGL/GLProgram.cpp"

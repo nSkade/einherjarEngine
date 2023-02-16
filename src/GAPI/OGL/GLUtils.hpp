@@ -6,6 +6,6 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-#define EXIT_ON_GL_ERR 0
+#define EXIT_ON_GL_ERR 1
 
 uint32_t ehj_gl_err();

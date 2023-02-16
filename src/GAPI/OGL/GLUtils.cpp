@@ -18,7 +18,8 @@ uint32_t ehj_gl_err() {
 		std::cout << "\nehj_gl_err: " << err << " " << str << "\n";
 		err = glGetError();
 		if (EXIT_ON_GL_ERR)
-			exit(1);
+			__debugbreak();
+			//exit(1);
 		else
 			return 1;
 	}

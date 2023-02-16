@@ -10,8 +10,6 @@ public:
 		uint32_t depth;
 		AABB aabb;
 		T data;
-
-		uint32_t idx;
 	};
 
 	Cell* getRoot() {
@@ -25,7 +23,6 @@ public:
 		for (uint32_t i=0;i<ca;++i)
 			m_root->child[i] = nullptr;
 		m_root->depth = 0;
-		m_root->idx = 0;
 	}
 
 	~Octree() {
@@ -42,7 +39,6 @@ public:
 			Cell* nc = new Cell();
 			nc->parent = c;
 			nc->depth = c->depth+1;
-			nc->idx = i;
 
 			AABB bb;
 			glm::vec3 diag = c->aabb.max-c->aabb.min;

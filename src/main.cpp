@@ -11,8 +11,8 @@ int main(void)
 	//SampleScene scene;
 	//ComputeShaderTestScene scene;
 	//VulkanTestScene scene;
-	ADFtestScene scene;
-	//EnvirScene scene;
+	//ADFtestScene scene;
+	EnvirScene scene;
 
 	scene.setup();
 	scene.run();

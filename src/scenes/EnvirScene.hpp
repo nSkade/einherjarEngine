@@ -1,4 +1,7 @@
 #include "../suOGL.hpp"
+#include "../Input.hpp"
+
+using namespace ehj;
 
 class EnvirScene : IScene {
 public:
@@ -42,25 +45,36 @@ public:
 		//TODO mouse callback not in class possible
 		//glfwSetCursorPosCallback(window, mouse_callback);
 		//glfwSetMouseButtonCallback(window, mouse_button_callback);
-		//glfwSetKeyCallback(window, key_callback);
 	
+		Mouse* mouse = Mouse::instance();
+		Keyboard* kb = Keyboard::instance();
+		ehj::Camera cam(mouse, kb);
+		
+		glfwSetCursorPosCallback(window, mouse->mouse_callback);
+		glfwSetMouseButtonCallback(window, mouse->mouse_button_callback);
+		glfwSetKeyCallback(window, kb->key_callback);
+
 		glfwMakeContextCurrent(window);
 		gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 	
-		ehj::GLProgram mainGLProgram;
+		GLProgram mainGLProgram;
 		
 		// load model
 		ehj::Mesh mesh; mesh.loadOBJ("models/ssn4.obj");
 		mesh.toTriangles();
 		OGLMesh oglMesh(mesh, GL_DYNAMIC_DRAW);
+		oglMesh.bind(0);
 
+		ehj_gl_err();
 		glBindVertexArray(oglMesh.getVAO());
+		ehj_gl_err();
 		
 		// tesselation maximum supported vertices
 		//GLint MaxPatchVertices = 0;
 		//glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);
 		//std::cout << "Max supported patch vertices "<< MaxPatchVertices << "\n";
 		glPatchParameteri(GL_PATCH_VERTICES, 4);
+		ehj_gl_err();
 
 		mainGLProgram.addSourceFromFile("shaders/basic_v.vert", GL_VERTEX_SHADER);
 		mainGLProgram.addSourceFromFile("shaders/basic_f.frag",GL_FRAGMENT_SHADER);
@@ -204,3 +218,4 @@ public:
 
 	}
 };
+

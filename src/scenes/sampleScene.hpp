@@ -118,7 +118,7 @@ int run() {
 	GLuint program;
 	GLint mvp_location;
 	
-	ehj::GLProgram mainGLProgram;
+	GLProgram mainGLProgram;
 
 	glfwSetErrorCallback(error_callback);
 	
@@ -152,8 +152,8 @@ int run() {
 	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	
 	//TODO mouse callback not in class possible
-	//glfwSetCursorPosCallback(window, mouse_callback);
-	//glfwSetMouseButtonCallback(window, mouse_button_callback);
+	//glfwsetcursorposcallback(window, mouse_callback);
+	//glfwsetmousebuttoncallback(window, mouse_button_callback);
 	glfwSetKeyCallback(window, key_callback);
 	
 	glfwMakeContextCurrent(window);

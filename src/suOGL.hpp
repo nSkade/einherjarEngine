@@ -22,13 +22,7 @@
 #include "../GAPI/OGL/GLUtils.hpp"
 #include "../Mesh.hpp"
 #include "../GAPI/OGL/OGLMesh.hpp"
-
-//TODO remove?
-// enable optimus!
-extern "C" {
-	_declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
-	_declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
-}
+#include "Camera.hpp"
 
 class IScene {
 public:
@@ -36,3 +30,10 @@ public:
 	virtual int run() = 0;
 	virtual void cleanup() = 0;
 };
+
+// try and use dedicated Graphics
+// enable optimus!
+extern "C" {
+	_declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+	_declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
+}

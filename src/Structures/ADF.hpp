@@ -1,6 +1,7 @@
-#include "Octree.hpp"
 #include <cmath>
 #include <iostream>
+
+#include "Octree.hpp"
 
 class ADF {
 public:
@@ -165,4 +166,3 @@ private:
 	Octree<Data> m_octree;
 	Octree<Data>::Cell* m_root;
 };
-

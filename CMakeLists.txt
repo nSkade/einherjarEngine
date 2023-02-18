@@ -22,7 +22,7 @@ LINK_DIRECTORIES(/)
 add_executable (einherjarEngine
 	"src/main.cpp"
 	"src/Mesh.cpp"
-	"src/Input.cpp"
+	"src/Input/Input.cpp"
 	"src/Camera.cpp"
 
 	"src/Structures/ADF.cpp"
@@ -46,6 +46,14 @@ add_executable (einherjarEngine
 target_link_libraries(einherjarEngine
 	glfw3
 	C:/VulkanSDK/1.3.231.1/Lib/vulkan-1.lib
+)
+target_compile_definitions(einherjarEngine
+PRIVATE
+PUBLIC
+	$<$<CONFIG:Debug>:EHJ_DBG>
+#	$<$<CONFIG:RelWithDebInfo>:>
+#	$<$<CONFIG:Release>:>
+#	$<$<CONFIG:MinSizeRel>:>
 )
 
 set_target_properties (einherjarEngine PROPERTIES CXX_STANDARD 17)

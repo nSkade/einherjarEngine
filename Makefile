@@ -2,8 +2,8 @@
 space:= $(empty) $(empty)
 OUTC = -o$(space)
 OUTF = -o$(space)
-TRUE = t
-FALSE = f
+TRUE = 1
+FALSE = 0
 
 ########################## general settings
 
@@ -25,7 +25,7 @@ TEXTENSION = .exe
 
 ########################## source
 LIB = -Lfolder -lglad -lglfw3
-INC = -Ilib/imgui -Ilib/imgui/backends -Ilib/glfw3 -Ilib
+INC = -Ilib/imgui -Ilib/imgui/backends -Ilib/glfw3 -Ilib -D EHJ_DBG=0
 
 SRC = $(wildcard src/*.cpp) $(wildcard src/*/*.cpp) $(wildcard src/*/*/*.cpp) lib/glad/glad.c
 HEAD = $(wildcard src/*.hpp)

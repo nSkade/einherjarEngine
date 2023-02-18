@@ -1,6 +1,10 @@
-#include <stdint.h>
-#include "../../Mesh.hpp"
+#pragma once
+
 #include <glad/glad.h>
+
+#include "../../Mesh.hpp"
+
+#include <stdint.h>
 
 class OGLMesh {
 public:

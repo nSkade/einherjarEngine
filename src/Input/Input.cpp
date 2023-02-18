@@ -1,5 +1,4 @@
 #include "Input.hpp"
-#include <iostream>
 
 namespace ehj {
 
@@ -21,6 +20,9 @@ void Keyboard::key_callback(GLFWwindow* window, int key, int scancode, int actio
 		return;
 	KeyboardData d;
 	d.glfwKey = key;
+	d.glfwScancode = scancode;
+	d.glfwAction = action;
+	d.glfwMods = mods;
 	m_pInstance->broadcast(d);
 }
 
@@ -41,14 +43,16 @@ void Mouse::mouse_button_callback(GLFWwindow* window, int button, int action, in
 		return;
 
 	MouseData d;
-	d.glfwMB = button;
+	d.glfwButton = button;
+	d.glfwAction = action;
+	d.glfwMod = mods;
 	m_pInstance->broadcast(d);
 }
 void Mouse::mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 	if (!m_pInstance)
 		return;
 	MouseData d;
-	d.glfwMB = -1;
+	d.glfwButton = -1;
 	d.xpos=xpos;
 	d.ypos=ypos;
 	m_pInstance->broadcast(d);

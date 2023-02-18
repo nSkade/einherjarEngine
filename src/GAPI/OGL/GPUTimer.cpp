@@ -1,4 +1,5 @@
 #include "GPUTimer.hpp"
+
 #include <iostream>
 
 void GPUTimer::start() {

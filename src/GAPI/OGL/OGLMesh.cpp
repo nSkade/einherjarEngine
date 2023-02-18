@@ -1,4 +1,5 @@
 #include "OGLMesh.hpp"
+
 #include "GLUtils.hpp"
 
 OGLMesh::OGLMesh(ehj::Mesh mesh, GLenum usage) {

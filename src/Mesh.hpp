@@ -1,6 +1,8 @@
 #pragma once
+
+#include <glm/glm.hpp>
+
 #include <vector>
-#include "../lib/glm/glm.hpp"
 #include <string>
 
 namespace ehj {

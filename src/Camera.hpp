@@ -1,36 +1,45 @@
-#include "Input.hpp"
+#include "Input/Input.hpp"
+
+#include <glfw/glfw3.h>
+#include <glm/glm.hpp>
 
 #include <iostream>
 
-#include <glfw/glfw3.h>
-
 namespace ehj {
 
+class ICameraController;
+
 class Camera {
-public:
-	Camera(Mouse* m, Keyboard* k) {
-		m_mouseCB.setCallbackFunc(testMouse);
-		m->addListener(&m_mouseCB);
 
-		m_keyboardCB.setCallbackFunc(testKeyboard);
-		k->addListener(&m_keyboardCB);
-
-		std::cout << "Cam created\n";
-	}
-
-	static void testMouse(MouseData md) {
-		std::cout << md.glfwMB << std::endl;
-		if (md.glfwMB == -1)
-			std::cout << md.xpos << " " << md.ypos << std::endl;
-	}
-
-	static void testKeyboard(KeyboardData md) {
-		std::cout << md.glfwKey << std::endl;
-	}
+	glm::mat4 getView();
 
 private:
-	Callback<MouseData> m_mouseCB;
-	Callback<KeyboardData> m_keyboardCB;
+	std::vector<ICameraController> m_controller;
+	glm::vec3 m_pos;
+	glm::vec3 m_dir;
+	glm::vec3 m_up;
+};
+
+class ICameraController {
+public:
+protected:
+	Camera* m_pCam;
+};
+
+class CCmouse : public ICameraController, public ICBlistener<MouseData> {
+public:
+	CCmouse(Camera* cam) { m_pCam = cam; }
+	void callback(MouseData* md) {
+		//TODO implement cam movement;
+	}
+};
+
+class CCkb : public ICameraController, public ICBlistener<KeyboardData> {
+public:
+	CCkb(Camera* cam) { m_pCam = cam; }
+	void callback(KeyboardData* md) {
+		//TODO implement cam movement;
+	}
 };
 
 }//ehj

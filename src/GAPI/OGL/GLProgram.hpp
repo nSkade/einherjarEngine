@@ -1,10 +1,11 @@
 #pragma once
-#include <string>
-#include <map>
 
 #include <glad/glad.h>
 
 #include "GLUtils.hpp"
+
+#include <string>
+#include <map>
 
 class GLProgram
 {

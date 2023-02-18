@@ -1,5 +1,5 @@
 @echo off
-make
+call m.bat
 if %ERRORLEVEL% EQU 0 (
 	a.exe
 )

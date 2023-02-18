@@ -1,5 +1,5 @@
 #include "../suOGL.hpp"
-#include "../Input.hpp"
+#include "../Input/Input.hpp" //TODO remove
 
 using namespace ehj;
 
@@ -48,8 +48,11 @@ public:
 	
 		Mouse* mouse = Mouse::instance();
 		Keyboard* kb = Keyboard::instance();
-		ehj::Camera cam(mouse, kb);
+		//ehj::Camera cam;
+		//ehj::CameraController camContr(mouse,kb,&cam);
 		
+		CallbackTest cbt;
+
 		glfwSetCursorPosCallback(window, mouse->mouse_callback);
 		glfwSetMouseButtonCallback(window, mouse->mouse_button_callback);
 		glfwSetKeyCallback(window, kb->key_callback);
@@ -215,7 +218,8 @@ public:
 		return 0;
 	}
 	void cleanup() {
-
+		Mouse::release();
+		Keyboard::release();
 	}
 };
 

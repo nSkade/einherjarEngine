@@ -2,12 +2,10 @@
 
 #include <fstream>
 #include <sstream>
-
-#include <string>
-#include <iostream>
 #include <filesystem>
+#include <string>
 
-#include <iostream> //TODO remove
+#include <iostream> //TODO remove?
 
 namespace fs = std::filesystem;
 

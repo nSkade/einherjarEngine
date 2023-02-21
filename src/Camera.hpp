@@ -1,6 +1,6 @@
 #include "Input/Input.hpp"
 
-#include <glfw/glfw3.h>
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
 #include <iostream>
@@ -15,9 +15,14 @@ class Camera {
 
 private:
 	std::vector<ICameraController> m_controller;
+	glm::mat4 m_mat;
+
 	glm::vec3 m_pos;
 	glm::vec3 m_dir;
 	glm::vec3 m_up;
+	glm::vec3 m_right;
+	
+	glm::vec3 m_target;
 };
 
 class ICameraController {

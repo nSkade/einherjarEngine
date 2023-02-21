@@ -25,11 +25,12 @@ TEXTENSION = .exe
 
 ########################## source
 LIB = -Lfolder -lglad -lglfw3
-INC = -Ilib/imgui -Ilib/imgui/backends -Ilib/glfw3 -Ilib -D EHJ_DBG=0
+INC = -Ilib/imgui -Ilib/imgui/backends -Ilib/glfw3 -Ilib
 
 SRC = $(wildcard src/*.cpp) $(wildcard src/*/*.cpp) $(wildcard src/*/*/*.cpp) lib/glad/glad.c
-HEAD = $(wildcard src/*.hpp)
-HSCENE = $(wildcard src/scenes/*.hpp) $(wildcard src/Structures/*.hpp)
+HEAD = $(wildcard src/*.hpp) $(wildcard src/*/*.hpp) $(wildcard src/*/*/*.hpp)
+HSCENE = $(wildcard scenes/*.hpp)
+#$(wildcard src/Structures/*.hpp)
 
 ########################## vulkan
 ifeq ($(VULKAN_ENABLED),$(TRUE))
@@ -58,7 +59,7 @@ NODEPS = clean cleanDBG
 ##########################
 all: $(TARGET)
 
-$(BUILDFOLDER)/%.o: %.c
+$(BUILDFOLDER)/lib/%.o: lib/%.c
 	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
 	$(CXX) $(ARGO) $< $(OUTC)$@ $(INC) $(VULKAN_INC)
 

@@ -1,5 +1,5 @@
-#include "../suOGL.hpp"
-#include "../Structures/ADF.hpp"
+#include "../src/suOGL.hpp"
+#include "../src/Structures/ADF.hpp"
 
 class ADFtestScene : IScene {
 public:

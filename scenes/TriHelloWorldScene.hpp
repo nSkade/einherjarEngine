@@ -1,4 +1,4 @@
-#include "../suOGL.hpp"
+#include "../src/suOGL.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>

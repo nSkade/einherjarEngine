@@ -22,7 +22,6 @@ LINK_DIRECTORIES(/)
 add_executable (einherjarEngine
 	"src/main.cpp"
 	"src/Mesh.cpp"
-	"src/Input/Input.cpp"
 	"src/Camera.cpp"
 
 	"src/Structures/ADF.cpp"
@@ -32,6 +31,10 @@ add_executable (einherjarEngine
 	"src/GAPI/OGL/GLProgram.cpp"
 	"src/GAPI/OGL/GLUtils.cpp"
 	"src/GAPI/OGL/OGLMesh.cpp"
+	
+	"src/Input/GLFW/GLFWKeyboard.cpp"
+	"src/Input/GLFW/GLFWMouse.cpp"
+	"src/Input/GLFW/GLFWCodes.cpp"
 	
 	"lib/glad/glad.c"
 	

@@ -26,7 +26,7 @@ void GLProgram::createProgram() {
 	}
 	glLinkProgram(m_programID);
 	for (auto id : m_shaders.toEnum) {
-		//glDeleteShader(id.first);
+		glDeleteShader(id.first);
 	}
 	m_shaders.clear();
 	ehj_gl_err();
@@ -44,7 +44,7 @@ void GLProgram::addSourceFromString(std::string shaderSource, GLenum shaderType)
 	auto itr = m_shaders.toID.find(shaderType);
 	if (itr != m_shaders.toID.end()) { // shader does already exist
 		GLuint oldID = itr->second;
-		//glDeleteShader(oldID);
+		glDeleteShader(oldID);
 		m_shaders.remove(oldID);
 	}
 	ehj_gl_err();
@@ -79,30 +79,69 @@ void GLProgram::loadProgramFromFilename(std::string folderPath, std::string file
 	}
 }
 
+GLenum GLProgram::detectShaderType(std::string fileName) {
+	GLenum shaderType = GL_INVALID_ENUM;
+	
+	std::string name = fileName;
+
+	if (name.find(".vert") != name.npos |
+	    name.find("_v.") != name.npos)
+		shaderType = GL_VERTEX_SHADER;
+	
+	if (name.find(".frag") != name.npos |
+	    name.find("_f.") != name.npos)
+		shaderType = GL_FRAGMENT_SHADER;
+
+	if (name.find("tcs") != name.npos)
+		shaderType = GL_TESS_CONTROL_SHADER;
+
+	if (name.find("tes") != name.npos)
+		shaderType = GL_TESS_EVALUATION_SHADER;
+	return shaderType;
+}
+
 void GLProgram::loadProgramFromFolder(std::string folderPath) {
 	for (const auto & entry : fs::directory_iterator(folderPath)) {
 		if (entry.is_directory())
 			continue;
 		std::cout << entry.path() << std::endl;
-		GLenum shaderType = GL_INVALID_ENUM;
 		
-		std::string name = entry.path().filename().string();
+		GLenum shaderType = detectShaderType(entry.path().filename().string());
 
-		if (name.find("vert") != std::string::npos |
-		    name.find("_v.") != std::string::npos);
-			shaderType = GL_FRAGMENT_SHADER;
-		
-		if (name.find("frag") != std::string::npos |
-		    name.find("_f.") != std::string::npos);
-			shaderType = GL_FRAGMENT_SHADER;
+		switch (shaderType)
+		{
+		case GL_FRAGMENT_SHADER:
+			std::cout << "GL_FRAGMENT_SHADER\n";
+			break;
+		case GL_VERTEX_SHADER:
+			std::cout << "GL_VERTEX_SHADER\n";
+			break;
+		case GL_TESS_CONTROL_SHADER:
+			std::cout << "GL_TESS_CONTROL_SHADER\n";
+			break;
+		case GL_TESS_EVALUATION_SHADER:
+			std::cout << "GL_TESS_EVALUATION_SHADER\n";
+			break;
+		case GL_GEOMETRY_SHADER:
+			std::cout << "GL_GEOMETRY_SHADER\n";
+			break;
+		default:
+			break;
+		}
 
-		if (name.find("tcs") != std::string::npos)
-			shaderType = GL_TESS_CONTROL_SHADER;
-
-		if (name.find("tes") != std::string::npos)
-			shaderType = GL_TESS_EVALUATION_SHADER;
-		
 		if (shaderType != GL_INVALID_ENUM)
 			addSourceFromFile(entry.path().string(),shaderType);
 	}
+}
+
+void GLProgram::addSourceFromFile(std::string shaderPath) {
+	std::stringstream buffer;
+	std::ifstream t(shaderPath);
+	buffer << t.rdbuf();
+	std::string shaderString = buffer.str();
+
+	std::filesystem::path sp(shaderPath);
+	GLenum shaderType = detectShaderType(sp.filename().string());
+
+	addSourceFromString(shaderString,shaderType);
 }

@@ -1,4 +1,4 @@
-#include "../suOGL.hpp"
+#include "../src/suOGL.hpp"
 
 //TODO remove obsolete includes
 #include <stdlib.h>

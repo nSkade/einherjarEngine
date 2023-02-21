@@ -82,6 +82,7 @@
 		"xtr1common": "cpp",
 		"xtree": "cpp",
 		"xutility": "cpp",
-		"span": "cpp"
+		"span": "cpp",
+		"orderingmethods": "cpp"
 	}
 }

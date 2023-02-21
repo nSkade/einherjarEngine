@@ -21,10 +21,11 @@ public:
 	
 	void addSourceFromString(std::string shaderSource, GLenum shaderType);
 	void addSourceFromFile(std::string shaderPath, GLenum shaderType);
+	void addSourceFromFile(std::string shaderPath);
 
+	GLenum detectShaderType(std::string fileName);
 	void loadProgramFromFilename(std::string folderPath, std::string programName);
 	void loadProgramFromFolder(std::string folderPath);
-
 private:
 	GLint m_programID = -1;
 	struct biMap {

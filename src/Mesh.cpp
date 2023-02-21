@@ -99,7 +99,8 @@ void Mesh::loadOBJ(std::string path) {
 					iss >> x >> v[0] >> x >> x >> n[0] >> v[1] >> x >> x >> n[1] >> v[2] >> x >> x >> n[2];
 				else
 					iss >> x >> v[0] >> v[1] >> v[2];
-				if (iss.tellg()!=line.length()) { // guys we have a quad!
+				if (iss.tellg()!=line.length() && iss.tellg()!=-1) { // guys we have a quad!
+					std::cout << iss.tellg() << " " << line.length() << "\n";
 					m_MP |= MP_QUAD;
 					iss >> v[3];
 					if (normals)

@@ -1,8 +1,11 @@
 #pragma once
 
+//#ifndef EHJ_DBG
+//TODO imgui wont allow overwriting of new
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_glfw.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
+//#endif
 
 #include <glad/glad.h>
 #define GLFW_INCLUDE_NONE
@@ -16,11 +19,11 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "../GAPI/OGL/GPUTimer.hpp"
-#include "../GAPI/OGL/GLProgram.hpp"
-#include "../GAPI/OGL/GLUtils.hpp"
-#include "../Mesh.hpp"
-#include "../GAPI/OGL/OGLMesh.hpp"
+#include "GAPI/OGL/GPUTimer.hpp"
+#include "GAPI/OGL/GLProgram.hpp"
+#include "GAPI/OGL/GLUtils.hpp"
+#include "Mesh.hpp"
+#include "GAPI/OGL/OGLMesh.hpp"
 #include "Camera.hpp"
 
 /**

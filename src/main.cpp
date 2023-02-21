@@ -2,20 +2,23 @@
 	#define _CRTDBG_MAP_ALLOC
 	#include <stdlib.h>
 	#include <crtdbg.h>
+//	#define new new(_CLIENT_BLOCK,__FILE__,__LINE__)
 #endif
 
-#include "scenes/SampleScene.hpp"
-#include "scenes/TriHelloWorldScene.hpp"
-#include "scenes/ComputeShaderTestScene.hpp"
-#include "scenes/VulkanTest.hpp"
-#include "scenes/ADFtestScene.hpp"
-#include "scenes/EnvirScene.hpp"
+#include "../scenes/SampleScene.hpp"
+#include "../scenes/TriHelloWorldScene.hpp"
+#include "../scenes/ComputeShaderTestScene.hpp"
+#include "../scenes/VulkanTest.hpp"
+#include "../scenes/ADFtestScene.hpp"
+#include "../scenes/EnvirScene.hpp"
 
 int main(void)
 {
 #ifdef EHJ_DBG
 	std::cout << "EHJ_DBG defined, running DEBUG mode.\n";
 #endif
+	{
+	
 	//TriangleHWScene scene;
 	//SampleScene scene;
 	//ComputeShaderTestScene scene;
@@ -26,6 +29,8 @@ int main(void)
 	scene.setup();
 	scene.run();
 	scene.cleanup();
+
+	}
 #ifdef EHJ_DBG
 	_CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_DEBUG); 
 	_CrtDumpMemoryLeaks();

@@ -7,7 +7,6 @@ std::weak_ptr<GLFWKeyboard> GLFWKeyboard::m_pInstance;
 std::shared_ptr<GLFWKeyboard> GLFWKeyboard::instance() {
 	auto i = m_pInstance.lock();
 	if (!i) {
-		std::cout << "GLFWKeyboard created!" << std::endl;
 		i = std::make_shared<GLFWKeyboard>();
 		m_pInstance = i;
 	}
@@ -27,6 +26,7 @@ void GLFWKeyboard::key_callback(GLFWwindow* window, int key, int scancode, int a
 }
 
 GLFWKeyboard::~GLFWKeyboard() {
+	std::cout << "GLFWKeyboard released!" << std::endl;
 	m_pInstance.reset();
 }
 

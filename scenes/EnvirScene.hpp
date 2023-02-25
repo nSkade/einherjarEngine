@@ -29,7 +29,7 @@ public:
 		m_windowRes.y = 1080;
 	#endif
 
-		m_pWindow = glfwCreateWindow(m_windowRes.x,m_windowRes.y, "Simple example", NULL, NULL);
+		m_pWindow = glfwCreateWindow(m_windowRes.x,m_windowRes.y, "EnvirScene", NULL, NULL);
 	
 		if (!m_pWindow)
 		{
@@ -43,16 +43,17 @@ public:
 		// make sure to keep instances alive
 		m_kb = ehj::GLFWKeyboard::instance();
 		m_mouse = ehj::GLFWMouse::instance();
-		
+
+		//glfwSetInputMode(m_pWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		//TODO set with imgui, exit with escape
 		glfwSetCursorPosCallback(m_pWindow, m_mouse->mouse_callback);
 		glfwSetMouseButtonCallback(m_pWindow, m_mouse->mouse_button_callback);
 		glfwSetKeyCallback(m_pWindow, m_kb->key_callback);
 	}
 
 	int run() {
-		
 		GLuint program;
-		GLint mvp_location;
+		GLint pvm_location;
 
 		//glfwSetErrorCallback(error_callback); //TODO
 
@@ -62,7 +63,7 @@ public:
 		//ehj::Camera cam;
 		//ehj::CameraController camContr(mouse,kb,&cam);
 		
-		GLFWCallbackTest cbt;
+		//GLFWCallbackTest cbt;
 
 		glfwMakeContextCurrent(m_pWindow);
 		gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
@@ -108,7 +109,7 @@ public:
 
 		std::cout << "check1\n";
 		ehj_gl_err();
-		mvp_location = glGetUniformLocation(program, "MVP");
+		pvm_location = glGetUniformLocation(program, "pvm");
 		GLint utime_location = glGetUniformLocation(program, "u_time");
 		GLint ures_location = glGetUniformLocation(program, "u_resolution");
 		GLint uview_location = glGetUniformLocation(program, "u_view");
@@ -116,7 +117,7 @@ public:
 		GLint tessQ_location = glGetUniformLocation(program, "u_tessQ");
 		std::cout << "\n tessQ: " << tessQ_location << "\n";
 	
-		std::cout << program << " " <<mvp_location << " " << utime_location << " " << ures_location;
+		std::cout << program << " " <<pvm_location << " " << utime_location << " " << ures_location;
 	
 		std::cout << "check2\n";
 		ehj_gl_err();
@@ -131,8 +132,8 @@ public:
 		//proj
 		glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)m_windowRes.x/(float)m_windowRes.y,0.0f,1000.0f);
 
-	//	IMGUI_CHECKVERSION();
-	//	ImGui::CreateContext();
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
 
 		int guiTess = 1;
 
@@ -140,38 +141,41 @@ public:
 		{
 			float ratio;
 			int width, height;
-			//mat4x4 m, p, mvp;
-
+			
 			//camera
-			static glm::vec3 camPos = glm::vec3(0.0f,0.0f,3.0f);
-			static glm::vec3 camTar = glm::vec3(0.0f,0.0f,0.0f);
-			static glm::vec3 camDir = glm::normalize(camPos-camTar);
+			//static glm::vec3 camPos = glm::vec3(0.0f,0.0f,3.0f);
+			//static glm::vec3 camTar = glm::vec3(0.0f,0.0f,0.0f);
+			//static glm::vec3 camDir = glm::normalize(camPos-camTar);
 
-			glm::vec3 direction = glm::vec3(0.0f,0.0f,-1.0f);
+			//glm::vec3 direction = glm::vec3(0.0f,0.0f,-1.0f);
 		//	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
 		//	direction.y = sin(glm::radians(pitch));
 		//	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 
-			camDir = glm::normalize(direction);
-		
-			static glm::vec3 camUp = glm::vec3(0.0f,1.0f,0.0f);
-			static glm::vec3 camRight = glm::normalize(glm::cross(camUp,camDir));
-			camUp = glm::cross(camDir,camRight);
-	
-			const float cameraSpeed = 0.05f; // adjust accordingly
-			if (glfwGetKey(m_pWindow, GLFW_KEY_W) == GLFW_PRESS)
-				camPos += cameraSpeed * (-camDir);
-			if (glfwGetKey(m_pWindow, GLFW_KEY_S) == GLFW_PRESS)
-				camPos -= cameraSpeed * (-camDir);
-			if (glfwGetKey(m_pWindow, GLFW_KEY_A) == GLFW_PRESS)
-				camPos -= glm::normalize(glm::cross(-camDir, camUp)) * cameraSpeed;
-			if (glfwGetKey(m_pWindow, GLFW_KEY_D) == GLFW_PRESS)
-				camPos += glm::normalize(glm::cross(-camDir, camUp)) * cameraSpeed;
+			//camDir = glm::normalize(direction);
 
-			glm::mat4 view = glm::lookAt(camPos,camPos-camDir,camUp);
+			//m_cam.setDir(camDir);
+			m_cam.update(0.05f);
+		
+			//static glm::vec3 camUp = glm::vec3(0.0f,1.0f,0.0f);
+			//static glm::vec3 camRight = glm::normalize(glm::cross(camUp,camDir));
+			//camUp = glm::cross(camDir,camRight);
+	
+			//const float cameraSpeed = 0.05f; // adjust accordingly
+			//if (glfwGetKey(m_pWindow, GLFW_KEY_W) == GLFW_PRESS)
+			//	camPos += cameraSpeed * (-camDir);
+			//if (glfwGetKey(m_pWindow, GLFW_KEY_S) == GLFW_PRESS)
+			//	camPos -= cameraSpeed * (-camDir);
+			//if (glfwGetKey(m_pWindow, GLFW_KEY_A) == GLFW_PRESS)
+			//	camPos -= glm::normalize(glm::cross(-camDir, camUp)) * cameraSpeed;
+			//if (glfwGetKey(m_pWindow, GLFW_KEY_D) == GLFW_PRESS)
+			//	camPos += glm::normalize(glm::cross(-camDir, camUp)) * cameraSpeed;
+
+			//glm::mat4 view = glm::lookAt(camPos,camPos-camDir,camUp);
 		
 			glfwGetFramebufferSize(m_pWindow, &width, &height);
-		
+			m_windowRes = glm::ivec2(width,height);
+
 			ratio = (float) width / (float) height;
 		
 			glViewport(0, 0, width, height);
@@ -180,29 +184,23 @@ public:
 			glBindVertexArray(oglMesh.getVAO());
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oglMesh.getEBO());
 
-			glm::mat4 m = glm::mat4(1.0f); // identity
-			m = glm::rotate(m,(float) glfwGetTime(), glm::vec3(0.f,1.f,0.f));
-			m = glm::translate(m,glm::vec3(0.0f,0.0f,-1.0f));
-			glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
-			//glm::mat4 p = glm::perspectiveFov(45,10,10,0,1000);
-			glm::mat4 mvp = p*m;
+		//	glm::mat4 m = glm::mat4(1.0f); // identity
+		//	m = glm::rotate(m,(float) glfwGetTime(), glm::vec3(0.f,1.f,0.f));
+		//	m = glm::translate(m,glm::vec3(0.0f,0.0f,-1.0f));
+		//	glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
+		//	//glm::mat4 p = glm::perspectiveFov(45,10,10,0,1000);
+		//	glm::mat4 pvm = p*m;
 			glm::mat4 proj = glm::perspective(glm::radians(90.0f), (float)m_windowRes.x/(float)m_windowRes.y,0.0f,1000.0f);
+			glm::mat4 view = m_cam.getView();
 			proj = proj*view;
-			mvp = proj;
+			glm::mat4 pvm = proj; //TODO rename to pvm
 		
 			glUseProgram(program);
-			glUniformMatrix4fv(mvp_location, 1, GL_FALSE, &mvp[0][0]);
+			glUniformMatrix4fv(pvm_location, 1, GL_FALSE, &pvm[0][0]);
 		
 			//glUniform1f(utime_location, utime);
 			glUniform2f(ures_location, width, height);
 			glUniform1i(tessQ_location, (GLint) guiTess);
-
-			//const float radius = 10.0f;
-			//float camX = sin(glfwGetTime()) * radius;
-			//float camZ = cos(glfwGetTime()) * radius;
-			//view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-			view = glm::mat4(1.0f);
-			glUniformMatrix4fv(uview_location,1,GL_FALSE,glm::value_ptr(view));
 		
 			ehj_gl_err();
 		
@@ -228,6 +226,8 @@ public:
 		glfwTerminate();
 
 		ImGui::DestroyContext();
+
+		//delete m_cam;
 	}
 private:
 	GLFWwindow* m_pWindow;
@@ -236,4 +236,6 @@ private:
 	// to hold references to instances
 	std::shared_ptr<ehj::GLFWKeyboard> m_kb;
 	std::shared_ptr<ehj::GLFWMouse> m_mouse;
+
+	FreeFlyCamera m_cam; // TODO when not pointer adress of variable changes -> nullptr except
 };

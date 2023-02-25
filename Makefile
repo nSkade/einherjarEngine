@@ -59,10 +59,6 @@ NODEPS = clean cleanDBG
 ##########################
 all: $(TARGET)
 
-$(BUILDFOLDER)/lib/%.o: lib/%.c
-	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
-	$(CXX) $(ARGO) $< $(OUTC)$@ $(INC) $(VULKAN_INC)
-
 $(BUILDFOLDER)/src/%.o: src/%.cpp $(HEAD)
 	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
 	$(CXX) $(ARGOP) $< $(OUTC)$@ $(INC) $(VULKAN_INC)
@@ -76,6 +72,10 @@ $(BUILDFOLDER)/src/main.o: src/main.cpp $(HSCENE)
 $(BUILDFOLDER)/lib/%.o: lib/%.cpp
 	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
 	$(CXX) $(ARGOP) $< $(OUTC)$@ $(INC) $(VULKAN_INC)
+
+$(BUILDFOLDER)/lib/%.o: lib/%.c
+	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
+	$(CXX) $(ARGO) $< $(OUTC)$@ $(INC) $(VULKAN_INC)
 
 #link executable
 $(TARGET): $(OBJ) $(IMGUIO)

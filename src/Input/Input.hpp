@@ -18,13 +18,15 @@ class ICBcaster {
 public:
 	void addListener(ICBlistener<T>* c);
 	void removeListener(ICBlistener<T>* c);
+protected:
 	void broadcast(T t);
-private:
 	std::vector<ICBlistener<T>*> m_listeners;
 };
 
 template <typename T>
 void ICBcaster<T>::addListener(ICBlistener<T>* c) {
+	for (uint32_t i=0;i<m_listeners.size();++i) //TODO faster?
+		if (m_listeners[i]==c) return;
 	m_listeners.push_back(c);
 }
 
@@ -39,21 +41,24 @@ void ICBcaster<T>::removeListener(ICBlistener<T>* c) {
 
 template <typename T>
 void ICBcaster<T>::broadcast(T t) {
-	for (uint32_t i=0;i<m_listeners.size();++i)
-		m_listeners[i]->callback(t);
+	for (uint32_t i=0;i<m_listeners.size();++i) {
+		if (m_listeners[i])
+			m_listeners[i]->callback(t);
+	}
 }
 
 struct KeyboardData {
-	IBCodes::KeyboardKey kk; // GLFW_KEY_
-	//TODO int32_t glfwScancode;
-	IBCodes::InputAction ia; // GLFW_PRESS, GLFW_RELEASE, GLFW_REPEAT
-	//TODO int32_t glfwMods;
+	IBCodes::KeyboardKey kk;
+	//TODO int32_t glfwScancode; //TODO
+	IBCodes::InputAction ia;
+	//TODO int32_t glfwMods; //TODO
 };
 
 struct MouseData {
-	IBCodes::MouseButton mb; // GLFW_MOUSE_BUTTON_
-	IBCodes::InputAction ia; // GLFW_PRESS, GLFW_RELEASE, GLFW_REPEAT
+	IBCodes::MouseButton mb;
+	IBCodes::InputAction ia;
 	//TODO int32_t glfwMod; //TODO wat dis
+	//TODO change double to glm::ivec2
 	double xpos;
 	double ypos;
 };

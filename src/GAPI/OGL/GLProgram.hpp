@@ -26,6 +26,13 @@ public:
 	GLenum detectShaderType(std::string fileName);
 	void loadProgramFromFilename(std::string folderPath, std::string programName);
 	void loadProgramFromFolder(std::string folderPath);
+
+	/**
+	 * @brief Returns Uniform Location.
+	*/
+	GLint getUnfLoc(std::string name);
+	void clearUniformLocations();
+
 private:
 	GLint m_programID = -1;
 	struct biMap {
@@ -46,4 +53,5 @@ private:
 			toID.erase(i);
 		}
 	} m_shaders;
+	std::map<std::string,GLint> m_uniformLocations;
 };

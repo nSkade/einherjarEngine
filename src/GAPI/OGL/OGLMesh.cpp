@@ -12,8 +12,10 @@ OGLMesh::OGLMesh(ehj::Mesh mesh, GLenum usage) {
 
 	m_EBOsize = indexBuffer.size();
 	
+	//TODO opengl 4.6 not available
 	glCreateBuffers(1,&m_VBO);
 	glNamedBufferStorage(m_VBO, vertexBuffer.size()*sizeof(float), &vertexBuffer[0], GL_DYNAMIC_STORAGE_BIT);
+	//glBufferData(GL_ARRAY_BUFFER,vertexBuffer.size()*sizeof(float), &vertexBuffer[0], GL_DYNAMIC_DRAW);
 	glCreateVertexArrays(1,&m_VAO);
 	
 	glCreateBuffers(1,&m_EBO);

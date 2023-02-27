@@ -157,6 +157,8 @@ public:
 		m_maxDepth = d;
 	}
 
+	Octree<Data>::Cell* getRoot() { return m_root; };
+
 private:
 	uint32_t m_maxDepth = 4;
 	float m_tolerance = 0.03;

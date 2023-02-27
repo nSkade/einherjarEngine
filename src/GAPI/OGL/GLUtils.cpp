@@ -15,11 +15,14 @@ uint32_t ehj_gl_err() {
 			case GL_OUT_OF_MEMORY:                 str = "OUT_OF_MEMORY"; break;
 			case GL_INVALID_FRAMEBUFFER_OPERATION: str = "INVALID_FRAMEBUFFER_OPERATION"; break;
 		}
-		std::cout << "\nehj_gl_err: " << err << " " << str << "\n";
+		std::cerr << "\nehj_gl_err: " << err << " " << str << "\n";
 		err = glGetError();
 		if (EXIT_ON_GL_ERR)
+		#ifdef EHJ_DBG
 			__debugbreak();
-			//exit(1);
+		#else
+			exit(-1);
+		#endif
 		else
 			return 1;
 	}

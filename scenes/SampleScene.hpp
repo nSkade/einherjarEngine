@@ -307,7 +307,7 @@ int run() {
 	//glFrontFace(GL_CW);
 
 	//proj
-	glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)windowW/(float)windowH,0.0f,1000.0f);
+	glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)windowW/(float)windowH,0.01f,100.0f);
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -367,7 +367,7 @@ int run() {
 		//m = glm::rotate(m,(float) glfwGetTime(), glm::vec3(0.f,1.f,0.f));
 		//m = glm::translate(m,glm::vec3(0.0f,0.0f,0.0f));
 		glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
-		//glm::mat4 p = glm::perspectiveFov(45,10,10,0,1000);
+		//glm::mat4 p = glm::perspectiveFov(45,10,10,0.1,1000);
 		glm::mat4 mvp = p*m;
 		//mvp = proj;
 		

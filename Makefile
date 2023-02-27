@@ -64,7 +64,7 @@ $(BUILDFOLDER)/src/%.o: src/%.cpp $(HEAD)
 	$(CXX) $(ARGOP) $< $(OUTC)$@ $(INC) $(VULKAN_INC)
 
 #main compile
-$(BUILDFOLDER)/src/main.o: src/main.cpp $(HSCENE)
+$(BUILDFOLDER)/src/main.o: src/main.cpp $(HSCENE) $(HEAD)
 	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
 	$(CXX) $(ARGOP) $< $(OUTC)$@ $(INC) $(VULKAN_INC)
 

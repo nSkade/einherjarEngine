@@ -145,3 +145,18 @@ void GLProgram::addSourceFromFile(std::string shaderPath) {
 
 	addSourceFromString(shaderString,shaderType);
 }
+
+GLint GLProgram::getUnfLoc(std::string name) {
+	GLint loc;
+	if (m_uniformLocations.find(name) != m_uniformLocations.end()) {
+		loc = m_uniformLocations[name];
+	} else { // uniform location does not exist
+		loc = glGetUniformLocation(m_programID, name.c_str());
+		m_uniformLocations[name] = loc;
+	}
+	return loc;
+}
+
+void GLProgram::clearUniformLocations() {
+	m_uniformLocations.clear();
+}

@@ -23,32 +23,43 @@ public:
 	*/
 	void update(float deltaTime);
 	
-	glm::mat4 getView() { return m_mat; }; //TODO only update mat when getView
+	glm::mat4 getView() { return m_view; }; //TODO only update mat when getView
 
-	void setPos(glm::vec3 p) { m_pos = p; m_matUpdated = false; };
-	void setDir(glm::vec3 d) { m_dir = d; m_matUpdated = false; m_isPerp = false; }; //TODO calculate target
+	void setPos(glm::vec3 p) { m_pos = p; m_viewUpdated = false; };
+	void setDir(glm::vec3 d) { m_dir = d; m_viewUpdated = false; m_isPerp = false; }; //TODO calculate target
 	//TODO not implemented yet
-	void setTarget(glm::vec3 t) { m_target = t; m_matUpdated = false; }; //TODO calculate dir
-	void setUp(glm::vec3 u) { m_up = u; m_matUpdated = false; m_isPerp = false; };
+	void setTarget(glm::vec3 t) { m_target = t; m_viewUpdated = false; }; //TODO calculate dir
+	void setUp(glm::vec3 u) { m_up = u; m_viewUpdated = false; m_isPerp = false; };
 	
 	glm::vec3 getPos() { return m_pos; };
 	glm::vec3 getDir() { return m_dir; };
 	glm::vec3 getTarget() { return m_target; };
 	glm::vec3 getUp() { return m_up; };
+	float getFocus() { return m_proj[1][1]; };
 
 	glm::vec3 getRight() { return m_right; };
 
 	void makePerpendicular();
 
+	glm::mat4 getPV() {
+		if (!m_projUpdated || !m_viewUpdated) {
+			m_pv = m_proj*m_view;
+			m_projUpdated = true;
+		}
+		return m_pv;
+	};
+	void setProj(glm::mat4 p) { m_proj = p; m_projUpdated = false; };
+
 protected:
 	/**
 	 * @brief signals Camera that its parameters have changed so the matrix gets updated
 	*/
-	void signalChange() { m_matUpdated = false; };
+	void signalChange() { m_viewUpdated = false; };
 
+	bool m_noTilt = true;
 	// variables calculated by class
-	bool m_matUpdated = false;
-	glm::mat4 m_mat = glm::mat4(1.0f);
+	bool m_viewUpdated = false;
+	glm::mat4 m_view = glm::mat4(1.0f);
 	bool m_isPerp = false; // true if dir, up and right are perpendicular
 	glm::vec3 m_right = glm::vec3(1.0f,0.0f,0.0f);
 
@@ -58,6 +69,10 @@ protected:
 	glm::vec3 m_dir = glm::vec3(0.0f,0.0f,-1.0f);
 	glm::vec3 m_target = glm::vec3(0);
 	glm::vec3 m_up = glm::vec3(0.0f,1.0f,0.0f);
+
+	bool m_projUpdated = false;
+	glm::mat4 m_pv = glm::mat4(1.0f);
+	glm::mat4 m_proj = glm::mat4(1.0f);
 	
 	std::vector<ICameraController*> m_controllers;
 };
@@ -89,9 +104,8 @@ public:
 			glm::ivec2 m = pos - oldPos;
 			if (m.x == 0 && m.y == 0) // no change no update, might happen
 				return;
-			
 			yaw += float(m.x)*m_sens.x;
-			pitch += float(m.y)*m_sens.y;
+			pitch -= float(m.y)*m_sens.y;
 			if(pitch > 89.0f)
 				pitch = 89.0f;
 			if(pitch < -89.0f)
@@ -128,7 +142,7 @@ private:
 	bool m_captured = false;
 	bool m_nonCapDrag = false;
 
-	float yaw = 0.0f;
+	float yaw = -90.0f;
 	float pitch = 0.0f;
 
 	glm::vec2 m_sens = glm::vec2(0.1f);
@@ -187,6 +201,7 @@ public:
 		m_ccm.setSensitivity(sens);
 	}
 
+	void makePerpendicular();
 private:
 	CCkb m_cckb;
 	CCmouse m_ccm;

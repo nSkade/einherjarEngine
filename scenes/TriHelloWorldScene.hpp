@@ -61,8 +61,8 @@ int run(void)
 	if (!glfwInit())
 		exit(EXIT_FAILURE);
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
 	window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
 	if (!window)
@@ -79,6 +79,7 @@ int run(void)
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 	glfwSwapInterval(1);
 	// NOTE: OpenGL error checks have been omitted for brevity
+	glEnable(GL_DEPTH_TEST);
 
 	glGenBuffers(1, &vertex_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -118,13 +119,13 @@ int run(void)
 		ratio = width / (float) height;
  
 		glViewport(0, 0, width, height);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
  
 		glm::mat4 m = glm::mat4(1.0f); // identity
 		m = glm::rotate(m,(float) glfwGetTime(), glm::vec3(0.f,1.f,0.f));
 		//m = glm::translate(m,glm::vec3(0.0f,0.0f,0.0f));
 		glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
-		//glm::mat4 p = glm::perspectiveFov(45,10,10,0,1000);
+		//glm::mat4 p = glm::perspectiveFov(45,10,10,0.1,1000);
 		glm::mat4 mvp = p*m;
 		//mvp = proj;
 		glUseProgram(program);

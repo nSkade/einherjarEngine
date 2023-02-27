@@ -25,11 +25,11 @@ void Camera::update(float deltaTime) {
 	makePerpendicular();
 	for (uint32_t i=0;i<m_controllers.size();++i)
 		m_controllers[i]->update(deltaTime);
-	if (!m_matUpdated) {
-		//TODO calculate m_mat
-		m_mat = glm::lookAtRH(m_pos,m_pos+m_dir,m_up);
+	if (!m_viewUpdated) {
+		//TODO calculate m_view
+		m_view = glm::lookAtRH(m_pos,m_pos+m_dir,m_up);
 
-		m_matUpdated = true;
+		m_viewUpdated = true;
 	}
 }
 
@@ -37,6 +37,9 @@ void Camera::makePerpendicular() {
 	if (!m_isPerp) {
 		m_dir = glm::normalize(m_dir);
 		m_right = glm::cross(glm::normalize(m_up),m_dir);
+		if (m_noTilt) {
+			m_right = glm::normalize(glm::vec3(m_right.x, 0.0f, m_right.z));
+		}
 		m_up = glm::cross(m_dir,m_right);
 		m_isPerp = true;
 	}
@@ -74,8 +77,5 @@ void CCkb::callback(KeyboardData kd) {
 	else if (kd.ia==IBCodes::IA_RELEASE)
 		m_state &= ~s;
 }
-//CCmouse::CCmouse(Camera* cam) {
-//	cam->
-//}
 
 }//ehj

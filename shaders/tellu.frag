@@ -2,6 +2,12 @@
 uniform float u_time;
 uniform vec2 u_resolution;
 
+uniform vec3 u_cPos;
+uniform vec3 u_cDir;
+uniform vec3 u_cUp;
+uniform vec3 u_cRgt;
+uniform float u_cFoc;
+
 in vec3 color;
 
 #define M_PI 3.14159265358979
@@ -370,18 +376,22 @@ void main()
 	vec2 uv = viewIndepUV();
 	//vec2 uv = gl_FragCoord.xy/u_resolution.xy;
 	vec2 ndc = uv * 2.0 - vec2(1.0);
-	CAMPOS.z -= 1.0;//+sin(u_time*0.5)*2.0;
-	CAMPOS.y -= 1.0;
-	CAMPOS.z += sin(u_time)*1.25;
-	CAMPOS = rotationY(u_time*0.3) * CAMPOS;
-	CAMPOS.y += 0.5*sin(u_time*0.4);
-	CAMPOS.y = max(0.1,CAMPOS.y);
-	vec3 lookat = normalize(scnSpherePos-CAMPOS);
-	//lookat = vec3(0.0);
-	
-	CAMDIR = vec3(ndc+lookat.xy, 1.0);
-	CAMDIR = normalize(CAMDIR);
-	CAMDIR = rotationY(u_time*0.3) * CAMDIR;
+//	CAMPOS.z -= 1.0;//+sin(u_time*0.5)*2.0;
+//	CAMPOS.y -= 1.0;
+//	CAMPOS.z += sin(u_time)*1.25;
+//	CAMPOS = rotationY(u_time*0.3) * CAMPOS;
+//	CAMPOS.y += 0.5*sin(u_time*0.4);
+//	CAMPOS.y = max(0.1,CAMPOS.y);
+//	vec3 lookat = normalize(scnSpherePos-CAMPOS);
+//	//lookat = vec3(0.0);
+//	
+//	CAMDIR = vec3(ndc+lookat.xy, 1.0);
+//	CAMDIR = normalize(CAMDIR);
+//	CAMDIR = rotationY(u_time*0.3) * CAMDIR;
+
+	CAMPOS = u_cPos;
+	CAMDIR = normalize(-u_cRgt*ndc.x+u_cUp*ndc.y+u_cDir*u_cFoc);
+
 	Def def = raymarch(CAMDIR, CAMPOS);
 	float fadeout = MAXDIST-5.0;
 	float scale = max(0.0,1.0/log(def.depth-fadeout+5.0));

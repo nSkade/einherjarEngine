@@ -25,6 +25,7 @@
 #include "Mesh.hpp"
 #include "GAPI/OGL/OGLMesh.hpp"
 #include "Camera.hpp"
+#include "Clock.hpp"
 
 /**
  * @brief Scene utility for OpenGL.

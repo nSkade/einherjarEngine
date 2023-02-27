@@ -76,6 +76,7 @@ void Mesh::loadOBJ(std::string path) {
 			if (line[0]=='#') continue; // comment
 			else if (line.substr(0,2).compare("vn")==0) { // face normal?
 				normals = true;
+				m_MP |= MP_NORMAL;
 				std::istringstream iss(line);
 				std::string n;
 				float v1,v2,v3,v4 = 0.0f;
@@ -125,9 +126,22 @@ std::vector<float> Mesh::getVertexBuffer() {
 		for (uint32_t j=0;j<m_Dim;++j) {
 			res.emplace_back(m_vertices[i][j]);
 		}
+		bool nrmFound = false;
 		if (m_MP & MP_NORMAL) {
-			for (uint32_t j=0;j<m_Dim;++j) {
-				res.emplace_back(m_normals[0][j]); //TODO fix
+			for (uint32_t k=0;k<m_faces.size();++k) {
+				for (uint32_t l=0;l<3;++l) {
+					if (m_faces[k].normalI[l]==i) {
+						for (uint32_t j=0;j<m_Dim;++j)
+							res.emplace_back(m_normals[m_faces[k].normalI[l]][j]);
+						nrmFound = true;
+						break;
+					}
+				}
+				if (nrmFound) break;
+			}
+			if (!nrmFound) {
+				for (uint32_t j=0;j<m_Dim;++j)
+					res.emplace_back(m_normals[0][j]); //TODO fix
 			}
 		}
 	}
@@ -168,7 +182,7 @@ void Mesh::toTriangles() {
 		this->m_faces.push_back(t1);
 		this->m_faces.push_back(t2);
 	}
-	m_MP -= MP_QUAD;
+	m_MP &= ~MP_QUAD;
 }
 
 SSMesh::SSMesh(bool triangles) {

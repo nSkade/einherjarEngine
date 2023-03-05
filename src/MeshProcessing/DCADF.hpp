@@ -8,25 +8,31 @@ namespace ehj {
 */
 class DCADF {
 public:
-	DCADF(float (*sdfFunc)(glm::vec3 p)) {
-		
-		// createADF
-		m_adf.setSDFFunc(sdfFunc);
-		AABB aabb = {glm::vec4(-1.5f,-1.5f,-1.5f,0.0f),glm::vec4(1.5f,1.5f,1.5f,0.0f)};
-		m_adf.setAABB(aabb);
-		m_adf.constructADF(m_adf.getRoot());
-	
-	}
-
-	//TODO doual conturing options
-	void createMesh() {
-		
+	struct Data {
+		glm::vec3* samples = nullptr; // one sample for every edge
+		~Data() {
+			if (samples)
+				delete samples;
+		}
 	};
+
+	void setAABB(AABB aabb) {
+		m_adf.setAABB(aabb);
+	}
+	void setSDF(float (*sdfFunc)(glm::vec3 p)) {
+		m_adf.setSDFFunc(sdfFunc);
+	}
+	void process() {
+		m_adf.setTolerance(0.1f);
+		m_adf.constructADF(m_adf.getRoot());
+		//TODO dual contouring
+		
+	}
 
 	Mesh getMesh() { return m_mesh; };
 
 private:
-	ADF m_adf;
+	ADF<Data> m_adf;
 	Mesh m_mesh;
 };
 

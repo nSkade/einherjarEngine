@@ -1,6 +1,6 @@
-//uniform sampler2D u_noise;
-uniform float u_time;
+
 uniform vec2 u_resolution;
+uniform float u_time;
 
 uniform vec3 u_cPos;
 uniform vec3 u_cDir;
@@ -8,13 +8,11 @@ uniform vec3 u_cUp;
 uniform vec3 u_cRgt;
 uniform float u_cFoc;
 
-in vec3 color;
-
 #define M_PI 3.14159265358979
 
 #define NUMSTEPS 64
 float MINHIT = 0.005;
-float MAXDIST = 20.0;
+float MAXDIST = 100.0; //TODO 20.0;
 vec3 CAMPOS = vec3(0.0, 1.0, -2.0);
 vec3 CAMDIR = vec3(0.0, 0.0, 0.0);
 float infinity = 1.0 / 0.0;
@@ -199,10 +197,7 @@ float distDune(vec3 p) {
 	vec3 planeN = vec3(0.0,1.0,0.0);
 	p.y += 0.2;
 	p.xz = p.xz*0.75;
-	
-	float c = duneFunc(p);
-	
-	float disp = c;
+	float disp = duneFunc(p);
 	return distPlane(p, planeN) + disp;
 }
 
@@ -245,7 +240,7 @@ float distFunc(vec3 ray, out vec2 uv) {
 }
 
 vec3 normalFunc(vec3 p) {
-	vec3 small_step = vec3(0.001,0.0,0.0);
+	vec3 small_step = vec3(0.01,0.0,0.0);
 	
 	vec2 uv;
 	float gradX = distFunc(p + small_step.xyy, uv) - distFunc(p - small_step.xyy, uv);
@@ -286,9 +281,41 @@ vec2 explCircle(vec3 pos, vec3 dir, float radius) {
 	float c = dot(pos,pos)-radius*radius;
 	float circle = b*b-4.0*a*c;
 	if (circle < 0.0) return vec2(0.0,0.0);
-	float fstSol = (-b + sqrt(circle))/(2.0*a);
+	float fstSol = (-b - sqrt(circle))/(2.0*a);
 	return vec2(1.0,fstSol);
 }
+
+vec2 explPlane(vec3 pos, vec3 dir, vec3 n, vec3 a) {
+	// dot(p-a,n)=0
+	// p=pos+dir*t;
+	// dot(pos+dir*t-a,n)=0
+	// dot(pos-a,n) + dot(dir*t,n) = 0
+	// dot(dir*t,n) = -dot(pos-a,n)
+	// t = -dot(pos-a,n)/dot(dir,n)
+	float t = -dot(pos-a,n)/dot(dir,n);
+	if (t<0.0) //nohit
+		return vec2(0.0,0.0);
+	else
+		return vec2(1.0,t);
+}
+
+vec2 explPlaneCurved(vec3 pos, vec3 dir, vec3 n, vec3 a) {
+	// dot(p-a,n)=0
+	// p=pos+dir*t;
+	// dot(pos+dir*t-a,n)=0
+	// dot(pos-a,n) + dot(dir*t,n) = 0
+	// dot(dir*t,n) = -dot(pos-a,n)
+	// t = -dot(pos-a,n)/dot(dir,n)
+	float t = -dot(pos-a,n)/dot(dir,n);
+	vec3 p = pos+dir*t;
+	float lp = 0.0;//length(p)*0.4;
+	if (t<0.0) //nohit
+		return vec2(0.0,0.0);
+	else
+		return vec2(1.0,t-lp);
+}
+
+float g = 0.0;
 
 Def raymarch(vec3 dir, vec3 origin) {
 	
@@ -302,8 +329,8 @@ Def raymarch(vec3 dir, vec3 origin) {
 	float explG = dir.y < 0.0 ? -origin.y/dir.y : 0.0;
 	//explicit circle
 	vec2 explC = explCircle(origin-scnSpherePos,dir,1.0);
-	origin += dir*(explC.x != 0.0 ? explC.y : 0.0);
-	dist = explC.x != 0.0 ? -explC.y : explG;
+	dist = explC.x != 0.0 ? explC.y : explG;
+	dist = explC.y < 0.0 ? explG : dist;
 	
 	for (int i = 0; i < NUMSTEPS; i++) {
 		vec3 pos = origin + dist * dir;
@@ -311,7 +338,11 @@ Def raymarch(vec3 dir, vec3 origin) {
 		def.worldPos = pos;
 		vec2 uv;
 		float closest = distFunc(pos, uv);
-			
+		
+		//vec3 llp = pos;
+		//g += 0.4/(llp.z*llp.z+0.1)*0.01;
+		//g += 0.4/(llp.x*llp.x+0.1)*0.01;
+		
 		if (closest < MINHIT) {
 			def.depth = dist;
 			vec3 ambient = vec3(1.0);
@@ -324,7 +355,7 @@ Def raymarch(vec3 dir, vec3 origin) {
 			vec3 oldNormal = normal;
 			//def.color = normal;
 			//return def;
-			
+
 			vec3 magma = vec3(0.0);
 			float scale = 0.0;
 			// TODO fix shiny border when facing cam? def.color = max(def.color, ambientF*max(0.0,1.0-scale*3.0));
@@ -337,6 +368,8 @@ Def raymarch(vec3 dir, vec3 origin) {
 				
 				oldNormal = oldNormal*(1.25);
 				scale = -(dot(dir,oldNormal));
+				
+				// use 2d screenspace normals?
 				float glowNoise1 = d3Noise((oldNormal+u_time*0.015)*20.0)-0.28;
 				float glowNoise2 = d3Noise((oldNormal+u_time*0.01)*60.0);
 				float glowNoise3 = d3Noise((oldNormal+u_time*0.01)*120.0);
@@ -358,7 +391,7 @@ Def raymarch(vec3 dir, vec3 origin) {
 				normal = normal*i + (1.0-i)*normalFuncDune(pos,normal);
 			}
 			float diffuse = max(0.0, dot(normal, dir_light));
-			def.color = (ambient) + (ambientF)*diffuse/(dist_light*0.15);
+			def.color = (ambient) + (ambientF)*diffuse/(dist_light*0.15); //TODO make light for moon brighter but keep dunes dark 
 			def.color = pos.y > 0.0 ? def.color + magma : def.color;
 			return def;
 		}
@@ -371,27 +404,49 @@ Def raymarch(vec3 dir, vec3 origin) {
 	return def;
 }
 
-void main()
+void lightlane(vec3 camToWS, vec3 pn, vec3 off, float wid, float llo, float str) {
+	vec2 px = explPlaneCurved(CAMPOS, CAMDIR, pn,off);
+	float dp = px.y;
+	if (dp > 0.0 && dp < length(camToWS)) {
+		vec3 llp = CAMPOS+CAMDIR*dp;
+		vec3 f = llp;//cross(llp,CAMDIR);
+		float lle = f.y-0.5-0.3*sin(dot(llp,cross(pn,vec3(0.0,1.0,0.0)))*.5+u_time+llo);
+		float fade = abs(dot(CAMDIR,pn))*min(1.0,dp)*str;
+		g += 0.7/(lle*lle*500.0*wid+1.0)*fade*fade;
+	}
+}
+
+void main(void)
 {
 	vec2 uv = viewIndepUV();
 	//vec2 uv = gl_FragCoord.xy/u_resolution.xy;
 	vec2 ndc = uv * 2.0 - vec2(1.0);
-//	CAMPOS.z -= 1.0;//+sin(u_time*0.5)*2.0;
-//	CAMPOS.y -= 1.0;
-//	CAMPOS.z += sin(u_time)*1.25;
-//	CAMPOS = rotationY(u_time*0.3) * CAMPOS;
-//	CAMPOS.y += 0.5*sin(u_time*0.4);
-//	CAMPOS.y = max(0.1,CAMPOS.y);
-//	vec3 lookat = normalize(scnSpherePos-CAMPOS);
-//	//lookat = vec3(0.0);
-//	
-//	CAMDIR = vec3(ndc+lookat.xy, 1.0);
-//	CAMDIR = normalize(CAMDIR);
-//	CAMDIR = rotationY(u_time*0.3) * CAMDIR;
+	//u_time *= 1.0;
+	//CAMPOS.z -= 1.0;//+sin(u_time*0.5)*2.0;
+	//CAMPOS.y -= 1.0;
+	//CAMPOS.z += sin(u_time)*1.25;
+	//CAMPOS = rotationY(u_time*0.3) * CAMPOS;
+	////CAMPOS = rotationY(3.14)*CAMPOS;
+	////CAMPOS = rotationY(u_mouse.x/u_resolution.x*3.14*2.0)*CAMPOS;
+	////CAMPOS = rotationZ(u_mouse.y/u_resolution.y*3.14)*CAMPOS;
+	//CAMPOS.y += 0.5*sin(u_time*0.4);
+	//CAMPOS.y = max(0.1,CAMPOS.y);
+	//vec3 lookat = normalize(scnSpherePos-CAMPOS);
+	////lookat = vec3(0.0);
+	//vec3 camdiro = lookat;
+	//CAMDIR = vec3(ndc+lookat, 1.0);
 
 	CAMPOS = u_cPos;
 	CAMDIR = normalize(-u_cRgt*ndc.x+u_cUp*ndc.y+u_cDir*u_cFoc);
+	float abrTime = u_time*3.0;
+	if (mod(abrTime,3.14*4.0) < 3.14) {
+		float abre = sin(abrTime)*0.01;
+		CAMDIR.x = mod(float(gl_FragCoord.x),2.0) < 1.0 ? CAMDIR.x -= abre : CAMDIR.x += abre;
+	}
 
+	CAMDIR = normalize(CAMDIR);
+	//CAMDIR = rotationY(u_mouse.x/u_resolution.x*3.14*2.0)*CAMDIR;
+	//CAMDIR = rotationY(u_time*0.3) * CAMDIR;
 	Def def = raymarch(CAMDIR, CAMPOS);
 	float fadeout = MAXDIST-5.0;
 	float scale = max(0.0,1.0/log(def.depth-fadeout+5.0));
@@ -408,21 +463,25 @@ void main()
 	vec3 Spos = CAMPOS;
 	int particleSteps = 6;
 	vec3 camToWS = pos-CAMPOS;
-	for (int i = 0; i < particleSteps; i++) {
-		Spos += (normalize(camToWS)*8.0)/float(particleSteps);
-		if (length(Spos-CAMPOS) > length(camToWS))
-			break;
-		float noise = d3Noise(Spos*30.0)-0.45;
-		noise *= 2.0/(length(Spos-scnSpherePos)*10.0-9.0);
-		def.color += max(max(0.0,noise)*red, max(0.0,noise-0.1)*orange*1.25)*3.0;
-	}
-	Spos = CAMPOS;
 	//def.color = vec3(0.0);
 	for (int i = 0; i < particleSteps; i++) {
+		//glow
 		Spos += (normalize(camToWS)*8.0)/float(particleSteps);
 		def.color += red*min(1.0,0.065/(exp(pow(length(Spos-scnSpherePos),1.75))));
+		
+		// particles
+		if (length(Spos-CAMPOS) < length(camToWS)) {
+			float noise = d3Noise(Spos*30.0+u_time*1.0)-0.45;
+			//float noise = gradientNoise(Spos.xy*30.0)-0.45; 
+			noise *= 2.0/(length(Spos-scnSpherePos)*10.0-9.0);
+			def.color += max(max(0.0,noise)*red, max(0.0,noise-0.1)*orange*1.25)*3.0;
+		}
 	}
 	vec4 col = vec4(def.color,1.0);
 	
-	gl_FragColor = vec4(col.xyz, 1.0);
+	lightlane(camToWS, vec3(1.0,0.0,0.0), vec3(-2.0,0.0,0.0),1.0,0.0,1.0);
+	lightlane(camToWS, normalize(vec3(.9,.0,.1)), vec3(-2.0,0.0,0.0),100.0,0.3*3.14,0.6);
+	lightlane(camToWS, normalize(vec3(.3,.0,.7)), vec3(0.0,0.0,-3.0),10.0,0.6*3.14,1.0);
+	
+	gl_FragColor = vec4(col.xyz+vec3(1.0,0.2,0.2)*g*5.0, 1.0);
 }

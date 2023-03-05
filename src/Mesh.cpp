@@ -162,6 +162,8 @@ std::vector<int> Mesh::getIndexBuffer() {
 }
 
 void Mesh::toTriangles() {
+	if (!(m_MP & MP_QUAD))
+		return;
 	Mesh mesh = Mesh(*this);
 	m_faces.clear();
 	for (uint32_t i=0;i<mesh.m_faces.size();++i) {

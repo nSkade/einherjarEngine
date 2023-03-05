@@ -26,7 +26,9 @@ void GLFWKeyboard::key_callback(GLFWwindow* window, int key, int scancode, int a
 }
 
 GLFWKeyboard::~GLFWKeyboard() {
+#ifdef EHJ_DBG
 	std::cout << "GLFWKeyboard released!" << std::endl;
+#endif
 	m_pInstance.reset();
 }
 

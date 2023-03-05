@@ -1,4 +1,4 @@
-
+#pragma once
 #include "GLFWKeyboard.hpp"
 #include "GLFWMouse.hpp"
 

@@ -11,6 +11,7 @@
 #include "../scenes/VulkanTest.hpp"
 #include "../scenes/ADFtestScene.hpp"
 #include "../scenes/EnvirScene.hpp"
+#include "../scenes/RayMarchingTestScene.hpp"
 
 int main(void)
 {
@@ -24,7 +25,8 @@ int main(void)
 	//ComputeShaderTestScene scene;
 	//VulkanTestScene scene;
 	//ADFtestScene scene;
-	EnvirScene scene;
+	//EnvirScene scene;
+	RayMarchingTestScene scene;
 
 	scene.setup();
 	scene.run();

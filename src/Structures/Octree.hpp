@@ -3,7 +3,6 @@
 template <class T>
 class Octree {
 public:
-
 	struct Cell {
 		Cell* parent;
 		Cell* child[8];
@@ -23,6 +22,7 @@ public:
 		for (uint32_t i=0;i<ca;++i)
 			m_root->child[i] = nullptr;
 		m_root->depth = 0;
+		m_depthCount.push_back(1);
 	}
 
 	~Octree() {
@@ -39,6 +39,11 @@ public:
 			Cell* nc = new Cell();
 			nc->parent = c;
 			nc->depth = c->depth+1;
+			if (nc->depth > m_maxDepth) {
+				m_maxDepth = nc->depth;
+				m_depthCount.push_back(0);
+			}
+			m_depthCount[nc->depth]++;
 
 			AABB bb;
 			glm::vec3 diag = c->aabb.max-c->aabb.min;
@@ -52,9 +57,16 @@ public:
 		}
 	}
 
+	//TODO implement
+	void collapseCell(Cell* c) {
+		std::cerr << "not implemented yet" << std::endl;
+	}
+
 	void test() {
 		std::cout << "sizeof(m_root): " << sizeof(m_root->child)/sizeof(m_root) << "\n";
 	}
+
+	uint32_t getMaxDepth() { return m_maxDepth; };
 
 private:
 	void destruct(Cell* c) {
@@ -67,6 +79,7 @@ private:
 		}
 		delete c;
 	}
-
+	uint32_t m_maxDepth = 0;
+	std::vector<uint32_t> m_depthCount;
 	Cell* m_root;
 };

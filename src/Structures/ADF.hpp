@@ -3,11 +3,14 @@
 
 #include "Octree.hpp"
 
+namespace ehj {
+
+//TODO discard cornerSDV of split Cells? Split Cells children always contain 8 sdf corner values
+template <typename T>
 class ADF {
 public:
 	ADF() {
 		m_root = m_octree.getRoot();
-		sampleCell(m_root);
 	}
 
 	//               front back
@@ -16,18 +19,15 @@ public:
 	//               x-> y^ z
 	struct Data {
 		bool set = false;
-		float cornerSDV[8];
+		float cornerSDV[8]; //TODO change to * for less memory consumption
+		T data;
 	};
 
-	float sdfCircle(glm::vec3 pos, glm::vec3 c, float r) {
-		return glm::length(pos-c)-r;
-	}
-
-	float sdfFuncTest(glm::vec3 p) {
-		return sdfCircle(p, glm::vec3(0.0f,0.0f,0.0f),1.0f);
-	}
-
-	void sampleCell(Octree<Data>::Cell* c) {
+	void sampleCell(typename Octree<Data>::Cell* c) {
+		if (!m_sdfFunc) {
+			std::cerr << "ADF::sampleCell : m_sdfFunc not set." << std::endl;
+			return;
+		}
 		uint32_t ca = sizeof(c->child)/sizeof(c);
 		for (uint32_t i=0;i<ca;++i) {
 			glm::vec3 p;
@@ -41,7 +41,7 @@ public:
 		c->data.set = true;
 	}
 
-	float evaluateCell(Octree<Data>::Cell* c, glm::vec3 p) {
+	float evaluateCell(typename Octree<Data>::Cell* c, glm::vec3 p) {
 		// compute position of p relative to c
 		glm::vec3 rp = p - c->aabb.min;
 		glm::vec3 diag = c->aabb.max-c->aabb.min;
@@ -72,14 +72,14 @@ public:
 		return sdf;
 	}
 
-	void split(Octree<Data>& octree, Octree<Data>::Cell* c) {
+	void split(Octree<Data>& octree, typename Octree<Data>::Cell* c) {
 		octree.splitCell(c);
 		for (uint32_t i=0;i<8;++i) {
 			sampleCell(c->child[i]);
 		}
 	}
 
-	bool determineSplit(Octree<Data>::Cell* c) {
+	virtual bool determineSplit(typename Octree<Data>::Cell* c) {
 		if(!c->data.set) {
 			std::cout << "determineSplit: cell is not sampled.\n";
 			return false;
@@ -91,6 +91,7 @@ public:
 		for (uint32_t i=0;i<3*3*3;++i) {
 			glm::vec3 p = c->aabb.min;
 
+			// values are 0, 1 or 2 for min, mid, max
 			uint32_t x = (i%3);
 			uint32_t y = ((i/3)%3);
 			uint32_t z = (i/9);
@@ -113,7 +114,7 @@ public:
 		return sc;
 	}
 
-	void constructADF(Octree<Data>::Cell* c) {
+	virtual void constructADF(typename Octree<Data>::Cell* c) {
 		if (!c) {
 			std::cout << "constructADF error: parameter Cell (c) is nullptr.\n";__debugbreak();exit(1);
 		}
@@ -132,14 +133,22 @@ public:
 		}
 	}
 
-	void test() {
-		m_root->aabb = {glm::vec4(-1.5f,-1.5f,-1.5f,0.0f),glm::vec4(1.5f,1.5f,1.5f,0.0f)};
-		//m_octree.splitCell(m_root);
-
-		constructADF(m_root);
-		
-		std::cout << "finished\n";
-	}
+//	float sdfCircle(glm::vec3 pos, glm::vec3 c, float r) {
+//		return glm::length(pos-c)-r;
+//	}
+//
+//	float sdfFuncTest(glm::vec3 p) {
+//		return sdfCircle(p, glm::vec3(0.0f,0.0f,0.0f),1.0f);
+//	}
+//
+//	void test() {
+//		m_root->aabb = {glm::vec4(-1.5f,-1.5f,-1.5f,0.0f),glm::vec4(1.5f,1.5f,1.5f,0.0f)};
+//		//m_octree.splitCell(m_root);
+//
+//		constructADF(m_root);
+//		
+//		std::cout << "finished\n";
+//	}
 
 	void setSDFFunc(float (*sdfFunc)(glm::vec3 p)) {
 		m_sdfFunc = sdfFunc;
@@ -157,14 +166,16 @@ public:
 		m_maxDepth = d;
 	}
 
-	Octree<Data>::Cell* getRoot() { return m_root; };
+	typename Octree<Data>::Cell* getRoot() { return m_root; };
 
 private:
-	uint32_t m_maxDepth = 4;
+	uint32_t m_maxDepth = 8;
 	float m_tolerance = 0.03;
 
-	float (*m_sdfFunc)(glm::vec3 p);
+	float (*m_sdfFunc)(glm::vec3 p) = nullptr;
 
 	Octree<Data> m_octree;
-	Octree<Data>::Cell* m_root;
+	typename Octree<Data>::Cell* m_root;
 };
+
+}//ehj

@@ -19,7 +19,7 @@ public:
 	GLint getProgramID(); //TODO remove?
 	GLuint getShaderID(GLenum shaderType);
 	
-	void addSourceFromString(std::string shaderSource, GLenum shaderType);
+	void addSourceFromString(std::string shaderSource, GLenum shaderType, const std::string& filePath);
 	void addSourceFromFile(std::string shaderPath, GLenum shaderType);
 	void addSourceFromFile(std::string shaderPath);
 

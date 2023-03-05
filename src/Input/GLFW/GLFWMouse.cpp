@@ -36,7 +36,9 @@ void GLFWMouse::mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 }
 
 GLFWMouse::~GLFWMouse() {
+#ifdef EHJ_DBG
 	std::cout << "GLFWMouse released!" << std::endl;
+#endif
 	m_pInstance.reset();
 }
 

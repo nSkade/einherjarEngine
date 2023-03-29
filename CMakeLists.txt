@@ -1,27 +1,64 @@
-﻿# CMakeList.txt: CMake-Projekt für "GLsLhop". Schließen Sie die Quelle ein, und definieren Sie
-# projektspezifische Logik hier.
-#
-cmake_minimum_required (VERSION 3.8)
+﻿cmake_minimum_required (VERSION 3.8)
 
 project ("einherjarEngine")
+
+find_package(Vulkan REQUIRED FATAL_ERROR)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
+include_directories(einherjarEngine
+	lib/glad
+	lib/imgui
+	lib/glfw3
+	lib
+	PUBLIC C:/VulkanSDK/1.3.231.1/Include
+)
+LINK_DIRECTORIES(lib/glad)
+LINK_DIRECTORIES(lib/glfw3)
+LINK_DIRECTORIES(/)
 
-include_directories(glad)
-include_directories(glfw3)
-LINK_DIRECTORIES(glfw3)
-
-# Fügen Sie der ausführbaren Datei dieses Projekts eine Quelle hinzu.
 add_executable (einherjarEngine
 	"src/main.cpp"
-	"src/GPUTimer.cpp"
-	"glad/glad.c"
+	"src/Mesh.cpp"
+	"src/Camera.cpp"
+
+	"src/Structures/ADF.cpp"
+	"src/MeshProcessing/DCADF.cpp"
+
+	"src/GAPI/OGL/GPUTimer.cpp"
+	"src/GAPI/OGL/GLProgram.cpp"
+	"src/GAPI/OGL/GLUtils.cpp"
+	"src/GAPI/OGL/OGLMesh.cpp"
+	
+	"src/Input/GLFW/GLFWKeyboard.cpp"
+	"src/Input/GLFW/GLFWMouse.cpp"
+	"src/Input/GLFW/GLFWCodes.cpp"
+	
+	"lib/glad/glad.c"
+	
+	"lib/imgui/imgui.cpp"
+	"lib/imgui/imgui_demo.cpp"
+	"lib/imgui/imgui_draw.cpp"
+	"lib/imgui/imgui_tables.cpp"
+	"lib/imgui/imgui_widgets.cpp"
+	"lib/imgui/backends/imgui_impl_opengl3.cpp"
+	"lib/imgui/backends/imgui_impl_glfw.cpp"
+)
+target_link_libraries(einherjarEngine
+	glfw3
+	C:/VulkanSDK/1.3.231.1/Lib/vulkan-1.lib
+)
+target_compile_definitions(einherjarEngine
+PRIVATE
+PUBLIC
+	$<$<CONFIG:Debug>:EHJ_DBG>
+#	$<$<CONFIG:RelWithDebInfo>:>
+#	$<$<CONFIG:Release>:>
+#	$<$<CONFIG:MinSizeRel>:>
 )
 
-target_link_libraries(einherjarEngine glfw3dll)
+set_target_properties (einherjarEngine PROPERTIES CXX_STANDARD 17)
+set_target_properties (einherjarEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-# TODO: Fügen Sie bei Bedarf Tests hinzu, und installieren Sie Ziele.

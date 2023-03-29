@@ -1,0 +1,31 @@
+{
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "buildTest",
+			"command": "${workspaceFolder}\\.vscode\\buildvs.bat",
+			//"command": "make CXX = cl /EHsc /Zi /Fe",
+			"group":  {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal":"always"
+			},
+			//"presentation": {
+			//	"reveal": "silent",
+			//	"clear": true
+			//},
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "buildTestEnd",
+			"type": "process",
+			"command":[
+				"${command:workbench.action.tasks.terminate}",
+				"${command:workbench.action.acceptSelectedQuickOpenItem}",
+			],
+		},
+	],
+	"version": "2.0.0"
+}

@@ -10,7 +10,7 @@ using namespace ehj;
 
 #define FULLSCREEN false
 
-class RayMarchingTestScene : IScene {
+class FSRTestScene : IScene {
 public:
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 		glViewport(0, 0, width, height);
@@ -20,7 +20,7 @@ public:
 			glfwSetWindowShouldClose(window, true);
 	}
 
-	~RayMarchingTestScene() {
+	~FSRTestScene() {
 		//__debugbreak();
 	}
 	void setup() {
@@ -61,6 +61,7 @@ public:
 		glfwMakeContextCurrent(m_pWindow);
 		gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 		glViewport(0, 0, m_windowRes.x, m_windowRes.y);
+		glfwSwapInterval(0);
 	}
 
 	int run() {
@@ -75,7 +76,8 @@ public:
 		}
 	#endif
 		
-		GLProgram mainGLP;
+		GLProgram glpMain;
+		GLProgram glpEASU;
 		
 		ehj::SSMesh mesh;
 		mesh.toTriangles();
@@ -86,20 +88,31 @@ public:
 		glBindVertexArray(oglMesh.getVAO());
 		ehj_gl_err();
 		
-		ehj_gl_err();
-		
-		mainGLP.loadProgramFromFolder("shaders");
+		//glpMain.loadProgramFromFolder("shaders");
+		glpMain.addSourceFromFile("shaders/basic_v.vert");
 		std::string fragShader = "tellu.frag";
-		mainGLP.addSourceFromFile("shaders/"+fragShader);
+		glpMain.addSourceFromFileRecursive("shaders/"+fragShader);
 
-		mainGLP.createProgram();
-		glBindAttribLocation(mainGLP.getProgramID(),oglMesh.getAttribPos(),"vPos");
+		glpMain.createProgram();
+		glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
-			glBindAttribLocation(mainGLP.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+			glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
 		ehj_gl_err();
-		mainGLP.bind();
+		glpMain.bind();
+
+		glpEASU.addSourceFromFile("shaders/basic_v.vert");
+		std::string fragShader2 = "invert.frag";
+		glpEASU.addSourceFromFileRecursive("shaders/"+fragShader2);
+
+		glpEASU.createProgram();
+		glBindAttribLocation(glpEASU.getProgramID(),oglMesh.getAttribPos(),"vPos");
+		if (oglMesh.getAttribNrm()!=-1)
+			glBindAttribLocation(glpEASU.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+		ehj_gl_err();
+		//glpEASU.bind();
 
 		GPUTimer fragSTimer;
+		GPUTimer fsrTimer;
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -109,21 +122,28 @@ public:
 
 		int guiTess = 1;
 		float time = 0.0f;
+
+		glm::ivec2 renderRes = {960,540};
+		GLFrameBuffer fb(renderRes);
+
+		glBindVertexArray(oglMesh.getVAO());
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oglMesh.getEBO());
+		bool enable_fsr = true;
 		
 		while (!glfwWindowShouldClose(m_pWindow))
 		{
 			if (GLFWKeyboardCache::keyPressed(IBCodes::KK_KEY_R)) {
 				glUseProgram(0);
-				mainGLP.loadProgramFromFolder("shaders");
-				mainGLP.addSourceFromFile("shaders/"+fragShader);
+				glpMain.loadProgramFromFolder("shaders");
+				glpMain.addSourceFromFileRecursive("shaders/"+fragShader);
 
-				mainGLP.createProgram();
+				glpMain.createProgram();
 		
-				glBindAttribLocation(mainGLP.getProgramID(),oglMesh.getAttribPos(),"vPos");
+				glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribPos(),"vPos");
 				if (oglMesh.getAttribNrm()!=-1)
-					glBindAttribLocation(mainGLP.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
-				mainGLP.bind();
+					glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
 			}
+			glpMain.bind();
 
 			float deltaTime = m_clock.update();
 			time += deltaTime;
@@ -135,35 +155,55 @@ public:
 			m_windowRes = glm::ivec2(width,height);
 			
 			glClear(GL_COLOR_BUFFER_BIT);
+			glBindFramebuffer(GL_FRAMEBUFFER,fb.getFBO());
+			glClear(GL_COLOR_BUFFER_BIT);
 
-			glBindVertexArray(oglMesh.getVAO());
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oglMesh.getEBO());
-
-			m_cam.setProj(glm::perspective(glm::radians(90.0f), (float)m_windowRes.x/(float)m_windowRes.y,0.01f,100.0f));
+			m_cam.setProj(glm::perspective(glm::radians(90.0f), (float)renderRes.x/(float)renderRes.y,0.01f,100.0f));
 			glm::mat4 pvm = m_cam.getPV();
 			pvm = glm::ortho(-1.f,1.f,-1.f,1.f);
 		
-			glUniformMatrix4fv(mainGLP.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
+			glUniformMatrix4fv(glpMain.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
 
-			glUniform1f(mainGLP.getUnfLoc("u_time"), time);
-			glUniform2f(mainGLP.getUnfLoc("u_resolution"), width, height);
-			glUniform1i(mainGLP.getUnfLoc("u_tess"), (GLint) guiTess);
+			glUniform1f(glpMain.getUnfLoc("u_time"), time);
+			glUniform2f(glpMain.getUnfLoc("u_resolution"), renderRes.x, renderRes.y);
+			glUniform1i(glpMain.getUnfLoc("u_tess"), (GLint) guiTess);
 			glm::vec3 cPos = m_cam.getPos();
-			glUniform3f(mainGLP.getUnfLoc("u_cPos"), cPos.x,cPos.y,cPos.z);
+			glUniform3f(glpMain.getUnfLoc("u_cPos"), cPos.x,cPos.y,cPos.z);
 			glm::vec3 cDir = m_cam.getDir();
-			glUniform3f(mainGLP.getUnfLoc("u_cDir"), cDir.x,cDir.y,cDir.z);
+			glUniform3f(glpMain.getUnfLoc("u_cDir"), cDir.x,cDir.y,cDir.z);
 			glm::vec3 cUp = m_cam.getUp();
-			glUniform3f(mainGLP.getUnfLoc("u_cUp"), cUp.x,cUp.y,cUp.z);
+			glUniform3f(glpMain.getUnfLoc("u_cUp"), cUp.x,cUp.y,cUp.z);
 			glm::vec3 cRgt = m_cam.getRight();
-			glUniform3f(mainGLP.getUnfLoc("u_cRgt"), cRgt.x,cRgt.y,cRgt.z);
+			glUniform3f(glpMain.getUnfLoc("u_cRgt"), cRgt.x,cRgt.y,cRgt.z);
 			float cFoc = m_cam.getFocus();
-			glUniform1f(mainGLP.getUnfLoc("u_cFoc"), cFoc);
+			glUniform1f(glpMain.getUnfLoc("u_cFoc"), cFoc);
 
 			ehj_gl_err();
 			glDepthMask(GL_TRUE);
 			fragSTimer.start();
 				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 			fragSTimer.end();
+
+			//fb.update(m_windowRes);
+			ehj_gl_err();
+			glBindFramebuffer(GL_FRAMEBUFFER,0);
+			ehj_gl_err();
+
+			fsrTimer.start();
+			glpEASU.bind();
+			ehj_gl_err();
+			glUniformMatrix4fv(glpEASU.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
+			glUniform1f(glpEASU.getUnfLoc("u_time"), time);
+			glUniform1i(glpEASU.getUnfLoc("u_enableFSR"), enable_fsr);
+			glUniform2f(glpEASU.getUnfLoc("u_texRes"), renderRes.x, renderRes.y);
+			glUniform2f(glpEASU.getUnfLoc("u_resolution"), m_windowRes.x, m_windowRes.y);
+			ehj_gl_err();
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D,fb.getTexCol());
+			ehj_gl_err();
+			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+			ehj_gl_err();
+			fsrTimer.end();
 
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
@@ -175,6 +215,11 @@ public:
 				std::string frameTime = "ms: " + std::to_string(fragSTimer.getMS());
 				ImGui::TextUnformatted(fps.c_str());
 				ImGui::TextUnformatted(frameTime.c_str());
+				std::string fsrTime = "ms frag: " + std::to_string(fsrTimer.getMS());
+				ImGui::TextUnformatted(fsrTime.c_str());
+				ImGui::Button("enable_fsr");
+				if (ImGui::IsItemClicked(0))
+					enable_fsr = !enable_fsr;
 				ImGui::End();
 			}
 			ImGui::Render();

@@ -23,6 +23,17 @@ public:
 	void addSourceFromFile(std::string shaderPath, GLenum shaderType);
 	void addSourceFromFile(std::string shaderPath);
 
+	std::string loadFileContents(std::string path);
+
+	/**
+	 * @brief resolves '#include "othershader"' in shaderSource recursively
+	*/
+	void resolveInclude(const std::string shaderPath, std::string* shaderSource, uint32_t curDepth);
+	/**
+	 * @brief loads shaderFile from given Path and resolves '#include' directives
+	*/
+	void addSourceFromFileRecursive(std::string shaderPath);
+
 	GLenum detectShaderType(std::string fileName);
 	void loadProgramFromFilename(std::string folderPath, std::string programName);
 	void loadProgramFromFolder(std::string folderPath);
@@ -54,4 +65,6 @@ private:
 		}
 	} m_shaders;
 	std::map<std::string,GLint> m_uniformLocations;
+
+	uint32_t m_maxIncludeDepth = 10;
 };

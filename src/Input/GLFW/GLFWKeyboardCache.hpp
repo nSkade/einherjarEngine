@@ -1,3 +1,4 @@
+#pragma once
 #include "../Input.hpp"
 #include "../BCodes.hpp"
 #include "GLFWKeyboard.hpp"

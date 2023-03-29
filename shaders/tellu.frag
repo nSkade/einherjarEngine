@@ -382,6 +382,8 @@ Def raymarch(vec3 dir, vec3 origin) {
 				glowColor = max(glowColor,(max(0.0,glowNoise1+0.2))*glowNoise3*red*1.5);
 				glowColor *= 5.0;
 				magma = (glowColor*scale*scale*scale);
+				
+				// silouhette aura
 				magma += max(0.0,1.0-scale*3.0)*0.4*(vec3(174.0/255.0,183.0/255.0,198.0/255.0));
 			} else {
 				ambient = vec3(26.0/255.0,0.28/255.0,40.0/255.0)*0.1;
@@ -441,7 +443,8 @@ void main(void)
 	float abrTime = u_time*3.0;
 	if (mod(abrTime,3.14*4.0) < 3.14) {
 		float abre = sin(abrTime)*0.01;
-		CAMDIR.x = mod(float(gl_FragCoord.x),2.0) < 1.0 ? CAMDIR.x -= abre : CAMDIR.x += abre;
+		abre = mod(float(gl_FragCoord.x),2.0) < 1.0 ? -abre : abre;
+		CAMDIR.x += abre;
 	}
 
 	CAMDIR = normalize(CAMDIR);

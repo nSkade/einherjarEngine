@@ -166,6 +166,8 @@ public:
 		m_maxDepth = d;
 	}
 
+	float (*getSDFFunc())(glm::vec3) { return m_sdfFunc; };
+
 	typename Octree<Data>::Cell* getRoot() { return m_root; };
 
 private:

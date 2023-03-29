@@ -21,6 +21,7 @@
 
 #include "GAPI/OGL/GPUTimer.hpp"
 #include "GAPI/OGL/GLProgram.hpp"
+#include "GAPI/OGL/GLFrameBuffer.hpp"
 #include "GAPI/OGL/GLUtils.hpp"
 #include "Mesh.hpp"
 #include "GAPI/OGL/OGLMesh.hpp"

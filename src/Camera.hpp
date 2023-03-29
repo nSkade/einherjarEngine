@@ -79,9 +79,9 @@ protected:
 
 class ICameraController {
 public:
-	ICameraController(Camera* cam) : m_pCam(cam) {};
 	virtual void update(float deltaTime) = 0;
 protected:
+	ICameraController(Camera* cam) : m_pCam(cam) {};
 	Camera* m_pCam;
 };
 

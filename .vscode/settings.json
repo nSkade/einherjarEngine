@@ -83,6 +83,13 @@
 		"xtree": "cpp",
 		"xutility": "cpp",
 		"span": "cpp",
-		"orderingmethods": "cpp"
+		"orderingmethods": "cpp",
+		"any": "cpp",
+		"codecvt": "cpp",
+		"condition_variable": "cpp",
+		"csignal": "cpp",
+		"shared_mutex": "cpp",
+		"typeindex": "cpp",
+		"variant": "cpp"
 	}
 }

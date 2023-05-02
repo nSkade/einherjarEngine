@@ -50,6 +50,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 void setup(void) {
 
 };
+//TODO rewrite in newer gl with helper functions
 int run(void)
 {
 	GLFWwindow* window;
@@ -61,8 +62,9 @@ int run(void)
 	if (!glfwInit())
 		exit(EXIT_FAILURE);
 
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	//TODO target at least 3.3
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
 	window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
 	if (!window)
@@ -74,8 +76,6 @@ int run(void)
 	glfwSetKeyCallback(window, key_callback);
 
 	glfwMakeContextCurrent(window);
-	//gladLoadGL(glfwGetProcAddress);
-	//gladLoadGL();
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 	glfwSwapInterval(1);
 	// NOTE: OpenGL error checks have been omitted for brevity

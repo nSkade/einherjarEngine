@@ -23,7 +23,7 @@ public:
 	void addSourceFromFile(std::string shaderPath, GLenum shaderType);
 	void addSourceFromFile(std::string shaderPath);
 
-	std::string loadFileContents(std::string path);
+	static std::string loadFileContents(std::string path);
 
 	/**
 	 * @brief resolves '#include "othershader"' in shaderSource recursively

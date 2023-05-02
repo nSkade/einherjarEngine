@@ -10,6 +10,7 @@
 #include <glad/glad.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+#include "Utility/GLFWFPSLimiter.hpp"
 
 #define GLM_FORCE_XYZW_ONLY
 
@@ -26,7 +27,8 @@
 #include "Mesh.hpp"
 #include "GAPI/OGL/OGLMesh.hpp"
 #include "Camera.hpp"
-#include "Clock.hpp"
+#include "Clock.hpp" //TODO replace with "Utility/Timer.hpp"
+#include "Utility/Timer.hpp"
 
 /**
  * @brief Scene utility for OpenGL.

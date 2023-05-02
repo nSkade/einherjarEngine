@@ -21,14 +21,14 @@ int main(void)
 #endif
 	{
 	
-	//TriangleHWScene scene;
+	TriangleHWScene scene;
 	//SampleScene scene;
 	//ComputeShaderTestScene scene;
 	//VulkanTestScene scene;
 	//ADFtestScene scene;
 	//EnvirScene scene;
 	//RayMarchingTestScene scene;
-	FSRTestScene scene;
+	//FSRTestScene scene;
 
 	scene.setup();
 	scene.run();

@@ -14,6 +14,16 @@ if not exist %VS2019TOOLS% (
 call %VS2019TOOLS%
 
 set /a "NOPMO=%NUMBER_OF_PROCESSORS%-1"
-:: run the compiler with your arguments
+if "%1"=="-my" (goto :a)
+goto :b
+:a
+make "MYENVIR = $(TRUE)" "CXX = cl.exe /Od /EHsc /Zi" "BUILDFOLDER = out/mfdbg" "TARGET = einherjarEngineDbg" "ARGO = /c /FS" "ARGOP = /std:c++17 /c /FS" "ARGF = /std:c++17" "OUTF = /link /out:" "OUTC = /Fo:" "INC = /Ilib/imgui /Ilib/imgui/backends /Ilib/glfw3 /Ilib /DEHJ_DBG /D_DEBUG /MDd /D_CRTDBG_MAP_ALLOC" "LIB = lib/glad/glad.lib glfw3.lib /LIBPATH:"""C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\lib\x64""" /LIBPATH:"""C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64""" /LIBPATH:"""C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\ucrt\x64"""" "VULKAN_INC = /I$(VULKAN_PATH)/Include" "VULKAN_LIB = $(VULKAN_PATH)/Lib/vulkan-1.lib" -j %NOPMO%
+
+goto :end
+:b
+:: Use Standard config.
+::TODO make smaller
 make "CXX = cl.exe /Od /EHsc /Zi" "BUILDFOLDER = out/mfdbg" "TARGET = einherjarEngineDbg" "ARGO = /c /FS" "ARGOP = /std:c++17 /c /FS" "ARGF = /std:c++17" "OUTF = /link /out:" "OUTC = /Fo:" "INC = /Ilib/imgui /Ilib/imgui/backends /Ilib/glfw3 /Ilib /DEHJ_DBG /D_DEBUG /MDd /D_CRTDBG_MAP_ALLOC" "LIB = lib/glad/glad.lib glfw3.lib /LIBPATH:"""C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\lib\x64""" /LIBPATH:"""C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64""" /LIBPATH:"""C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\ucrt\x64"""" "VULKAN_INC = /I$(VULKAN_PATH)/Include" "VULKAN_LIB = $(VULKAN_PATH)/Lib/vulkan-1.lib" -j %NOPMO%
+
+:end
 exit

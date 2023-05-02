@@ -10,9 +10,9 @@ uniform float u_cFoc;
 
 #define M_PI 3.14159265358979
 
-#define NUMSTEPS 64
+#define NUMSTEPS 16
 float MINHIT = 0.005;
-float MAXDIST = 100.0; //TODO 20.0;
+float MAXDIST = 40.0; //TODO 20.0;
 vec3 CAMPOS = vec3(0.0, 1.0, -2.0);
 vec3 CAMDIR = vec3(0.0, 0.0, 0.0);
 float infinity = 1.0 / 0.0;
@@ -451,12 +451,16 @@ void main(void)
 	//CAMDIR = rotationY(u_mouse.x/u_resolution.x*3.14*2.0)*CAMDIR;
 	//CAMDIR = rotationY(u_time*0.3) * CAMDIR;
 	Def def = raymarch(CAMDIR, CAMPOS);
-	float fadeout = MAXDIST-5.0;
-	float scale = max(0.0,1.0/log(def.depth-fadeout+5.0));
+	float fadeout = MAXDIST;
+	fadeout =log(def.depth-fadeout+13.0);
+	float scale = clamp(log(fadeout),0.0,1.0);
 	//def.color *= scale;
 	vec3 bot = vec3(36.0/255.0,45.0/255.0,60.0/255.0);
 	vec3 top = vec3(30.0/255.0,34.0/255.0,45.0/255.0);
-	def.color += (scale > 0.0 || def.depth > MAXDIST) ? (uv.y*bot+(1.0-uv.y)*top)*(1.0-scale) : vec3(0.0);
+	vec3 bg = (uv.y*top+(1.0-uv.y)*bot);
+	//def.color += (scale > 0.0 || def.depth > MAXDIST) ? (uv.y*bot+(1.0-uv.y)*top)*(1.0-scale) : vec3(0.0);
+	//scale = 1.0-scale;
+	def.color = scale*bg+(1.0-scale)*def.color;
 	
 	vec3 pos = def.worldPos;
 	// TODO make colors global

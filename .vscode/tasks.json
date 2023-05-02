@@ -19,6 +19,24 @@
 			"problemMatcher": "$msCompile"
 		},
 		{
+			"type": "shell",
+			"label": "buildTest MYENVIR",
+			"command": "${workspaceFolder}\\.vscode\\buildvs.bat -my",
+			//"command": "make CXX = cl /EHsc /Zi /Fe",
+			"group":  {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal":"always"
+			},
+			//"presentation": {
+			//	"reveal": "silent",
+			//	"clear": true
+			//},
+			"problemMatcher": "$msCompile"
+		},
+		{
 			"label": "buildTestEnd",
 			"type": "process",
 			"command":[

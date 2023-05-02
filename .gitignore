@@ -1,6 +1,7 @@
 .vs/
 out/
 modelsOut/
+myScenes/
 einherjarEngine.*
 einherjarEngineDbg.*
 imgui.ini

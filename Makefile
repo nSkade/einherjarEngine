@@ -4,7 +4,7 @@ OUTC = -o$(space)
 OUTF = -o$(space)
 TRUE = 1
 FALSE = 0
-
+#TODO make non changeable variables full lower case
 ########################## general settings
 
 CXX = clang
@@ -15,6 +15,9 @@ VULKAN_PATH = C:/VulkanSDK/1.3.231.1
 
 #make sure to add a custom buildfolder to the .gitignore
 BUILDFOLDER = out/mf
+#use /myScenes/main.cpp instead of /src/main.cpp and myScenes instead of scenes
+MYENVIR = $(FALSE)
+#TODO somehow move out of Makefile
 
 ARGO = -c -Wall
 ARGOP = -std=c++17 -c -Wall
@@ -27,10 +30,18 @@ TEXTENSION = .exe
 LIB = -Lfolder -lglad -lglfw3
 INC = -Ilib/imgui -Ilib/imgui/backends -Ilib/glfw3 -Ilib
 
-SRC = $(wildcard src/*.cpp) $(wildcard src/*/*.cpp) $(wildcard src/*/*/*.cpp) lib/glad/glad.c
+SRC2 = $(wildcard src/*.cpp) $(wildcard src/*/*.cpp) $(wildcard src/*/*/*.cpp) lib/glad/glad.c
 HEAD = $(wildcard src/*.hpp) $(wildcard src/*/*.hpp) $(wildcard src/*/*/*.hpp)
 HSCENE = $(wildcard scenes/*.hpp)
-#$(wildcard src/Structures/*.hpp)
+
+ifeq ($(MYENVIR),$(TRUE))
+#SRC3 = $(filter src/main.cpp,$(space), $(SRC2)) $(myScenes/main.cpp)
+SRC3 = $(SRC2:src/main.cpp=myScenes/main.cpp)
+HSCENE = $(wildcard myScenes/*.hpp)
+SRC = $(SRC3)
+else
+SRC = $(SRC2)
+endif
 
 ########################## vulkan
 ifeq ($(VULKAN_ENABLED),$(TRUE))
@@ -59,12 +70,17 @@ NODEPS = clean cleanDBG
 ##########################
 all: $(TARGET)
 
-$(BUILDFOLDER)/src/%.o: src/%.cpp $(HEAD)
+#main compile
+$(BUILDFOLDER)/myScenes/main.o: myScenes/main.cpp $(HSCENE) $(HEAD)
+	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
+	$(CXX) $(ARGOP) $< $(OUTC)$@ $(INC) $(VULKAN_INC)
+	
+#main compile
+$(BUILDFOLDER)/src/main.o: src/main.cpp $(HSCENE) $(HEAD)
 	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
 	$(CXX) $(ARGOP) $< $(OUTC)$@ $(INC) $(VULKAN_INC)
 
-#main compile
-$(BUILDFOLDER)/src/main.o: src/main.cpp $(HSCENE) $(HEAD)
+$(BUILDFOLDER)/src/%.o: src/%.cpp $(HEAD)
 	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
 	$(CXX) $(ARGOP) $< $(OUTC)$@ $(INC) $(VULKAN_INC)
 

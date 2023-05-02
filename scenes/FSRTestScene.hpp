@@ -129,6 +129,9 @@ public:
 		glBindVertexArray(oglMesh.getVAO());
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oglMesh.getEBO());
 		bool enable_fsr = true;
+
+		//Timer frameTimer;
+		GLFWfpsLimiter fpsLimiter;
 		
 		while (!glfwWindowShouldClose(m_pWindow))
 		{
@@ -209,9 +212,11 @@ public:
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
 			{
-				ImGui::Begin("Render Info");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-				//ImGui::Text("Hello from another window!");
+				ImGui::Begin("Render Info");
 				std::string fps = "fps: " + std::to_string(1.0/(fragSTimer.getMS()/1000.0));
+				//std::string fps = "fps: " + std::to_string(1.0/(frameTimer.endTimer()*0.001));
+				// need to take samples over larger timespan
+				//frameTimer.startTimer();
 				std::string frameTime = "ms: " + std::to_string(fragSTimer.getMS());
 				ImGui::TextUnformatted(fps.c_str());
 				ImGui::TextUnformatted(frameTime.c_str());
@@ -230,6 +235,8 @@ public:
 			glfwSwapBuffers(m_pWindow);
 			glfwPollEvents();
 			processInput(m_pWindow); // TODO check esc close window
+
+			fpsLimiter.wait();
 		}
 		return 0;
 	}

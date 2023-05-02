@@ -1,1 +1,1 @@
-bb.bat < nul
+bb.bat %1 < nul

@@ -273,9 +273,7 @@ int run() {
 	glBindAttribLocation(program,attribNrm,"vNrm");
 	ehj_gl_err();
 	glUseProgram(program);
-
-	sleep(2000);
-
+	
 	std::cout << "check1\n";
 	ehj_gl_err();
 	mvp_location = glGetUniformLocation(program, "MVP");

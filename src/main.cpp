@@ -14,21 +14,20 @@
 #include "../scenes/RayMarchingTestScene.hpp"
 #include "../scenes/FSRTestScene.hpp"
 
-int main(void)
-{
+int main(void) {
 #ifdef EHJ_DBG
 	std::cout << "EHJ_DBG defined, running DEBUG mode.\n";
 #endif
 	{
 	
-	TriangleHWScene scene;
+	//TriangleHWScene scene;
 	//SampleScene scene;
 	//ComputeShaderTestScene scene;
 	//VulkanTestScene scene;
 	//ADFtestScene scene;
 	//EnvirScene scene;
 	//RayMarchingTestScene scene;
-	//FSRTestScene scene;
+	FSRTestScene scene;
 
 	scene.setup();
 	scene.run();

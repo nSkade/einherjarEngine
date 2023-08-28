@@ -167,6 +167,10 @@ public:
 		DWN = 32,
 		SPT = 64,  // sprint
 		WLK = 128, // walk
+		VLFT = 256,
+		VRGT = 512,
+		VUP = 1024,
+		VDWN = 2048,
 	};
 	CCkb(Camera* cam) : ICameraController(cam) {
 		m_pKB = GLFWKeyboard::instance();
@@ -178,6 +182,11 @@ public:
 	void callback(KeyboardData kd);
 private:
 	uint32_t m_state = 0;
+
+	glm::vec2 m_sens = glm::vec2(20.f);
+	//TODOf uniform place with mouse cam
+	float yaw = -90.0f;
+	float pitch = 0.0f;
 	
 	std::shared_ptr<GLFWKeyboard> m_pKB;
 };

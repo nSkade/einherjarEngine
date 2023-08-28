@@ -171,6 +171,12 @@ public:
 				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 			fragSTimer.end();
 
+			pvm = m_cam.getPV();
+			glm::mat4 t2(1.f);
+			pvm = pvm * glm::translate(t2,glm::vec3(1.f,0.f,0.f));
+			glUniformMatrix4fv(mainGLP.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
+			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+
 			ehj_gl_err();
 
 			glfwSwapBuffers(m_pWindow);

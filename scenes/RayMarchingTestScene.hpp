@@ -109,6 +109,8 @@ public:
 
 		int guiTess = 1;
 		float time = 0.0f;
+		bool fps30 = false;
+		GLFWfpsLimiter fpsLimiter;
 		
 		while (!glfwWindowShouldClose(m_pWindow))
 		{
@@ -124,6 +126,13 @@ public:
 					glBindAttribLocation(mainGLP.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
 				mainGLP.bind();
 			}
+			if (GLFWKeyboardCache::keyPressed(IBCodes::KK_KEY_F)) {
+				fps30 = !fps30;
+				uint32_t n = fps30 ? 30 : fpsLimiter.getRefreshRate();
+				fpsLimiter.setLimit(n);
+			}
+
+			fpsLimiter.wait();
 
 			float deltaTime = m_clock.update();
 			time += deltaTime;

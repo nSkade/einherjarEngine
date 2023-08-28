@@ -10,8 +10,8 @@ uniform float u_cFoc;
 
 #define M_PI 3.14159265358979
 
-#define NUMSTEPS 16
-float MINHIT = 0.005;
+#define NUMSTEPS 16//32 //25
+float MINHIT = 0.005; //0.04;
 float MAXDIST = 40.0; //TODO 20.0;
 vec3 CAMPOS = vec3(0.0, 1.0, -2.0);
 vec3 CAMDIR = vec3(0.0, 0.0, 0.0);
@@ -46,9 +46,6 @@ struct Mat {
 	vec3 color;
 	float glow;
 };
-
-const int NUMLIGHTS = 2;
-vec3 lights[NUMLIGHTS];
 
 float smin(float a, float b, float k) {
 	float h = clamp(0.5+0.5*(a-b)/k,0.0,1.0);
@@ -332,10 +329,10 @@ Def raymarch(vec3 dir, vec3 origin) {
 	dist = explC.x != 0.0 ? explC.y : explG;
 	dist = explC.y < 0.0 ? explG : dist;
 	
+	vec3 pos = vec3(0.);
 	for (int i = 0; i < NUMSTEPS; i++) {
-		vec3 pos = origin + dist * dir;
+		pos = origin + dist * dir;
 		
-		def.worldPos = pos;
 		vec2 uv;
 		float closest = distFunc(pos, uv);
 		
@@ -344,78 +341,112 @@ Def raymarch(vec3 dir, vec3 origin) {
 		//g += 0.4/(llp.x*llp.x+0.1)*0.01;
 		
 		if (closest < MINHIT) {
+			def.worldPos = pos;
 			def.depth = dist;
-			vec3 ambient = vec3(1.0);
-			vec3 ambientF = vec3(1.0);
-			//return normalFunc(pos);
-			vec3 light = vec3(5.0,2.0,-6.0);
-			vec3 dir_light = normalize(light-pos);
-			float dist_light = length(light-pos);
-			vec3 normal = normalFunc(pos);
-			vec3 oldNormal = normal;
-			//def.color = normal;
-			//return def;
-
-			vec3 magma = vec3(0.0);
-			float scale = 0.0;
-			// TODO fix shiny border when facing cam? def.color = max(def.color, ambientF*max(0.0,1.0-scale*3.0));
-			
-			//TODO this is horribly slow do one normal func
-			if (pos.y > 0.0) {
-				ambient = vec3(20.0/255.0,25.0/255.0,31.5/255.0);
-				normal = normalFuncMoon(pos);
-				ambientF = normalize(vec3(174.0/255.0,183.0/255.0,198.0/255.0));
-				
-				oldNormal = oldNormal*(1.25);
-				scale = -(dot(dir,oldNormal));
-				
-				// use 2d screenspace normals?
-				float glowNoise1 = d3Noise((oldNormal+u_time*0.015)*20.0)-0.28;
-				float glowNoise2 = d3Noise((oldNormal+u_time*0.01)*60.0);
-				float glowNoise3 = d3Noise((oldNormal+u_time*0.01)*120.0);
-				
-				vec3 red = vec3(233.0/255.0,48.0/255.0,28.0/255.0);
-				vec3 orange = vec3(1.0, 197.0/255.0,73.0/255.0);
-				
-				vec3 glowColor = max(red*(glowNoise1-0.075),orange*(max(0.0,glowNoise1-0.2)))*2.0;
-				glowColor = max(glowColor,(max(0.0,glowNoise1+0.15))*glowNoise2*red*2.0);
-				glowColor = max(glowColor,(max(0.0,glowNoise1+0.2))*glowNoise3*red*1.5);
-				glowColor *= 5.0;
-				magma = (glowColor*scale*scale*scale);
-				
-				// silouhette aura
-				magma += max(0.0,1.0-scale*3.0)*0.4*(vec3(174.0/255.0,183.0/255.0,198.0/255.0));
-			} else {
-				ambient = vec3(26.0/255.0,0.28/255.0,40.0/255.0)*0.1;
-				ambientF = normalize(vec3(56.0/255.0,63.0/255.0,79.0/255.0));
-				float i = dist/MAXDIST;
-				i = pow(i,0.2);
-				normal = normal*i + (1.0-i)*normalFuncDune(pos,normal);
-			}
-			float diffuse = max(0.0, dot(normal, dir_light));
-			def.color = (ambient) + (ambientF)*diffuse/(dist_light*0.15); //TODO make light for moon brighter but keep dunes dark 
-			def.color = pos.y > 0.0 ? def.color + magma : def.color;
 			return def;
 		}
-		if (dist > MAXDIST)
+		if (dist > MAXDIST) {
+			def.worldPos = pos;
 			return def;
+		}
 		
 		dist += closest;
 	}
-	
+	def.worldPos = pos;
+	def.depth = pos.y > 0. ? infinity : dist;
 	return def;
 }
 
-void lightlane(vec3 camToWS, vec3 pn, vec3 off, float wid, float llo, float str) {
+const int NUMLIGHTS = 2;
+vec3 lights[NUMLIGHTS];
+
+vec3 shade(Def def, vec3 dir) {
+	vec3 c=vec3(0.);
+	if (def.depth == infinity)
+		return c;
+	
+	vec3 pos = def.worldPos;
+	float dist = def.depth;
+	
+	vec3 ambient = vec3(1.0);
+	vec3 ambientF = vec3(1.0);
+	//return normalFunc(pos);
+	vec3 normal = normalFunc(pos);
+	vec3 oldNormal = normal;
+	//c = normal;
+	//return c;
+
+	vec3 magma = vec3(0.0);
+	float scale = 0.0;
+	// TODO fix shiny border when facing cam? def.color = max(def.color, ambientF*max(0.0,1.0-scale*3.0));
+	
+	//TODO this is horribly slow do one normal func
+	if (pos.y > 0.0) {
+		ambient = vec3(20.0/255.0,25.0/255.0,31.5/255.0);
+		normal = normalFuncMoon(pos);
+		ambientF = normalize(vec3(174.0/255.0,183.0/255.0,198.0/255.0));
+		
+		//oldNormal = oldNormal*(1.25);
+		scale = -(dot(dir,oldNormal));
+		
+		// use 2d screenspace normals?
+		float glowNoise1 = d3Noise((oldNormal+u_time*0.015)*20.0)-0.28;
+		float glowNoise2 = d3Noise((oldNormal+u_time*0.01)*60.0);
+		float glowNoise3 = d3Noise((oldNormal+u_time*0.01)*120.0);
+		
+		vec3 red = vec3(233.0/255.0,48.0/255.0,28.0/255.0);
+		vec3 orange = vec3(1.0, 197.0/255.0,73.0/255.0);
+		
+		vec3 glowColor = max(red*(glowNoise1-0.075),orange*(max(0.0,glowNoise1-0.2)))*2.0;
+		glowColor = max(glowColor,(max(0.0,glowNoise1+0.15))*glowNoise2*red*2.0);
+		glowColor = max(glowColor,(max(0.0,glowNoise1+0.2))*glowNoise3*red*1.5);
+		glowColor *= 5.0;
+		magma = (glowColor*scale*scale*scale);
+		magma += max(0.0,1.0-scale*3.0)*0.4*(vec3(174.0/255.0,183.0/255.0,198.0/255.0));
+	} else {
+		ambient = vec3(26.0/255.0,0.28/255.0,40.0/255.0)*0.1;
+		ambientF = normalize(vec3(56.0/255.0,63.0/255.0,79.0/255.0));
+		float i = dist/MAXDIST;
+		i = pow(i,0.2);
+		normal = normal*i + (1.0-i)*normalFuncDune(pos,normal);
+	}
+	
+	lights[0] = vec3(5.0,3.0,-6.0);
+	lights[1] = vec3(-5.0,1.5,6.0);
+	
+	vec3 diffuse = vec3(0.);
+	
+	for (int i=0;i<NUMLIGHTS;++i) {
+		vec3 l = lights[i], c = normalize(CAMDIR);
+		//lights[i].xz = l.xz*c.xz;
+		
+		vec3 dir_light = normalize(lights[i]-pos);
+		float dist_light = length(lights[i]-pos);
+		float fd = dot(CAMDIR,normalize(l))*.5+.5;
+		fd = fd*1.1-.1;
+		float id = fd*max(0.0, dot(normal, dir_light));//*(1.-float(i)*(sin(u_time)*0.5+0.5));
+		diffuse += 1.5*ambientF*id/(dist_light*.15);
+	}
+	ambient *= ambient;
+
+	c = (ambient) + diffuse;//TODO make light for moon brighter but keep dunes dark 
+	c = pos.y > 0.0 ? c + magma : c;
+	
+	return c;
+}
+
+float lightlane(float depth, vec3 pn, vec3 off, float wid, float llo, float str) {
 	vec2 px = explPlaneCurved(CAMPOS, CAMDIR, pn,off);
 	float dp = px.y;
-	if (dp > 0.0 && dp < length(camToWS)) {
+	float g;
+	if (dp > 0.0 && dp < depth) {
 		vec3 llp = CAMPOS+CAMDIR*dp;
 		vec3 f = llp;//cross(llp,CAMDIR);
 		float lle = f.y-0.5-0.3*sin(dot(llp,cross(pn,vec3(0.0,1.0,0.0)))*.5+u_time+llo);
 		float fade = abs(dot(CAMDIR,pn))*min(1.0,dp)*str;
 		g += 0.7/(lle*lle*500.0*wid+1.0)*fade*fade;
 	}
+	return g;
 }
 
 void main(void)
@@ -444,13 +475,17 @@ void main(void)
 	if (mod(abrTime,3.14*4.0) < 3.14) {
 		float abre = sin(abrTime)*0.01;
 		abre = mod(float(gl_FragCoord.x),2.0) < 1.0 ? -abre : abre;
-		CAMDIR.x += abre;
+		//CAMDIR.x += abre;
 	}
 
 	CAMDIR = normalize(CAMDIR);
 	//CAMDIR = rotationY(u_mouse.x/u_resolution.x*3.14*2.0)*CAMDIR;
 	//CAMDIR = rotationY(u_time*0.3) * CAMDIR;
 	Def def = raymarch(CAMDIR, CAMPOS);
+	//gl_FragColor = vec4(def.worldPos, 1.0);
+	//return;
+	def.color = shade(def,CAMDIR);
+
 	float fadeout = MAXDIST;
 	fadeout =log(def.depth-fadeout+13.0);
 	float scale = clamp(log(fadeout),0.0,1.0);
@@ -474,7 +509,7 @@ void main(void)
 	for (int i = 0; i < particleSteps; i++) {
 		//glow
 		Spos += (normalize(camToWS)*8.0)/float(particleSteps);
-		def.color += red*min(1.0,0.065/(exp(pow(length(Spos-scnSpherePos),1.75))));
+		def.color += 2.0*red*min(1.0,0.065/(exp(pow(length(Spos-scnSpherePos),1.75))));
 		
 		// particles
 		if (length(Spos-CAMPOS) < length(camToWS)) {
@@ -486,9 +521,10 @@ void main(void)
 	}
 	vec4 col = vec4(def.color,1.0);
 	
-	lightlane(camToWS, vec3(1.0,0.0,0.0), vec3(-2.0,0.0,0.0),1.0,0.0,1.0);
-	lightlane(camToWS, normalize(vec3(.9,.0,.1)), vec3(-2.0,0.0,0.0),100.0,0.3*3.14,0.6);
-	lightlane(camToWS, normalize(vec3(.3,.0,.7)), vec3(0.0,0.0,-3.0),10.0,0.6*3.14,1.0);
-	
-	gl_FragColor = vec4(col.xyz+vec3(1.0,0.2,0.2)*g*5.0, 1.0);
+	float ll = 0.;
+	ll += lightlane(def.depth, vec3(1.0,0.0,0.0), vec3(-2.0,0.0,0.0),1.0,0.0,1.0);
+	ll += lightlane(def.depth, normalize(vec3(.9,.0,.1)), vec3(-2.0,0.0,0.0),100.0,0.3*3.14,0.6);
+	ll += lightlane(def.depth, normalize(vec3(.3,.0,.7)), vec3(0.0,0.0,-3.0),10.0,0.6*3.14,1.0);
+
+	gl_FragColor = vec4(col.xyz+vec3(1.0,0.2,0.2)*(g+ll)*5.0, 1.0);
 }

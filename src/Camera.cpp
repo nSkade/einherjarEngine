@@ -57,6 +57,28 @@ void CCkb::update(float deltaTime) {
 	if (m_state & RGT) m_pCam->setPos(m_pCam->getPos() - deltaTime*r);
 	if (m_state & UP) m_pCam->setPos(m_pCam->getPos() + deltaTime*u);
 	if (m_state & DWN) m_pCam->setPos(m_pCam->getPos() - deltaTime*u);
+
+	if (m_state & (VLFT+VRGT+VUP+VDWN)) {
+		if (m_state & VLFT)
+			yaw -= deltaTime*m_sens[0];
+		else if (m_state & VRGT)
+			yaw += deltaTime*m_sens[0];
+		
+		if (m_state & VUP)
+			pitch += deltaTime*m_sens[1];
+		else if (m_state & VDWN)
+			pitch -= deltaTime*m_sens[1];
+		
+		if(pitch > 89.0f)
+			pitch = 89.0f;
+		if(pitch < -89.0f)
+			pitch = -89.0f;
+		glm::vec3 dir;
+		dir.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		dir.y = sin(glm::radians(pitch));
+		dir.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		m_pCam->setDir(glm::normalize(dir));
+	}
 }
 
 void CCkb::callback(KeyboardData kd) {
@@ -70,6 +92,10 @@ void CCkb::callback(KeyboardData kd) {
 	case IBCodes::KK_KEY_SPACE: s = UP; break;
 	case IBCodes::KK_KEY_LEFT_SHIFT: s = SPT; break;
 	case IBCodes::KK_KEY_LEFT_ALT: s = WLK; break;
+	case IBCodes::KK_KEY_KP_1: s = VLFT; break;
+	case IBCodes::KK_KEY_KP_3: s = VRGT; break;
+	case IBCodes::KK_KEY_KP_2: s = VUP; break;
+	case IBCodes::KK_KEY_KP_0: s = VDWN; break;
 	default: break;
 	}
 	if (kd.ia==IBCodes::IA_PRESS)

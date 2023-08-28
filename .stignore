@@ -1,0 +1,9 @@
+.git/
+.vs/
+.vscode/
+out/
+*.exe
+*.pdb
+*.ilk
+*.exp
+*.lib

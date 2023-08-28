@@ -77,6 +77,7 @@ public:
 	#endif
 		
 		GLProgram glpMain;
+		GLProgram glpFXAA;
 		GLProgram glpEASU;
 		
 		ehj::SSMesh mesh;
@@ -94,6 +95,16 @@ public:
 		glpMain.addSourceFromFileRecursive("shaders/"+fragShader);
 
 		glpMain.createProgram();
+
+		glpFXAA.addSourceFromFile("shaders/basic_v.vert");
+		std::string fxaaShader = "fxaa.frag";
+		glpFXAA.addSourceFromFileRecursive("shaders/"+fxaaShader);
+		glpFXAA.createProgram();
+		glBindAttribLocation(glpFXAA.getProgramID(),oglMesh.getAttribPos(),"vPos");
+		if (oglMesh.getAttribNrm()!=-1)
+			glBindAttribLocation(glpFXAA.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+		ehj_gl_err();
+
 		glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
 			glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
@@ -124,14 +135,17 @@ public:
 		float time = 0.0f;
 
 		glm::ivec2 renderRes = {960,540};
-		GLFrameBuffer fb(renderRes);
+		GLFrameBuffer fbr(renderRes);
+		GLFrameBuffer fbFxaa(renderRes);
 
 		glBindVertexArray(oglMesh.getVAO());
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oglMesh.getEBO());
 		bool enable_fsr = true;
+		bool enable_fxaa = true;
 
 		//Timer frameTimer;
 		GLFWfpsLimiter fpsLimiter;
+		bool fps30 = true;
 		
 		while (!glfwWindowShouldClose(m_pWindow))
 		{
@@ -146,6 +160,12 @@ public:
 				if (oglMesh.getAttribNrm()!=-1)
 					glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
 			}
+			if (GLFWKeyboardCache::keyPressed(IBCodes::KK_KEY_F)) {
+				fps30 = !fps30;
+				uint32_t n = fps30 ? 15 : fpsLimiter.getRefreshRate();
+				fpsLimiter.setLimit(n);
+			}
+
 			glpMain.bind();
 
 			float deltaTime = m_clock.update();
@@ -158,7 +178,7 @@ public:
 			m_windowRes = glm::ivec2(width,height);
 			
 			glClear(GL_COLOR_BUFFER_BIT);
-			glBindFramebuffer(GL_FRAMEBUFFER,fb.getFBO());
+			glBindFramebuffer(GL_FRAMEBUFFER,fbr.getFBO());
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			m_cam.setProj(glm::perspective(glm::radians(90.0f), (float)renderRes.x/(float)renderRes.y,0.01f,100.0f));
@@ -187,7 +207,21 @@ public:
 				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 			fragSTimer.end();
 
-			//fb.update(m_windowRes);
+			ehj_gl_err();
+			glBindFramebuffer(GL_FRAMEBUFFER,fbFxaa.getFBO());
+			ehj_gl_err();
+
+			glpFXAA.bind();
+			glUniformMatrix4fv(glpFXAA.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
+			glUniform1i(glpFXAA.getUnfLoc("u_enableFXAA"), enable_fxaa);
+			glUniform2f(glpFXAA.getUnfLoc("RCPFrame"), 1./renderRes.x, 1./renderRes.y);
+			glUniform2f(glpFXAA.getUnfLoc("u_resolution"), renderRes.x, renderRes.y);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D,fbr.getTexCol());
+			ehj_gl_err();
+			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+
+			//fbr.update(m_windowRes);
 			ehj_gl_err();
 			glBindFramebuffer(GL_FRAMEBUFFER,0);
 			ehj_gl_err();
@@ -202,7 +236,7 @@ public:
 			glUniform2f(glpEASU.getUnfLoc("u_resolution"), m_windowRes.x, m_windowRes.y);
 			ehj_gl_err();
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D,fb.getTexCol());
+			glBindTexture(GL_TEXTURE_2D,fbFxaa.getTexCol());
 			ehj_gl_err();
 			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 			ehj_gl_err();
@@ -225,6 +259,9 @@ public:
 				ImGui::Button("enable_fsr");
 				if (ImGui::IsItemClicked(0))
 					enable_fsr = !enable_fsr;
+				ImGui::Button("enable_fxaa");
+				if (ImGui::IsItemClicked(0))
+					enable_fxaa = !enable_fxaa;
 				ImGui::End();
 			}
 			ImGui::Render();

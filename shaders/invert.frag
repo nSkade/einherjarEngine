@@ -24,7 +24,7 @@ AF4 FsrEasuBF(AF2 p) { return textureGather(u_Tex, p, 2); }
 
 void main() {
 	vec2 uv = gl_FragCoord.xy/u_resolution.xy;
-	if (u_enableFSR) {
+	if (!u_enableFSR) {
 		vec3 c = texture(u_Tex,uv).xyz;
 		color = vec4(c,0.0);
 		return;

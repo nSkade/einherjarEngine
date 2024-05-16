@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include <iostream>
 #include <memory>
@@ -30,6 +31,9 @@ public:
 	//TODO not implemented yet
 	void setTarget(glm::vec3 t) { m_target = t; m_viewUpdated = false; }; //TODO calculate dir
 	void setUp(glm::vec3 u) { m_up = u; m_viewUpdated = false; m_isPerp = false; };
+
+	void Camera::setRot(glm::quat q);
+	glm::quat getRot();
 	
 	glm::vec3 getPos() { return m_pos; };
 	glm::vec3 getDir() { return m_dir; };
@@ -48,15 +52,18 @@ public:
 		}
 		return m_pv;
 	};
-	void setProj(glm::mat4 p) { m_proj = p; m_projUpdated = false; };
+	void setProj(glm::mat4 p) { m_proj = p; m_projUpdated = false; }
+	glm::mat4 getProj() { return m_proj; }
 
-protected:
+	void setTiltable(bool tiltable) { m_noTilt = !tiltable; }
+	
 	/**
 	 * @brief signals Camera that its parameters have changed so the matrix gets updated
 	*/
 	void signalChange() { m_viewUpdated = false; };
 
-	bool m_noTilt = true;
+protected:
+	bool m_noTilt = true; //TODO make false
 	// variables calculated by class
 	bool m_viewUpdated = false;
 	glm::mat4 m_view = glm::mat4(1.0f);
@@ -125,7 +132,7 @@ public:
 		if (md.mb==IBCodes::MB_BUTTON_NONE) {
 			pos = glm::ivec2(md.xpos, md.ypos);
 		} else {
-			if (md.mb==IBCodes::MB_BUTTON_MIDDLE) {
+			if (md.mb==IBCodes::MB_BUTTON_RIGHT) {
 				if (md.ia==IBCodes::IA_PRESS) {
 					m_nonCapDrag = true;
 				}
@@ -159,18 +166,18 @@ private:
 class CCkb : public ICameraController, public ICBlistener<KeyboardData> {
 public:
 	enum state : uint32_t {
-		FWD = 1,
-		BWD = 2,
-		LFT = 4,
-		RGT = 8,
-		UP = 16,
-		DWN = 32,
-		SPT = 64,  // sprint
-		WLK = 128, // walk
-		VLFT = 256,
-		VRGT = 512,
-		VUP = 1024,
-		VDWN = 2048,
+		FWD =  1 << 0,
+		BWD =  1 << 1,
+		LFT =  1 << 2,
+		RGT =  1 << 3,
+		UP =   1 << 4,
+		DWN =  1 << 5,
+		SPT =  1 << 6, // sprint
+		WLK =  1 << 7, // walk
+		VLFT = 1 << 8,
+		VRGT = 1 << 9,
+		VUP =  1 << 10,
+		VDWN = 1 << 11,
 	};
 	CCkb(Camera* cam) : ICameraController(cam) {
 		m_pKB = GLFWKeyboard::instance();

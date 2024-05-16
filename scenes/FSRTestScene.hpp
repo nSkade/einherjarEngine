@@ -10,6 +10,7 @@ using namespace ehj;
 
 #define FULLSCREEN false
 
+#define SCENETYPE FSRTestScene
 class FSRTestScene : IScene {
 public:
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -296,3 +297,4 @@ private:
 	FreeFlyCamera m_cam;
 	Clock m_clock;
 };
+

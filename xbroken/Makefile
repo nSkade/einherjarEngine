@@ -8,10 +8,11 @@ FALSE = 0
 ########################## general settings
 
 CXX = clang
+CL = $(FALSE)
 # requires VOLK to be installed with VULKAN SDK
 VULKAN_ENABLED = $(TRUE)
 #VULKAN_ENABLED = $(FALSE)
-VULKAN_PATH = C:/VulkanSDK/1.3.231.1
+VULKAN_PATH = C:/VulkanSDK/1.3.275.0
 
 #make sure to add a custom buildfolder to the .gitignore
 BUILDFOLDER = out/mf
@@ -30,13 +31,13 @@ TEXTENSION = .exe
 LIB = -Lfolder -lglad -lglfw3
 INC = -Ilib/imgui -Ilib/imgui/backends -Ilib/glfw3 -Ilib
 
-SRC2 = $(wildcard src/*.cpp) $(wildcard src/*/*.cpp) $(wildcard src/*/*/*.cpp) lib/glad/glad.c
+SRC2 = $(wildcard src/*.cpp) $(wildcard src/*/*.cpp) $(wildcard src/*/*/*.cpp) lib/glad/glad.c  $(wildcard scenes/*.cpp)
 HEAD = $(wildcard src/*.hpp) $(wildcard src/*/*.hpp) $(wildcard src/*/*/*.hpp)
 HSCENE = $(wildcard scenes/*.hpp)
 
 ifeq ($(MYENVIR),$(TRUE))
 #SRC3 = $(filter src/main.cpp,$(space), $(SRC2)) $(myScenes/main.cpp)
-SRC3 = $(SRC2:src/main.cpp=myScenes/main.cpp)
+SRC3 = $(SRC2:scenes/main.cpp=myScenes/main.cpp)
 HSCENE = $(wildcard myScenes/*.hpp)
 SRC = $(SRC3)
 else
@@ -46,7 +47,14 @@ endif
 ########################## vulkan
 ifeq ($(VULKAN_ENABLED),$(TRUE))
 VULKAN_INC = -I$(VULKAN_PATH)/Include
-VULKAN_LIB = -l$(VULKAN_PATH)/Lib/vulkan-1
+#VULKAN_LIB = -l$(VULKAN_PATH)/Lib/vulkan-1 -l$(VULKAN_PATH)/Lib/volk
+VULKAN_LIB2 = $(wildcard $(VULKAN_PATH)/Lib/*.lib)
+
+ifeq ($(CL),$(TRUE))
+VULKAN_LIB = $(patsubst %, /l%, $(VULKAN_LIB2))
+else
+VULKAN_LIB = $(VULKAN_LIB2)
+endif
 
 IMGUI_VULK = lib/imgui/backends/imgui_impl_vulkan.cpp
 else
@@ -57,7 +65,7 @@ IMGUI_VULK = $(space)
 endif
 
 ########################## imgui
-IMGUI = $(wildcard lib/imgui/*.cpp) lib/imgui/backends/imgui_impl_opengl3.cpp lib/imgui/backends/imgui_impl_glfw.cpp $(IMGUI_VULK)
+IMGUI = $(wildcard lib/imgui/*.cpp) lib/imgui/backends/imgui_impl_opengl3.cpp lib/imgui/backends/imgui_impl_glfw.cpp lib/imgui/misc/cpp/imgui_stdlib.cpp $(IMGUI_VULK)
 IMGUIO2 = $(patsubst %, $(BUILDFOLDER)/%, $(IMGUI))
 IMGUIO = $(IMGUIO2:.cpp=.o)
 
@@ -76,7 +84,7 @@ $(BUILDFOLDER)/myScenes/main.o: myScenes/main.cpp $(HSCENE) $(HEAD)
 	$(CXX) $(ARGOP) $< $(OUTC)$@ $(INC) $(VULKAN_INC)
 	
 #main compile
-$(BUILDFOLDER)/src/main.o: src/main.cpp $(HSCENE) $(HEAD)
+$(BUILDFOLDER)/scenes/main.o: scenes/main.cpp $(HSCENE) $(HEAD)
 	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
 	$(CXX) $(ARGOP) $< $(OUTC)$@ $(INC) $(VULKAN_INC)
 
@@ -93,9 +101,12 @@ $(BUILDFOLDER)/lib/%.o: lib/%.c
 	if not exist $(subst /,\\,$(dir $@)) mkdir $(subst /,\\,$(dir $@))
 	$(CXX) $(ARGO) $< $(OUTC)$@ $(INC) $(VULKAN_INC)
 
+my.res:
+	llvm-rc my.rc
+
 #link executable
-$(TARGET): $(OBJ) $(IMGUIO)
-	$(CXX) $(ARGF) $(OBJ) $(IMGUIO) $(OUTF)$(TARGET)$(TEXTENSION) $(LIB) $(INC) $(VULKAN_LIB) $(VULKAN_INC)
+$(TARGET): $(OBJ) $(IMGUIO) my.res
+	$(CXX) $(ARGF) $(OBJ) $(IMGUIO) $(OUTF)$(TARGET)$(TEXTENSION) $(LIB) $(INC) $(VULKAN_LIB) $(VULKAN_INC) my.res
 
 ##########################
 .PHONY: clean

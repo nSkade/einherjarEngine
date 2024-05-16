@@ -52,7 +52,9 @@ protected:
 	uint32_t m_Dim = 3; // dimension of object
 };
 
-
+/**
+ * @brief SceenSpace Mesh
+*/
 class SSMesh : public Mesh {
 public:
 	SSMesh(bool triangles = false);

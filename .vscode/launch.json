@@ -1,15 +1,13 @@
 {
-	// Use IntelliSense to learn about possible attributes.
-	// Hover to view descriptions of existing attributes.
-	// For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+	// Use IntelliSense to learn about possible attributes. https://go.microsoft.com/fwlink/?linkid=830387
 	"version": "0.2.0",
 	"configurations": [
+
 		{
-			"preLaunchTask": "buildTest",
+			"preLaunchTask": "buildCMake",
 			"name": "cl debug",
 			"type": "cppvsdbg",
 			"request": "launch",
-			//"program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
 			"program": "${workspaceFolder}\\einherjarEngineDbg.exe",
 			"args": [],
 			"stopAtEntry": false,
@@ -21,20 +19,16 @@
 			//"postDebugTask": "buildTestEnd",
 		},
 		{
-			"preLaunchTask": "buildTest MYENVIR",
+			"preLaunchTask": "buildCMake MY",
 			"name": "cl MYENVIR",
 			"type": "cppvsdbg",
 			"request": "launch",
-			//"program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
 			"program": "${workspaceFolder}\\einherjarEngineDbg.exe",
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
 			"environment": [],
-			//"console": "externalTerminal",
-			//"console": "internalConsole",
 			"console": "integratedTerminal",
-			//"postDebugTask": "buildTestEnd",
 		}
 	]
 }

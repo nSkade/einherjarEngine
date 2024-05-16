@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 
+#define SCENETYPE ComputeShaderTestScene
 class ComputeShaderTestScene : IScene {
 public:
 	void setup() {

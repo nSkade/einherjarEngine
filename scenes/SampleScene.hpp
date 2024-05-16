@@ -9,6 +9,8 @@
 
 #include <stdlib.h>
 #define sleep _sleep
+
+#define SCENETYPE SampleScene
 class SampleScene : IScene {
 public:
 

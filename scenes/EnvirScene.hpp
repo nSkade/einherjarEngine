@@ -7,6 +7,7 @@ using namespace ehj;
 
 #define FULLSCREEN false
 
+#define SCENETYPE EnvirScene
 class EnvirScene : IScene {
 public:
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {

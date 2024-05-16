@@ -10,6 +10,7 @@ using namespace ehj;
 
 #define FULLSCREEN false
 
+#define SCENETYPE RayMarchingTestScene
 class RayMarchingTestScene : IScene {
 public:
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {

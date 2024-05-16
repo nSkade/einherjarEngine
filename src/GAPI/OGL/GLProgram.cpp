@@ -44,7 +44,7 @@ void GLProgram::bind() {
 	glUseProgram(m_programID);
 }
 
-void GLProgram::addSourceFromString(std::string shaderSource, GLenum shaderType, const std::string& filePath) {
+bool GLProgram::addSourceFromString(std::string shaderSource, GLenum shaderType, const std::string& filePath) {
 	auto itr = m_shaders.toID.find(shaderType);
 	if (itr != m_shaders.toID.end()) { // shader does already exist
 		GLuint oldID = itr->second;
@@ -55,7 +55,7 @@ void GLProgram::addSourceFromString(std::string shaderSource, GLenum shaderType,
 	GLuint shaderID = glCreateShader(shaderType);
 	if (shaderID == 0) {
 		std::cerr << "GLProgram::addSourceFromString : glCreateShader error occured." << std::endl;
-		return;
+		return false;
 	}
 	
 	const char* shaderSourceC = shaderSource.c_str();
@@ -73,10 +73,11 @@ void GLProgram::addSourceFromString(std::string shaderSource, GLenum shaderType,
 		std::cerr << logSTR << std::endl;
 
 		glDeleteShader(shaderID);
-		return;
+		return false;
 	}
 
 	m_shaders.push_back(shaderID,shaderType);
+	return true;
 }
 
 std::string GLProgram::loadFileContents(std::string path) {
@@ -87,9 +88,9 @@ std::string GLProgram::loadFileContents(std::string path) {
 	return contents;
 }
 
-void GLProgram::addSourceFromFile(std::string shaderPath, GLenum shaderType) {
+bool GLProgram::addSourceFromFile(std::string shaderPath, GLenum shaderType) {
 	std::string shaderString = loadFileContents(shaderPath);
-	addSourceFromString(shaderString,shaderType,shaderPath);
+	return addSourceFromString(shaderString,shaderType,shaderPath);
 }
 
 //TODO not implemented
@@ -159,13 +160,13 @@ void GLProgram::loadProgramFromFolder(std::string folderPath) {
 	}
 }
 
-void GLProgram::addSourceFromFile(std::string shaderPath) {
+bool GLProgram::addSourceFromFile(std::string shaderPath) {
 	std::string shaderString = loadFileContents(shaderPath);
 
 	std::filesystem::path sp(shaderPath);
 	GLenum shaderType = detectShaderType(sp.filename().string());
 
-	addSourceFromString(shaderString,shaderType,shaderPath);
+	return addSourceFromString(shaderString,shaderType,shaderPath);
 }
 
 GLint GLProgram::getUnfLoc(std::string name) {
@@ -183,17 +184,22 @@ void GLProgram::clearUniformLocations() {
 	m_uniformLocations.clear();
 }
 
-void GLProgram::addSourceFromFileRecursive(std::string shaderPath) {
+bool GLProgram::addSourceFromFileRecursive(std::string shaderPath, GLenum shaderType) {
 	std::filesystem::path sp(shaderPath);
-	GLenum shaderType = detectShaderType(sp.filename().string());
-
 	std::string shaderString = loadFileContents(shaderPath);
 
 	resolveInclude(shaderPath,&shaderString,0);
 
-	addSourceFromString(shaderString,shaderType,shaderPath);
+	return addSourceFromString(shaderString,shaderType,shaderPath);
 }
 
+bool GLProgram::addSourceFromFileRecursive(std::string shaderPath) {
+	std::filesystem::path sp(shaderPath);
+	GLenum shaderType = detectShaderType(sp.filename().string());
+	return addSourceFromFileRecursive(shaderPath, shaderType);
+}
+
+//TODO add check to avoid include loop or double includes which could casue conflicts
 void GLProgram::resolveInclude(const std::string shaderPath, std::string* shaderSource, uint32_t curDepth) {
 	if (curDepth >= m_maxIncludeDepth) {
 		std::cerr << "GLProgram::resolveInclude error: max include depth reached!" << std::endl;

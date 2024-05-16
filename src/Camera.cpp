@@ -1,9 +1,11 @@
 #include "Camera.hpp"
 
 #include <glm/ext/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 namespace ehj {
 
+//TODO probably change to smart pointer
 void Camera::addCameraController(ICameraController* cc) {
 	for (uint32_t i=0;i<m_controllers.size();++i) { //TODO check faster with map?
 		if (m_controllers[i]==cc)
@@ -43,6 +45,22 @@ void Camera::makePerpendicular() {
 		m_up = glm::cross(m_dir,m_right);
 		m_isPerp = true;
 	}
+}
+
+void Camera::setRot(glm::quat q) {
+	m_viewUpdated = false;
+	glm::vec3 dir = glm::vec3(0.0f,0.0f,-1.0f);
+	glm::vec3 up = glm::vec3(0.0f,1.0f,0.0f);
+	glm::mat3 rot = glm::mat3_cast(q);
+	m_dir = rot*dir;
+	m_up = rot*up;
+}
+
+glm::quat Camera::getRot() {
+	glm::mat3 rot = glm::mat3(m_view);
+	rot = glm::inverse(rot);
+	glm::quat q = glm::quat_cast(rot);
+	return q;
 }
 
 void CCkb::update(float deltaTime) {

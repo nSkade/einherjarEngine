@@ -10,6 +10,7 @@ using namespace ehj;
 
 #define FULLSCREEN false
 
+#define SCENETYPE ADFtestScene
 class ADFtestScene : IScene {
 public:
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -47,7 +48,7 @@ public:
 	#endif
 		glfwSetFramebufferSizeCallback(m_pWindow, framebuffer_size_callback);
 
-		m_kb = ehj::GLFWKeyboard::instance();
+		m_kb = ehj::GLFWKeyboard::instance(); //TODO fix this requirement to keep singleton alive
 		m_mouse = ehj::GLFWMouse::instance();
 
 		glfwSetCursorPosCallback(m_pWindow, m_mouse->mouse_callback);

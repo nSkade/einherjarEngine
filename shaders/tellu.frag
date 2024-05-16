@@ -10,8 +10,10 @@ uniform float u_cFoc;
 
 #define M_PI 3.14159265358979
 
-#define NUMSTEPS 16//32 //25
-float MINHIT = 0.005; //0.04;
+//#define NUMSTEPS 16//32 //25
+//float MINHIT = 0.005; //0.04;
+#define NUMSTEPS 4//2//32 //25
+float MINHIT = 0.01; //0.04;
 float MAXDIST = 40.0; //TODO 20.0;
 vec3 CAMPOS = vec3(0.0, 1.0, -2.0);
 vec3 CAMDIR = vec3(0.0, 0.0, 0.0);
@@ -153,7 +155,7 @@ const vec3 scnSpherePos = vec3(0.0,1.0,0.0);
 
 float moonNoise(in vec3 normal) {
 	normal *= 10.0; // scale normal
-	float ret = d3Noise(normal)*0.02;
+	float ret = 0.;//d3Noise(normal)*0.02;
 	//ret += d3Noise(normal*24.0)*0.02;
 	//ret += d3Noise(normal*8.0)*0.03;
 	//ret += d3Noise(normal*12.0)*0.02;
@@ -161,7 +163,10 @@ float moonNoise(in vec3 normal) {
 	int steps = 3;
 	float multip = 6.0;
 	for (int i = 1; i < steps; i++) {
-		ret +=d3Noise(normal*multip)*0.02;
+		//ret +=d3Noise(normal*multip)*0.02;
+		//multip *= multip;
+		vec3 v = normal*multip;
+		ret += gradientNoise(v.xz)*gradientNoise(v.xy)*5.0*0.02;
 		multip *= multip;
 	}
 	
@@ -187,7 +192,7 @@ float distPlane(vec3 p, vec3 n) {
 float duneFunc(vec3 p) {
 	p = p.zyx*0.5;
 	vec3 u = 2.0*vec3(gradientNoise(p.xy),0.0,gradientNoise(p.zx));
-	return -0.8+0.3*sin(u.x+cos(u.z))-(1.0-abs(sin(u.x+u.z+gradientNoise(u.zx)*0.5)))*0.5;
+	return -0.7+0.3*sin(u.x+cos(u.z))-(1.0-abs(sin(u.x+u.z+gradientNoise(u.zx)*0.5)))*0.5;
 }
 
 float distDune(vec3 p) {
@@ -282,6 +287,17 @@ vec2 explCircle(vec3 pos, vec3 dir, float radius) {
 	return vec2(1.0,fstSol);
 }
 
+// returns both intersections
+vec3 explCircle2(vec3 pos, vec3 dir, float radius) {
+	float a = dot(dir,dir);
+	float b = dot(2.0*pos,dir);
+	float c = dot(pos,pos)-radius*radius;
+	float circle = b*b-4.0*a*c;
+	if (circle < 0.0) return vec3(0.0,0.0,0.);
+	float fstSol = (-b-sqrt(circle))/(2.0*a);
+	float sndSol = (-b+sqrt(circle))/(2.0*a);
+	return vec3(1.0,fstSol,sndSol);
+}
 vec2 explPlane(vec3 pos, vec3 dir, vec3 n, vec3 a) {
 	// dot(p-a,n)=0
 	// p=pos+dir*t;
@@ -357,7 +373,7 @@ Def raymarch(vec3 dir, vec3 origin) {
 	return def;
 }
 
-const int NUMLIGHTS = 2;
+const int NUMLIGHTS = 3;
 vec3 lights[NUMLIGHTS];
 
 vec3 shade(Def def, vec3 dir) {
@@ -408,7 +424,8 @@ vec3 shade(Def def, vec3 dir) {
 		ambientF = normalize(vec3(56.0/255.0,63.0/255.0,79.0/255.0));
 		float i = dist/MAXDIST;
 		i = pow(i,0.2);
-		normal = normal*i + (1.0-i)*normalFuncDune(pos,normal);
+		//normal = normal*i + (1.0-i)*normalFuncDune(pos,normal);
+		normal = normalFuncDune(pos,normal);
 	}
 	
 	lights[0] = vec3(5.0,3.0,-6.0);

@@ -19,9 +19,12 @@ public:
 	GLint getProgramID(); //TODO remove?
 	GLuint getShaderID(GLenum shaderType);
 	
-	void addSourceFromString(std::string shaderSource, GLenum shaderType, const std::string& filePath);
-	void addSourceFromFile(std::string shaderPath, GLenum shaderType);
-	void addSourceFromFile(std::string shaderPath);
+	/**
+	 * @return true on compile success.
+	*/
+	bool addSourceFromString(std::string shaderSource, GLenum shaderType, const std::string& filePath);
+	bool addSourceFromFile(std::string shaderPath, GLenum shaderType);
+	bool addSourceFromFile(std::string shaderPath);
 
 	static std::string loadFileContents(std::string path);
 
@@ -32,7 +35,9 @@ public:
 	/**
 	 * @brief loads shaderFile from given Path and resolves '#include' directives
 	*/
-	void addSourceFromFileRecursive(std::string shaderPath);
+	bool addSourceFromFileRecursive(std::string shaderPath);
+
+	bool addSourceFromFileRecursive(std::string shaderPath, GLenum shaderType);
 
 	GLenum detectShaderType(std::string fileName);
 	void loadProgramFromFilename(std::string folderPath, std::string programName);

@@ -11,8 +11,9 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 include_directories(einherjarEngine
 	lib/glad
 	lib/imgui
+	lib/imgui/backends
 	lib/glfw3
-	lib
+	lib/
 	src/
 	PUBLIC C:/VulkanSDK/1.3.275.0/Include #TODO abstract
 )
@@ -32,20 +33,20 @@ SET(CMAKE_COLOR_MAKEFILE OFF)
 file(GLOB_RECURSE einherjarEngine_SRC
 	"src/*.cpp"
 )
+file(GLOB imgui_SRC
+	"lib/imgui/*.cpp"
+)
 set(ehjSourceFiles )
 list(APPEND ehjSourceFiles
 	"my.rc"
 	${einherjarEngine_SRC}
 	
 	"lib/glad/glad.c"
-	
-	"lib/imgui/imgui.cpp"
-	"lib/imgui/imgui_demo.cpp"
-	"lib/imgui/imgui_draw.cpp"
-	"lib/imgui/imgui_tables.cpp"
-	"lib/imgui/imgui_widgets.cpp"
+
+	${imgui_SRC}
 	"lib/imgui/backends/imgui_impl_opengl3.cpp"
 	"lib/imgui/backends/imgui_impl_glfw.cpp"
+	"lib/imgui/misc/cpp/imgui_stdlib.cpp"
 )
 
 add_executable (ehjEngine

@@ -87,7 +87,10 @@ protected:
 class ICameraController {
 public:
 	virtual void update(float deltaTime) = 0;
+	void active(bool active) { m_enabled = active; };
+	bool active() { return m_enabled; };
 protected:
+	bool m_enabled = true;
 	ICameraController(Camera* cam) : m_pCam(cam) {};
 	Camera* m_pCam;
 };
@@ -215,6 +218,10 @@ public:
 	}
 	void setSensitivity(glm::vec2 sens) {
 		m_ccm.setSensitivity(sens);
+	}
+	void kbmActive(bool active) {
+		m_cckb.active(active);
+		m_ccm.active(active);
 	}
 
 	void makePerpendicular();

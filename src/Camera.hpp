@@ -32,7 +32,7 @@ public:
 	void setTarget(glm::vec3 t) { m_target = t; m_viewUpdated = false; }; //TODO calculate dir
 	void setUp(glm::vec3 u) { m_up = u; m_viewUpdated = false; m_isPerp = false; };
 
-	void Camera::setRot(glm::quat q);
+	void setRot(glm::quat q);
 	glm::quat getRot();
 	
 	glm::vec3 getPos() { return m_pos; };

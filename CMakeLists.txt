@@ -2,32 +2,39 @@
 
 project ("einherjarEngine")
 
-find_package(Vulkan REQUIRED FATAL_ERROR)
+set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+SET(VCPKG_BOOTSTRAP_OPTIONS "-disableMetrics") # Disable telemetry for vcpkg.
+SET(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)          # Install vcpkg dependencies automatically(experimental - might be changed or removed later; see: https://github.com/microsoft/vcpkg/issues/1653). 
+
+#include(CMakePrintHelpers)
+#cmake_print_variables(CMAKE_TOOLCHAIN_FILE)
+#get_cmake_property(_variableNames VARIABLES)
+#list (SORT _variableNames)
+#foreach (_variableName ${_variableNames})
+#    message(STATUS "${_variableName}=${${_variableName}}")
+#endforeach()
+
+find_package(Vulkan REQUIRED)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 include_directories(einherjarEngine
-	lib/glad
-	lib/imgui
-	lib/imgui/backends
-	lib/glfw3
 	lib/
+	lib/glad           #TODO add git submodule
+	lib/imgui          #TODO add git submodule
+	lib/imgui/backends #TODO add git submodule
+	lib/glfw3          #TODO add git submodule
+	lib/stb
 	src/
-	PUBLIC C:/VulkanSDK/1.3.275.0/Include #TODO abstract
+	${Stb_INCLUDE_DIR}
 )
 LINK_DIRECTORIES(lib/glad)
 LINK_DIRECTORIES(lib/glfw3)
 LINK_DIRECTORIES(/)
 
 SET(CMAKE_COLOR_MAKEFILE OFF)
-
-#OPTION(MYENVIR "Compile with main.cpp in myScenes" OFF)
-#IF(MYENVIR)
-#	ADD_DEFINITIONS(-DMYENVIR)
-#ENDIF(MYENVIR)
-#unset(MYENVIR CACHE)
 
 # src files
 file(GLOB_RECURSE einherjarEngine_SRC
@@ -38,7 +45,7 @@ file(GLOB imgui_SRC
 )
 set(ehjSourceFiles )
 list(APPEND ehjSourceFiles
-	"my.rc"
+	"xicon/my.rc"
 	${einherjarEngine_SRC}
 	
 	"lib/glad/glad.c"
@@ -71,8 +78,7 @@ add_dependencies(ehjEngineMY file_toucherMY)
 
 set(linkedLibraries
 	glfw3
-	C:/VulkanSDK/1.3.275.0/Lib/vulkan-1.lib #TODO more libraries
-	#C:/VulkanSDK/1.3.275.0/Lib/volk.lib #TODO use vulkan.hpp instead
+	Vulkan::Vulkan
 )
 target_link_libraries(ehjEngine ${linkedLibraries})
 target_link_libraries(ehjEngineMY ${linkedLibraries})

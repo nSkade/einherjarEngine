@@ -99,6 +99,7 @@ public:
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
 		window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+		ehjSetGLFWicon(window);
 		if (!window)
 		{
 			glfwTerminate();

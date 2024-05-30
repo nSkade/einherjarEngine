@@ -141,6 +141,7 @@ int run() {
 	windowH = 1080;
 #endif
 	window = glfwCreateWindow(windowW,windowH, "Simple example", NULL, NULL);
+	ehjSetGLFWicon(window);
 	
 	if (!window)
 	{

@@ -2,6 +2,7 @@
 set /a "NOPMO=%NUMBER_OF_PROCESSORS%-1"
 if "%1"=="-my" (goto :b)
 if "%1"=="-nj" (goto :c)
+if "%1"=="clean" (goto :clean)
 
 :a
 ::make -j %NOPMO%
@@ -23,6 +24,10 @@ goto :end
 :d
 ::make -j %NOPMO% "MYENVIR = $(TRUE)"
 cd build & cmake .. -DCMAKE_BUILD_TYPE=Release & cmake --build . --target ehjEngineMY & cd..
+goto :end
+
+:clean
+cmake --build build/ --target clean
 goto :end
 
 :end

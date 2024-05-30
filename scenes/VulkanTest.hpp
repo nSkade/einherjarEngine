@@ -3,18 +3,9 @@
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 
-#include <Vulkan/vulkan.hpp>
-
-//#define VOLK_IMPLEMENTATION //TODO volk.c not build
-//#include <Volk/volk.h>
-
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#include <iostream>
-
 #include "../src/suVULK.hpp"
 
+#include <iostream>
 #include <vector>
 
 const std::vector<const char*> validationLayers = {
@@ -116,6 +107,7 @@ public:
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); //TODO
 		m_window = glfwCreateWindow(800, 600, "Vulkan window", nullptr, nullptr);
+		ehjSetGLFWicon(m_window);
 
 		//VkResult volkRes = volkInitialize();
 		//if (volkRes!=VK_SUCCESS)

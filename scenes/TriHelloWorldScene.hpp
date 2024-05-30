@@ -68,6 +68,7 @@ int run(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
 	window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+	ehjSetGLFWicon(window);
 	if (!window)
 	{
 		glfwTerminate();

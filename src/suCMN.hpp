@@ -32,7 +32,10 @@ inline void SetupImGuiStyle(bool is_dark_style, float alpha_threshold) {
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-#include "Utility/GLFWFPSLimiter.hpp"
+#include "Utility/GLFWfpsLimiter.hpp"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 #define GLM_FORCE_XYZW_ONLY
 
@@ -56,3 +59,10 @@ public:
 	virtual int run() = 0;
 	virtual void cleanup() = 0;
 };
+
+void ehjSetGLFWicon(GLFWwindow* window) {
+	GLFWimage images[1];
+	images[0].pixels = stbi_load("xicon/icon.png", &images[0].width, &images[0].height, 0, 4); //rgba channels
+	glfwSetWindowIcon(window, 1, images); 
+	stbi_image_free(images[0].pixels);
+}

@@ -30,9 +30,10 @@ public:
 	// Buffer Flags
 	enum MeshProperty {
 		MP_QUAD     = 1,
-		MP_NORMAL   = 2,
-		MP_VRTNRM   = 4,
-		MP_COLOR    = 8,
+		MP_NORMAL   = 1 << 1,
+		MP_VRTNRM   = 1 << 2,
+		MP_COLOR    = 1 << 3,
+		MP_UV       = 1 << 4,
 	};
 	
 	uint32_t getMP();

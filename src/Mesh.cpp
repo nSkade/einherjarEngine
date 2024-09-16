@@ -69,19 +69,25 @@ void Mesh::storeOBJ(std::string path) {
 void Mesh::loadOBJ(std::string path) {
 	std::ifstream file(path, std::ifstream::in);
 	std::string line;
-	bool normals = false;
 
 	if (file.good()) {
 		while (getline(file,line)) {
 			if (line[0]=='#') continue; // comment
 			else if (line.substr(0,2).compare("vn")==0) { // face normal?
-				normals = true;
 				m_MP |= MP_NORMAL;
 				std::istringstream iss(line);
 				std::string n;
 				float v1,v2,v3,v4 = 0.0f;
 				iss >> n >> v1 >> v2 >> v3;
 				m_normals.emplace_back(v1,v2,v3,v4);
+			}
+			else if (line.substr(0,2).compare("vt")==0) { // face normal?
+				m_MP |= MP_UV;
+				std::istringstream iss(line);
+				std::string n;
+				float v1,v2,v3,v4 = 0.0f;
+				iss >> n >> v1 >> v2;
+				m_texUVs.emplace_back(v1,v2,v3,v4);
 			}
 			else if (line[0]=='v') { //vertex
 				std::istringstream iss(line);
@@ -96,21 +102,30 @@ void Mesh::loadOBJ(std::string path) {
 				int32_t v[4];
 				int32_t n[4];
 				v[3] = -1;
-				if (normals)
+				// face is vert/tex/nrm vert/tex/nrm vert/tex/nrm
+
+				iss >> x;
+				for (uint32_t i=0;i<3;++i) {
+					iss;
+				}
+
+				if (m_MP & MP_NORMAL)
 					iss >> x >> v[0] >> x >> x >> n[0] >> v[1] >> x >> x >> n[1] >> v[2] >> x >> x >> n[2];
 				else
 					iss >> x >> v[0] >> v[1] >> v[2];
+
 				if (iss.tellg()!=line.length() && iss.tellg()!=-1) { // guys we have a quad!
-					std::cout << iss.tellg() << " " << line.length() << "\n";
-					m_MP |= MP_QUAD;
-					iss >> v[3];
-					if (normals)
-						iss >> x >> x >> n[3];
+					throw std::runtime_error("quads not supported");
+					//std::cout << iss.tellg() << " " << line.length() << "\n";
+					//m_MP |= MP_QUAD;
+					//iss >> v[3];
+					//if (m_MP & MP_NORMAL)
+					//	iss >> x >> x >> n[3];
 				}
 				Face f;
 				for (uint32_t i=0;i<4;++i) {
 					f.vertsI[i] = v[i]-1;
-					if (normals)
+					if (m_MP & MP_NORMAL)
 						f.normalI[i] = n[i]-1;
 				}
 				m_faces.push_back(f);
@@ -145,6 +160,18 @@ std::vector<float> Mesh::getVertexBuffer() {
 			}
 		}
 	}
+
+	//TODO
+	//for (uint32_t i=0;i<m_faces.size();++i) {
+	//	for (uint32_t j=0;j<4;++j) {
+	//		for (uint32_t k=0;k<m_Dim;++k)
+	//			res.push_back(m_vertices[m_faces[i].vertsI[j]][k]);
+	//		if (m_MP & MP_NORMAL)
+	//			for (uint32_t k=0;k<m_Dim;++k)
+	//				res.push_back(m_normals[m_faces[i].normalI[j]][k]);
+	//	}
+	//}
+
 	return res;
 }
 
@@ -167,6 +194,7 @@ void Mesh::toTriangles() {
 	Mesh mesh = Mesh(*this);
 	m_faces.clear();
 	for (uint32_t i=0;i<mesh.m_faces.size();++i) {
+		std::cout << "toTriangles: " << i << "/" << mesh.m_faces.size() << " " << float(i)/mesh.m_faces.size()*100. << "%" << std::endl;
 		Face fq = mesh.m_faces[i];
 		Face t1,t2;
 		t1.vertsI = {fq.vertsI[0],fq.vertsI[1],fq.vertsI[2],-1};

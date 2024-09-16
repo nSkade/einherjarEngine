@@ -25,7 +25,6 @@ void GLProgram::createProgram() {
 	auto itr = m_shaders.toEnum.begin();
 	while (itr != m_shaders.toEnum.end()) {
 		glAttachShader(m_programID, itr->first);
-		ehj_gl_err();
 		itr++;
 	}
 	glLinkProgram(m_programID);
@@ -33,7 +32,6 @@ void GLProgram::createProgram() {
 		glDeleteShader(id.first);
 	}
 	m_shaders.clear();
-	ehj_gl_err();
 }
 
 GLint GLProgram::getProgramID() {
@@ -51,12 +49,9 @@ bool GLProgram::addSourceFromString(std::string shaderSource, GLenum shaderType,
 		glDeleteShader(oldID);
 		m_shaders.remove(oldID);
 	}
-	ehj_gl_err();
 	GLuint shaderID = glCreateShader(shaderType);
-	if (shaderID == 0) {
-		std::cerr << "GLProgram::addSourceFromString : glCreateShader error occured." << std::endl;
-		return false;
-	}
+	if (shaderID == 0)
+		throw std::runtime_error("GLProgram::addSourceFromString : glCreateShader error occured");
 	
 	const char* shaderSourceC = shaderSource.c_str();
 	glShaderSource(shaderID, 1, &shaderSourceC, NULL);
@@ -69,7 +64,11 @@ bool GLProgram::addSourceFromString(std::string shaderSource, GLenum shaderType,
 		std::vector<GLchar> log(logSize);
 		glGetShaderInfoLog(shaderID, logSize, NULL, &log[0]);
 		std::string logSTR = log.data();
-		std::cerr << "Shader error: " << filePath << std::endl;
+		if (filePath != "")
+			std::cerr << "Shader error: " << filePath << std::endl;
+		else
+			std::cerr << "Shader error: " << shaderSource << std::endl;
+
 		std::cerr << logSTR << std::endl;
 
 		glDeleteShader(shaderID);
@@ -82,6 +81,9 @@ bool GLProgram::addSourceFromString(std::string shaderSource, GLenum shaderType,
 
 std::string GLProgram::loadFileContents(std::string path) {
 	std::stringstream buffer;
+	if (!std::filesystem::exists(path))
+		throw std::runtime_error("file: "+path+" does not exist");
+
 	std::ifstream t(path);
 	buffer << t.rdbuf();
 	std::string contents = buffer.str();
@@ -93,15 +95,15 @@ bool GLProgram::addSourceFromFile(std::string shaderPath, GLenum shaderType) {
 	return addSourceFromString(shaderString,shaderType,shaderPath);
 }
 
-//TODO not implemented
-void GLProgram::loadProgramFromFilename(std::string folderPath, std::string fileName) {
-	std::cerr << "loadProgramFromFilename not implemented yet\n";
-	return;
-	for (const auto & entry : fs::directory_iterator(folderPath)) {
-		std::cout << entry.path() << std::endl;
-	
-	}
-}
+////TODO not implemented
+//void GLProgram::loadProgramFromFilename(std::string folderPath, std::string fileName) {
+//	std::cerr << "loadProgramFromFilename not implemented yet\n";
+//	return;
+//	for (const auto & entry : fs::directory_iterator(folderPath)) {
+//		std::cout << entry.path() << std::endl;
+//	
+//	}
+//}
 
 GLenum GLProgram::detectShaderType(std::string fileName) {
 	GLenum shaderType = GL_INVALID_ENUM;
@@ -109,10 +111,12 @@ GLenum GLProgram::detectShaderType(std::string fileName) {
 	std::string name = fileName;
 
 	if (name.find(".vert") != name.npos |
+	    name.find(".vs") != name.npos |
 	    name.find("_v.") != name.npos)
 		shaderType = GL_VERTEX_SHADER;
 	
 	if (name.find(".frag") != name.npos |
+	    name.find(".fs") != name.npos |
 	    name.find("_f.") != name.npos)
 		shaderType = GL_FRAGMENT_SHADER;
 
@@ -171,11 +175,22 @@ bool GLProgram::addSourceFromFile(std::string shaderPath) {
 
 GLint GLProgram::getUnfLoc(std::string name) {
 	GLint loc;
-	if (m_uniformLocations.find(name) != m_uniformLocations.end()) {
+	if (m_uniformLocations.find(name) != m_uniformLocations.end())
 		loc = m_uniformLocations[name];
-	} else { // uniform location does not exist
+	else { // uniform location does not exist
 		loc = glGetUniformLocation(m_programID, name.c_str());
 		m_uniformLocations[name] = loc;
+	}
+	return loc;
+}
+
+GLint GLProgram::getAttribLoc(std::string name) {
+	GLint loc;
+	if (m_attribLocations.find(name) != m_attribLocations.end())
+		loc = m_attribLocations[name];
+	else { // attrib location does not exist
+		loc = glGetAttribLocation(m_programID, name.c_str());
+		m_attribLocations[name] = loc;
 	}
 	return loc;
 }

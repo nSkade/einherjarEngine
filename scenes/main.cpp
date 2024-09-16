@@ -12,7 +12,11 @@
 //#include "EnvirScene.hpp"
 //#include "RayMarchingTestScene.hpp"
 //#include "FSRTestScene.hpp"
-#include "VulkanTest.hpp"
+//#include "VulkanTest.hpp"
+
+#include "PathTracing.hpp"
+
+//#include "TexturedTri.hpp"
 
 #ifndef SCENETYPE
 #error "SCENETYPE inside scene header undefined, "#define SCENETYPE <scene class name>" in your header"

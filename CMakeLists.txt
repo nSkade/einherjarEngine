@@ -2,6 +2,8 @@
 
 project ("einherjarEngine")
 
+set(CMAKE_CXX_STANDARD 17)
+
 set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 SET(VCPKG_BOOTSTRAP_OPTIONS "-disableMetrics") # Disable telemetry for vcpkg.
 SET(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)          # Install vcpkg dependencies automatically(experimental - might be changed or removed later; see: https://github.com/microsoft/vcpkg/issues/1653). 
@@ -66,15 +68,16 @@ add_executable (ehjEngineMY
 )
 
 set_property(TARGET ehjEngine PROPERTY OUTPUT_NAME einherjarEngine)
-set_property(TARGET ehjEngineMY PROPERTY OUTPUT_NAME einherjarEngine)
+set_property(TARGET ehjEngineMY PROPERTY OUTPUT_NAME einherjarEngineMY)
 
-add_custom_target(file_toucher 
-		COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/scenes/main.cpp)
-add_custom_target(file_toucherMY 
-		COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/myScenes/main.cpp)
-
-add_dependencies(ehjEngine file_toucher)
-add_dependencies(ehjEngineMY file_toucherMY)
+#TODO(skade) old filetoucher for same exe at MY and non MY
+#add_custom_target(file_toucher 
+#		COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/scenes/main.cpp)
+#add_custom_target(file_toucherMY 
+#		COMMAND ${CMAKE_COMMAND} -E touch_nocreate ${CMAKE_CURRENT_SOURCE_DIR}/myScenes/main.cpp)
+#
+#add_dependencies(ehjEngine file_toucher)
+#add_dependencies(ehjEngineMY file_toucherMY)
 
 set(linkedLibraries
 	glfw3

@@ -69,6 +69,7 @@ public:
 	uint32_t getMaxDepth() { return m_maxDepth; };
 
 private:
+	//TODO use better memory model
 	void destruct(Cell* c) {
 		if (!c)
 			return;

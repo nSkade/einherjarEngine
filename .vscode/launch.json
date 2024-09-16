@@ -23,7 +23,7 @@
 			"name": "cl MYENVIR",
 			"type": "cppvsdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}\\einherjarEngineDbg.exe",
+			"program": "${workspaceFolder}\\einherjarEngineMYDbg.exe",
 			"args": [],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",

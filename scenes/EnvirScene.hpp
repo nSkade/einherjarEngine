@@ -81,7 +81,8 @@ public:
 		
 		GLProgram mainGLP;
 		
-		ehj::Mesh mesh; mesh.loadOBJ("models/monkey.obj");
+		//ehj::Mesh mesh; mesh.loadOBJ("models/monkey.obj");
+		ehj::Mesh mesh; mesh.loadOBJ("myModels/sponza/Sponza.obj");
 		mesh.toTriangles();
 		OGLMesh oglMesh(mesh, GL_DYNAMIC_DRAW);
 		oglMesh.bind(0);

@@ -1,4 +1,5 @@
 {
+	"cmake.configureOnOpen": false,
 	"files.associations": {
 		"fstream": "cpp",
 		"xstring": "cpp",
@@ -93,24 +94,23 @@
 		"variant": "cpp"
 	},
 	"workbench.colorCustomizations": {
-		"activityBar.activeBackground": "#492800",
-		"activityBar.background": "#492800",
+		"activityBar.activeBackground": "#405153",
+		"activityBar.background": "#405153",
 		"activityBar.foreground": "#e7e7e7",
 		"activityBar.inactiveForeground": "#e7e7e799",
-		"activityBarBadge.background": "#008046",
+		"activityBarBadge.background": "#30102c",
 		"activityBarBadge.foreground": "#e7e7e7",
 		"commandCenter.border": "#e7e7e799",
-		"sash.hoverBorder": "#492800",
-		"statusBar.background": "#160c00",
+		"sash.hoverBorder": "#405153",
+		"statusBar.background": "#2a3536",
 		"statusBar.foreground": "#e7e7e7",
-		"statusBarItem.hoverBackground": "#492800",
-		"statusBarItem.remoteBackground": "#160c00",
+		"statusBarItem.hoverBackground": "#405153",
+		"statusBarItem.remoteBackground": "#2a3536",
 		"statusBarItem.remoteForeground": "#e7e7e7",
-		"titleBar.activeBackground": "#160c00",
+		"titleBar.activeBackground": "#2a3536",
 		"titleBar.activeForeground": "#e7e7e7",
-		"titleBar.inactiveBackground": "#160c0099",
+		"titleBar.inactiveBackground": "#2a353699",
 		"titleBar.inactiveForeground": "#e7e7e799"
 	},
-	"peacock.color": "#160c00",
-	"cmake.configureOnOpen": true
+	"peacock.color": "#2a3536",
 }

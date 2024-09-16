@@ -10,3 +10,4 @@
 #include <iostream>
 
 uint32_t ehj_gl_err();
+uint32_t ehj_gl_err_continue();

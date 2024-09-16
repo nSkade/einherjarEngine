@@ -22,7 +22,7 @@ public:
 	/**
 	 * @return true on compile success.
 	*/
-	bool addSourceFromString(std::string shaderSource, GLenum shaderType, const std::string& filePath);
+	bool addSourceFromString(std::string shaderSource, GLenum shaderType, const std::string& filePath = std::string());
 	bool addSourceFromFile(std::string shaderPath, GLenum shaderType);
 	bool addSourceFromFile(std::string shaderPath);
 
@@ -40,13 +40,14 @@ public:
 	bool addSourceFromFileRecursive(std::string shaderPath, GLenum shaderType);
 
 	GLenum detectShaderType(std::string fileName);
-	void loadProgramFromFilename(std::string folderPath, std::string programName);
+	//void loadProgramFromFilename(std::string folderPath, std::string programName);
 	void loadProgramFromFolder(std::string folderPath);
 
 	/**
 	 * @brief Returns Uniform Location.
 	*/
 	GLint getUnfLoc(std::string name);
+	GLint getAttribLoc(std::string name);
 	void clearUniformLocations();
 
 private:
@@ -70,6 +71,7 @@ private:
 		}
 	} m_shaders;
 	std::map<std::string,GLint> m_uniformLocations;
+	std::map<std::string,GLint> m_attribLocations;
 
 	uint32_t m_maxIncludeDepth = 10;
 };

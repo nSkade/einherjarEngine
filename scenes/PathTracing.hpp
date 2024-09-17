@@ -105,9 +105,39 @@ int run(void)
 
 	GLFWfpsLimiter fpsLimiter;
 
+	int width, height;
+	//glfwGetFramebufferSize(window, &width, &height);
+	ivec2 prevRes = {1920,1080};
+
+	GLFrameBuffer fbr1(prevRes);
+	GLFrameBuffer fbr2(prevRes);
+	bool ping = true;
+
+	float time = 0.;
+	int frame = 0;
 	while (!glfwWindowShouldClose(window)) {
 		float ratio;
-		int width, height;
+		//vec2 res = {width,height};
+		//if (prevRes != res) {
+		//	fbr1 = GLFrameBuffer(res);
+		//	fbr2 = GLFrameBuffer(res);
+		//	prevRes = res;
+		//}
+
+		if (ping) {
+			glBindFramebuffer(GL_FRAMEBUFFER,fbr2.getFBO());
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D,fbr1.getTexCol());
+			glViewport(0, 0, prevRes.x, prevRes.y);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		} else {//pong
+			glBindFramebuffer(GL_FRAMEBUFFER,fbr1.getFBO());
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
+			glViewport(0, 0, prevRes.x, prevRes.y);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		}
+		ping = !ping;
 
 		{ // reload shader
 			static bool suc = true;
@@ -117,7 +147,7 @@ int run(void)
 				m_kkTap[IBCodes::KK_KEY_R] = false;
 				glUseProgram(0);
 				//suc = glProg.addSourceFromFileRecursive("myScenes/shader/"+fragShader,GL_FRAGMENT_SHADER);
-				suc = glProg.addSourceFromFile("myShaders/PathTracing/pt.fs");
+				suc = glProg.addSourceFromFile("shaders/PathTracing/pt.fs");
 
 				glProg.createProgram();
 			
@@ -125,6 +155,7 @@ int run(void)
 				if (oglMesh.getAttribNrm()!=-1)
 					glBindAttribLocation(glProg.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
 				ehj_gl_err_continue();
+				frame = 0;
 			}
 			if (!suc) {
 				glfwSwapBuffers(window);
@@ -135,21 +166,31 @@ int run(void)
 			}
 		}
 		float deltaTime = m_clock.update();
+		time += deltaTime;
+		frame++;
 		m_cam.kbmActive(true);
 		m_cam.update(deltaTime);
 		m_cam.setProj(glm::perspective(glm::radians(60.0f), 1.f,0.1f,1000.0f));
- 
-		glfwGetFramebufferSize(window, &width, &height);
-		ratio = width / (float) height; //TODO uniform
- 
-		glViewport(0, 0, width, height);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
  
 		glm::mat4 m = glm::mat4(1.0f); // identity
 		glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
 		glm::mat4 mvp = p*m;
 
-		glUniform2f(glProg.getUnfLoc("u_resolution"), width,height);
+		static vec3 prevDir;
+		static vec3 prevPos;
+		if (m_cam.getDir() != prevDir || m_cam.getPos() != prevPos) {
+			glUniform1f(glProg.getUnfLoc("u_camChange"), 1.f);
+			frame = 0;
+		}
+		else
+			glUniform1f(glProg.getUnfLoc("u_camChange"), 0.f);
+		prevDir = m_cam.getDir();
+		prevPos = m_cam.getPos();
+
+
+		glUniform1f(glProg.getUnfLoc("u_time"), time);
+		glUniform1f(glProg.getUnfLoc("u_frame"), frame);
+		glUniform2f(glProg.getUnfLoc("u_resolution"), prevRes.x,prevRes.y);
 		glm::vec3 cPos = m_cam.getPos(); //TODO clear accumulation buffer on cam pos change
 		glUniform3f(glProg.getUnfLoc("u_cPos"), cPos.x,cPos.y,cPos.z);
 		glm::mat4 camPV = glm::scale(glm::mat4(1.f),glm::vec3(float(width)/height,1.,1.))*m_cam.getPV();
@@ -157,6 +198,26 @@ int run(void)
 
 		glProg.bind();
 		glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+ 
+		glfwGetFramebufferSize(window, &width, &height);
+		ratio = width / (float) height; //TODO uniform
+ 
+		glBindFramebuffer(GL_FRAMEBUFFER,0);
+		glViewport(0, 0, width, height);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// accumulate
+		if (ping) {
+			glBlitNamedFramebuffer(fbr2.getFBO(),0,
+				0,0,prevRes.x,prevRes.y,
+				0,0,width,height,
+				 GL_COLOR_BUFFER_BIT,GL_LINEAR);
+		} else {
+			glBlitNamedFramebuffer(fbr1.getFBO(),0,
+				0,0,prevRes.x,prevRes.y,
+				0,0,width,height,
+				 GL_COLOR_BUFFER_BIT,GL_LINEAR);
+		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

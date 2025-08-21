@@ -113,7 +113,7 @@ public:
 		glUseProgram(program);
 
 		GPUTimer fragSTimer;
-	
+
 		//glLineWidth(1.0f);
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glEnable(GL_CULL_FACE);

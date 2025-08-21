@@ -24,11 +24,11 @@ void Camera::removeCameraController(ICameraController* cc) {
 }
 
 void Camera::update(float deltaTime) {
-	makePerpendicular();
 	for (uint32_t i=0;i<m_controllers.size();++i) {
 		if (m_controllers[i]->active())
 			m_controllers[i]->update(deltaTime);
 	}
+	makePerpendicular();
 	if (!m_viewUpdated) {
 		//TODO calculate m_view
 		m_view = glm::lookAtRH(m_pos,m_pos+m_dir,m_up);

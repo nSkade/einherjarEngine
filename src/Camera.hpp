@@ -106,10 +106,6 @@ public:
 	}
 	~CCmouse() { GLFWMouse::instance()->removeListener(this); }
 	void update(float deltaTime) {
-		if (!oldPosSet) {
-			oldPos = pos;
-			oldPosSet = true;
-		}
 		if (m_captured || m_nonCapDrag) {
 			glm::ivec2 m = pos - oldPos;
 			if (m.x == 0 && m.y == 0) // no change no update, might happen
@@ -125,11 +121,8 @@ public:
 			dir.y = sin(glm::radians(pitch));
 			dir.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 			m_pCam->setDir(glm::normalize(dir));
-
-			oldPos = pos;
-		} else {
-			oldPos = pos;
 		}
+		oldPos = pos;
 	}
 	void callback(MouseData md) {
 		if (md.mb==IBCodes::MB_BUTTON_NONE) {
@@ -157,7 +150,6 @@ private:
 
 	glm::vec2 m_sens = glm::vec2(0.1f);
 	glm::ivec2 pos = glm::ivec2(0,0); //TODO initialize to screen center?
-	bool oldPosSet = false;
 	glm::ivec2 oldPos = glm::ivec2(0,0);
 
 	std::shared_ptr<GLFWMouse> m_pMouse;

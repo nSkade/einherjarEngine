@@ -17,15 +17,18 @@ public:
 	void setLimit(uint32_t fpsLimit) { m_fpsLimit = fpsLimit; calcInterval(); };
 	
 	void wait() {
-		m_tp += std::chrono::microseconds(m_interval);
-		std::this_thread::sleep_until(m_tp);
+		auto dt = std::chrono::steady_clock::now()-m_tp;
+		auto overhead = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::microseconds(m_interval) - dt);
+		if (overhead.count() > 0)
+			std::this_thread::sleep_for(overhead);
+		m_tp = std::chrono::steady_clock::now();
 	}
 
 private:
 	void calcInterval() {
 		m_interval = (double) 1.0/m_fpsLimit*1000.0*1000.0;
 	}
-	std::chrono::high_resolution_clock::time_point m_tp;
+	std::chrono::steady_clock::time_point m_tp;
 	uint32_t m_fpsLimit = 60;
 	uint32_t m_interval;
 };

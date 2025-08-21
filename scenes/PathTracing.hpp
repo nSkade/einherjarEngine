@@ -27,11 +27,6 @@ static void error_callback(int error, const char* description)
 	fprintf(stderr, "Error: %s\n", description);
 }
 
-//static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-//{
-//	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-//		glfwSetWindowShouldClose(window, GLFW_TRUE);
-//}
 static void processInput(GLFWwindow *window) {
 	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
@@ -78,6 +73,16 @@ int run(void)
 
 	glProg.createProgram();
 	glProg.bind();
+
+	GLProgram glpPP;
+	glpPP.addSourceFromFile("shaders/PathTracing/ssq.vs");
+	ehj_gl_err();
+	glpPP.addSourceFromFile("shaders/PathTracing/pp.fs");
+	ehj_gl_err();
+
+	glpPP.createProgram();
+	glpPP.bind();
+	glProg.bind();
  
 	ehj::SSMesh mesh;
 	mesh.toTriangles();
@@ -88,16 +93,19 @@ int run(void)
 	glBindVertexArray(oglMesh.getVAO());
 	ehj_gl_err();
  
+	glProg.bind();
 	glBindAttribLocation(glProg.getProgramID(),oglMesh.getAttribPos(),"vPos");
 	if (oglMesh.getAttribNrm()!=-1)
 		glBindAttribLocation(glProg.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+	glpPP.bind();
+	glBindAttribLocation(glpPP.getProgramID(),oglMesh.getAttribPos(),"vPos");
+	if (oglMesh.getAttribNrm()!=-1)
+		glBindAttribLocation(glpPP.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
 
+	glProg.bind();
 	glBindVertexArray(oglMesh.getVAO());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oglMesh.getEBO());
-
 	glm::mat4 pvm = glm::ortho(-1.f,1.f,-1.f,1.f);
-	
-	glUniformMatrix4fv(glProg.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
 
 	m_cam.setTiltable(false);
 	m_cam.setPos(vec3(0.,0.,3.));
@@ -116,28 +124,6 @@ int run(void)
 	float time = 0.;
 	int frame = 0;
 	while (!glfwWindowShouldClose(window)) {
-		float ratio;
-		//vec2 res = {width,height};
-		//if (prevRes != res) {
-		//	fbr1 = GLFrameBuffer(res);
-		//	fbr2 = GLFrameBuffer(res);
-		//	prevRes = res;
-		//}
-
-		if (ping) {
-			glBindFramebuffer(GL_FRAMEBUFFER,fbr2.getFBO());
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D,fbr1.getTexCol());
-			glViewport(0, 0, prevRes.x, prevRes.y);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		} else {//pong
-			glBindFramebuffer(GL_FRAMEBUFFER,fbr1.getFBO());
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
-			glViewport(0, 0, prevRes.x, prevRes.y);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		}
-		ping = !ping;
 
 		{ // reload shader
 			static bool suc = true;
@@ -165,6 +151,20 @@ int run(void)
 				continue;
 			}
 		}
+
+		if (ping) {
+			glBindFramebuffer(GL_FRAMEBUFFER,fbr2.getFBO());
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D,fbr1.getTexCol());
+		} else {//pong
+			glBindFramebuffer(GL_FRAMEBUFFER,fbr1.getFBO());
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
+		}
+		ping = !ping;
+		glViewport(0, 0, prevRes.x, prevRes.y);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		float deltaTime = m_clock.update();
 		time += deltaTime;
 		frame++;
@@ -175,6 +175,7 @@ int run(void)
 		glm::mat4 m = glm::mat4(1.0f); // identity
 		glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
 		glm::mat4 mvp = p*m;
+		glProg.bind();
 
 		static vec3 prevDir;
 		static vec3 prevPos;
@@ -187,37 +188,55 @@ int run(void)
 		prevDir = m_cam.getDir();
 		prevPos = m_cam.getPos();
 
-
 		glUniform1f(glProg.getUnfLoc("u_time"), time);
 		glUniform1f(glProg.getUnfLoc("u_frame"), frame);
 		glUniform2f(glProg.getUnfLoc("u_resolution"), prevRes.x,prevRes.y);
+		glUniformMatrix4fv(glProg.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
 		glm::vec3 cPos = m_cam.getPos(); //TODO clear accumulation buffer on cam pos change
 		glUniform3f(glProg.getUnfLoc("u_cPos"), cPos.x,cPos.y,cPos.z);
 		glm::mat4 camPV = glm::scale(glm::mat4(1.f),glm::vec3(float(width)/height,1.,1.))*m_cam.getPV();
 		glUniformMatrix4fv(glProg.getUnfLoc("u_m"),1,GL_TRUE,&camPV[0][0]);
 
-		glProg.bind();
 		glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
  
 		glfwGetFramebufferSize(window, &width, &height);
+		float ratio;
 		ratio = width / (float) height; //TODO uniform
- 
+
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// accumulate
+//		if (ping) {
+//			glBlitNamedFramebuffer(fbr2.getFBO(),0,
+//				0,0,prevRes.x,prevRes.y,
+//				0,0,width,height,
+//				 GL_COLOR_BUFFER_BIT,GL_LINEAR);
+//		} else {
+//			glBlitNamedFramebuffer(fbr1.getFBO(),0,
+//				0,0,prevRes.x,prevRes.y,
+//				0,0,width,height,
+//				 GL_COLOR_BUFFER_BIT,GL_LINEAR);
+//		}
+
+		glpPP.bind();
+		//PP
+		glUniform1f(glpPP.getUnfLoc("u_time"), time);
+		glUniform1f(glpPP.getUnfLoc("u_frame"), frame);
+		glUniform2f(glpPP.getUnfLoc("u_resolution"), prevRes.x,prevRes.y);
+		glUniformMatrix4fv(glpPP.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
+
 		if (ping) {
-			glBlitNamedFramebuffer(fbr2.getFBO(),0,
-				0,0,prevRes.x,prevRes.y,
-				0,0,width,height,
-				 GL_COLOR_BUFFER_BIT,GL_LINEAR);
-		} else {
-			glBlitNamedFramebuffer(fbr1.getFBO(),0,
-				0,0,prevRes.x,prevRes.y,
-				0,0,width,height,
-				 GL_COLOR_BUFFER_BIT,GL_LINEAR);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
+		} else {//pong
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D,fbr1.getTexCol());
 		}
+
+		glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+ 
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

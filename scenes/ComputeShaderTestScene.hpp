@@ -98,7 +98,7 @@ public:
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
-		window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+		window = glfwCreateWindow(640, 480, "ehjE Simple example", NULL, NULL);
 		ehjSetGLFWicon(window);
 		if (!window)
 		{

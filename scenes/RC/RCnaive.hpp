@@ -51,7 +51,7 @@ int run(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 
 	int width = 640, height = 480;
-	window = glfwCreateWindow(width, height, "RCnaive", NULL, NULL);
+	window = glfwCreateWindow(width, height, "ehjE RCnaive", NULL, NULL);
 #if 0
 	width = 1920, height = 1027;
 	glfwSetWindowSize(window,width,height);

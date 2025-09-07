@@ -106,7 +106,7 @@ public:
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); //TODO
-		m_window = glfwCreateWindow(800, 600, "Vulkan window", nullptr, nullptr);
+		m_window = glfwCreateWindow(800, 600, "ehjE Vulkan window", nullptr, nullptr);
 		ehjSetGLFWicon(m_window);
 
 		//VkResult volkRes = volkInitialize();

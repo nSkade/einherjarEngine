@@ -36,7 +36,7 @@ public:
 		m_windowRes.y = 1080;
 	#endif
 
-		m_pWindow = glfwCreateWindow(m_windowRes.x,m_windowRes.y, "EnvirScene", NULL, NULL);
+		m_pWindow = glfwCreateWindow(m_windowRes.x,m_windowRes.y, "ehjE EnvirScene", NULL, NULL);
 		ehjSetGLFWicon(m_pWindow);
 	
 		if (!m_pWindow)

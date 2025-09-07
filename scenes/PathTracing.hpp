@@ -47,7 +47,7 @@ int run(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 
-	window = glfwCreateWindow(640, 480, "PathTracing", NULL, NULL);
+	window = glfwCreateWindow(640, 480, "ehjE PathTracing", NULL, NULL);
 	ehjSetGLFWicon(window);
 	if (!window)
 	{

@@ -14,7 +14,8 @@
 //#include "FSRTestScene.hpp"
 //#include "VulkanTest.hpp"
 
-#include "PathTracing.hpp"
+//#include "PathTracing.hpp"
+#include "RC/RCnaive.hpp"
 
 //#include "TexturedTri.hpp"
 

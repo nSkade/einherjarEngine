@@ -59,7 +59,7 @@ struct Sphere {
 const int sphereCount = 7;
 Sphere spheres[sphereCount] = {
 	//p           s     col             e  r   t
-	{{3.,2.,0.},  .5,   {1.,1.,1.}     ,10.,0.,{0.,0.}},
+	{{3.,2.,0.},  1.,   {1.,1.,1.}     ,1.,0.,{0.,0.}},
 	//{{3.,2.,0.},  .5,   {1.,1.,1.}     ,0.,0.,{0.,0.}},
 
 	{{0.,0.,0.},  1.,   {0.1,1.,0.1}   ,0.,1.,{0.,0.}},
@@ -189,6 +189,11 @@ float randGauss(vec3 co) { // gaussian distr, random
 	float r = sqrt(-2. * log(rand(co+t)));
 	return r * cos(t);
 }
+float randGauss(float co) { // gaussian distr, random
+	float t = 2. * 3.1415926 * rand(co);
+	float r = sqrt(-2. * log(rand(co+t)));
+	return r * cos(t);
+}
 
 vec3 rand3(vec3 co) {
 	vec3 r = co;
@@ -229,7 +234,7 @@ vec3 shade(Ray r,int iter) {
 	vec3 c = vec3(1.); // color for absorption
 	vec3 e = vec3(0.); // emission
 
-	int bounces = 5;
+	int bounces = 3;
 	Hit h;
 	bool anyHit = false;
 	for (int i=0;i<bounces;++i) {
@@ -278,7 +283,7 @@ vec3 shade(Ray r,int iter) {
 			vec3 nd;
 			//vec2 uv = gl_FragCoord.xy/u_resolution.xy;
 			//if (uv.x<.5) {
-				vec3 rv = normalize(rand3(pos+n+vec3(UV,iter+u_time)));
+				vec3 rv = normalize(rand3(pos+n+vec3(UV,i)+vec3(iter+u_time)));
 				nd = normalize(n + rv); // diff // already includes lambert cosine law
 			//}
 			//else {
@@ -341,8 +346,8 @@ vec3 shade(Ray r,int iter) {
 			float sunDirD = dot(normalize(vec3(1.,1.,1.)),r.d);
 			sunDirD = max(0.,pow(sunDirD,100.));
 			vec3 sunC = vec3(1.);
-			float sunE = 50.*sunDirD;
-			e += sunC*sunE; //TODO split into emission color and color
+			float sunE = 0.;
+			e += sunC*sunE*sunDirD; //TODO split into emission color and color
 			break;
 		}
 	}

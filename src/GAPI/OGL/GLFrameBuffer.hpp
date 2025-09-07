@@ -6,37 +6,26 @@
 class GLFrameBuffer {
 public:
 	GLFrameBuffer(glm::ivec2 res) {
-		glGenFramebuffers(1,&m_fbo);
-		glBindFramebuffer(GL_FRAMEBUFFER,m_fbo);
-
-		glGenTextures(1, &m_tCol);
-		glBindTexture(GL_TEXTURE_2D, m_tCol);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		//TODO(skade) abstract
-		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, res.x, res.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, res.x, res.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_tCol, 0);
-		
-		glGenTextures(1, &m_tDep);
-		glBindTexture(GL_TEXTURE_2D, m_tDep);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, res.x, res.y, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_tDep, 0);
-		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		m_res = res;
+		construct();
+	}
+
+	GLFrameBuffer(const GLFrameBuffer& a) {
+		m_res = a.m_res;
+		construct();
+	}
+
+	GLFrameBuffer& operator=(const GLFrameBuffer& a) {
+		if (this != &a) {
+			destruct();     // Clean old resources
+			m_res = a.m_res;
+			construct();    // Re-create with new size
+		}
+		return *this;
 	}
 
 	~GLFrameBuffer() {
-		glDeleteTextures(1,&m_tCol);
-		glDeleteTextures(1,&m_tDep);
-		glDeleteFramebuffers(1,&m_fbo);
+		destruct();
 	}
 
 	GLuint getFBO() { return m_fbo; };
@@ -55,6 +44,37 @@ public:
 	}
 
 private:
+	void construct() {
+		glGenFramebuffers(1,&m_fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER,m_fbo);
+
+		glGenTextures(1, &m_tCol);
+		glBindTexture(GL_TEXTURE_2D, m_tCol);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		//TODO(skade) abstract
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, res.x, res.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, m_res.x, m_res.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_tCol, 0);
+		
+		glGenTextures(1, &m_tDep);
+		glBindTexture(GL_TEXTURE_2D, m_tDep);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_res.x, m_res.y, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_tDep, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER,0);
+	}
+	void destruct() {
+		glDeleteTextures(1,&m_tCol);
+		glDeleteTextures(1,&m_tDep);
+		glDeleteFramebuffers(1,&m_fbo);
+	}
 	GLuint m_fbo;
 	GLuint m_tCol; // color texture
 	GLuint m_tDep; // depth texture

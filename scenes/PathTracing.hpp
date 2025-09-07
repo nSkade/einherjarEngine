@@ -1,9 +1,8 @@
-#include "../src/suOGL.hpp"
+#include <suOGL.hpp>
 
-//TODO global path
-#include "../src/Input/GLFW/GLFWKeyboard.hpp"
-#include "../src/Input/GLFW/GLFWMouse.hpp"
-#include "../src/Input/GLFW/GLFWKeyboardCache.hpp"
+#include <Input/GLFW/GLFWKeyboard.hpp>
+#include <Input/GLFW/GLFWMouse.hpp>
+#include <Input/GLFW/GLFWKeyboardCache.hpp>
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -3,7 +3,16 @@
 
 //#ifndef EHJ_DBG
 //TODO imgui wont allow overwriting of new
+#if defined(__clang__) // ignore trival copyable warnings
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnontrivial-memaccess"
+#endif
+
 #include <imgui/imgui.h>
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 // https://gist.github.com/dougbinks/8089b4bbaccaaf6fa204236978d165a9#file-imguiutils-h-L9-L93
 inline void SetupImGuiStyle(bool is_dark_style, float alpha_threshold) {

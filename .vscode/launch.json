@@ -4,9 +4,9 @@
 	"configurations": [
 
 		{
-			"preLaunchTask": "buildCMake",
+			//"preLaunchTask": "buildCMake",
 			"name": "cl debug",
-			"type": "cppvsdbg",
+			"type": "lldb",
 			"request": "launch",
 			"program": "${workspaceFolder}\\einherjarEngineDbg.exe",
 			"args": [],
@@ -19,9 +19,9 @@
 			//"postDebugTask": "buildTestEnd",
 		},
 		{
-			"preLaunchTask": "buildCMake MY",
+			//"preLaunchTask": "buildCMake MY",
 			"name": "cl MYENVIR",
-			"type": "cppvsdbg",
+			"type": "lldb",
 			"request": "launch",
 			"program": "${workspaceFolder}\\einherjarEngineMYDbg.exe",
 			"args": [],

@@ -24,6 +24,8 @@ uniform float u_rayDist;
 uniform sampler2D u_tex;
 uniform sampler2D u_texJumpFlood;
 
+uniform int u_viewPass;
+
 float sdCircle( vec2 p, float r )
 {
 	return length(p) - r;
@@ -64,41 +66,53 @@ vec4 raymarch(vec2 uv) {
 	float noise = rand(uv)*u_rayNoise;
 	
 	vec4 radiance = vec4(0.0);
-	
+
+#define JFA 1
+#if !JFA
 	for(int i = 0; i < u_rayCount; i++) {
 		float angle = tauOverRayCount * (float(i) + noise);
 		vec2 rayDirectionUv = vec2(cos(angle), -sin(angle))
 			/ u_raySteps * u_rayDist;
-
-		// Our current position, plus one step.
-#if 1 // jump flood, TODO utilize profiling imgui tool and compare
 		vec2 sampleUv = uv;
-#else
-		vec2 sampleUv = uv + rayDirectionUv;
-#endif
-		
 		for (int j = 0; j< u_raySteps; j++) {
-#if 1 // jump flood, TODO utilize profiling imgui tool and compare
-			vec2 nearestSeed = texture(u_texJumpFlood, sampleUv).xy;
-			float dist = clamp(distance(sampleUv, nearestSeed), 0.0, 1.0);
-			sampleUv += rayDirectionUv * dist;
-#endif
+			sampleUv += rayDirectionUv;
 			if (outOfBounds(sampleUv))
 				break;
 			
 			vec4 sampleLight = texture(u_tex, sampleUv);
-#if 1 // jump flood, TODO utilize profiling imgui tool and compare
-			if (dist < 0.001) {
-#else
-			if (sampleLight.a > 0.1) {
-#endif
+			if (sampleLight.a > 0.5) {
 				radiance += sampleLight;
 				break;
 			}
-			
-			sampleUv += rayDirectionUv;
 		}
 	}
+#endif
+
+#if JFA
+	for(int i = 0; i < u_rayCount; i++) {
+		float angle = tauOverRayCount * (float(i) + noise);
+		vec2 rayDirectionUv = vec2(cos(angle), -sin(angle));
+		float ratio = u_resolution.x/u_resolution.y;
+		rayDirectionUv.x /= ratio;
+		rayDirectionUv = normalize(rayDirectionUv);
+
+		vec2 sampleUv = uv;
+		
+		for (int j = 0; j< u_raySteps; j++) {
+			vec2 nearestSeed = texture(u_texJumpFlood, sampleUv).xy;
+			float dist = distance(sampleUv, nearestSeed);
+			sampleUv += rayDirectionUv * dist;
+			if (outOfBounds(sampleUv))
+				break;
+			
+			if (dist < 0.001) {
+				vec4 sampleLight = texture(u_tex, sampleUv);
+				radiance += sampleLight;
+				break;
+			}
+		}
+	}
+#endif
 	return radiance * oneOverRayCount;
 }
 
@@ -108,10 +122,10 @@ void main() {
 	color = texture(u_tex,uv);
 	return;
 #endif
-#if 0
-	color = texture(u_texJumpFlood,uv);
-	return;
-#endif
+	if (u_viewPass==1) {
+		color = texture(u_texJumpFlood,uv);
+		return;
+	}
 #if 0
 	vec2 nearestSeed = texture(u_texJumpFlood, uv).xy;
 	// Clamp by the size of our texture (1.0 in uv space).

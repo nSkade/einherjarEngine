@@ -1,5 +1,6 @@
 #include "GAPI/OGL/GLProgram.hpp"
 #include "GAPI/OGL/GLUtils.hpp"
+#include "imgui.h"
 #include <suOGL.hpp>
 
 #include <Input/GLFW/GLFWKeyboard.hpp>
@@ -99,6 +100,12 @@ int run(void)
 		"scenes/RC/pencil.fs"
 	);
 	
+	GLProgram glpDO; // dynamic objects
+	createPass(glpDO,
+		"scenes/RC/ssq.vs",
+		"scenes/RC/dynamicObj.fs"
+	);
+	
 	GLProgram glpJumpFlood;
 	createPass(glpJumpFlood,
 		"scenes/RC/ssq.vs",
@@ -122,9 +129,9 @@ int run(void)
 	ivec2 prevRes = {width,height};
 
 	GLFrameBuffer fbr1(prevRes);
+	GLFrameBuffer fbr2(prevRes);
 	GLFrameBuffer fbJumpFlood(prevRes);
 	GLFrameBuffer fbJumpFlood2(prevRes);
-	bool ping = true;
 
 	float time = 0.;
 	int frame = 0;
@@ -146,31 +153,34 @@ int run(void)
 	float rayDist = 1.;
 	int jfPassCount = 0;
 
+	enum ViewPass {
+		VP_NRM,
+		VP_JFA,
+		VP_COUNT,
+	};
+	int viewPass = VP_NRM;
+	const char* viewPassStr[] = {
+		"NRM",
+		"JFA",
+	};
+
+	vec2 mouse = vec2(0.,0.);
+
 	while (!glfwWindowShouldClose(window)) {
 		
 		bool hoveredImgui = ImGui::IsAnyItemHovered() || ImGui::IsAnyItemActive() || ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow);
 		glfwGetFramebufferSize(window, &width, &height);
-		ehj_gl_err();
-		if (widthPrev != width || height != heightPrev) {
-			fbr1 = GLFrameBuffer(ivec2(width,height));
-			fbJumpFlood = GLFrameBuffer(ivec2(width,height));
-			fbJumpFlood2 = GLFrameBuffer(ivec2(width,height));
-		}
 
-		glBindFramebuffer(GL_FRAMEBUFFER,fbr1.getFBO());
-		ehj_gl_err();
-		glViewport(0, 0, width, height);
-		ehj_gl_err();
-		if (widthPrev != width || height != heightPrev) {
-			frame = 0;
-			glClearColor(0.,0.,0.,0.);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		} else {
-			glClear(GL_DEPTH_BUFFER_BIT);
-		}
-		
-		widthPrev = width;
-		heightPrev = height;
+		float deltaTime = m_clock.update();
+		m_cam.kbmActive(true);
+		m_cam.update(deltaTime);
+		m_cam.setProj(glm::perspective(glm::radians(60.0f), 1.f,0.1f,1000.0f));
+		//glm::mat4 m = glm::mat4(1.0f); // identity
+		//glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
+		//glm::mat4 mvp = p*m;
+
+		vec2 mousePrev = mouse;
+		mouse = vec2(GLFWMouseCache::getXPos(),height-GLFWMouseCache::getYPos());
 
 		{ // reload shader
 			static bool suc = true;
@@ -182,7 +192,7 @@ int run(void)
 				glUseProgram(0);
 
 				auto reloadPass = [&](GLProgram& glp, std::string fs) {
-					suc &= glp.addSourceFromFile("scenes/RC/pencil.fs");
+					suc &= glp.addSourceFromFile(fs);
 					glp.createProgram();
 					glBindAttribLocation(glp.getProgramID(),oglMesh.getAttribPos(),"vPos");
 					if (oglMesh.getAttribNrm()!=-1)
@@ -191,6 +201,7 @@ int run(void)
 				};
 
 				reloadPass(glpPencil,"scenes/RC/pencil.fs");
+				reloadPass(glpDO,"scenes/RC/dynamicObj.fs");
 				reloadPass(glpRCnaive,"scenes/RC/naive.fs");
 				reloadPass(glpJumpFlood,"scenes/RC/jumpflood.fs");
 				
@@ -206,39 +217,6 @@ int run(void)
 			}
 		}
 
-		ehj_gl_err();
-		//if (ping) {
-		//	glBindFramebuffer(GL_FRAMEBUFFER,fbr2.getFBO());
-		//	glActiveTexture(GL_TEXTURE0);
-		//	glBindTexture(GL_TEXTURE_2D,fbr1.getTexCol());
-		//} else {//pong
-		//	glBindFramebuffer(GL_FRAMEBUFFER,fbr1.getFBO());
-		//	glActiveTexture(GL_TEXTURE0);
-		//	glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
-		//}
-		//ping = !ping;
-
-		float deltaTime = m_clock.update();
-		m_cam.kbmActive(true);
-		m_cam.update(deltaTime);
-		m_cam.setProj(glm::perspective(glm::radians(60.0f), 1.f,0.1f,1000.0f));
- 
-		glm::mat4 m = glm::mat4(1.0f); // identity
-		glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
-		glm::mat4 mvp = p*m;
-		glpPencil.bind();
-
-		//static vec3 prevDir;
-		//static vec3 prevPos;
-		//if (m_cam.getDir() != prevDir || m_cam.getPos() != prevPos) {
-		//	glUniform1f(glpPencil.getUnfLoc("u_camChange"), 1.f);
-		//	frame = 0;
-		//}
-		//else
-		//	glUniform1f(glpPencil.getUnfLoc("u_camChange"), 0.f);
-		//prevDir = m_cam.getDir();
-		//prevPos = m_cam.getPos();
-
 		auto setCMNuniforms = [&](GLProgram& glp) {
 			glUniform1f(glp.getUnfLoc("u_time"), time);
 			glUniform1f(glp.getUnfLoc("u_frame"), frame);
@@ -247,7 +225,9 @@ int run(void)
 				glUniform1i(glp.getUnfLoc("u_mbd"), 0);
 			else
 				glUniform1i(glp.getUnfLoc("u_mbd"), (int) GLFWMouseCache::keyPressed(IBCodes::MB_BUTTON_LEFT));
-			glUniform2f(glp.getUnfLoc("u_mouse"), GLFWMouseCache::getXPos(),height-GLFWMouseCache::getYPos());
+			glUniform2fv(glp.getUnfLoc("u_mouse"), 1, &mouse[0]);
+			glUniform2fv(glp.getUnfLoc("u_mousePrev"), 1, &mousePrev[0]);
+			//ehj_gl_err();
 			glUniformMatrix4fv(glp.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
 			glUniform1f(glp.getUnfLoc("u_pencilSize"),pencilSize);
 			glUniform4fv(glp.getUnfLoc("u_pencilColor"),1,&pencilColor[0]);
@@ -255,19 +235,44 @@ int run(void)
 			glUniform1i(glp.getUnfLoc("u_raySteps"),raySteps);
 			glUniform1f(glp.getUnfLoc("u_rayNoise"),rayNoise);
 			glUniform1f(glp.getUnfLoc("u_rayDist"),rayDist);
+			glUniform1i(glp.getUnfLoc("u_viewPass"),viewPass);
 		};
 
-		setCMNuniforms(glpPencil);
-		//glm::vec3 cPos = m_cam.getPos(); //TODO clear accumulation buffer on cam pos change
-		//glUniform3f(glpPencil.getUnfLoc("u_cPos"), cPos.x,cPos.y,cPos.z);
-		//glm::mat4 camPV = glm::scale(glm::mat4(1.f),glm::vec3(float(width)/height,1.,1.))*m_cam.getPV();
-		//glUniformMatrix4fv(glpPencil.getUnfLoc("u_m"),1,GL_TRUE,&camPV[0][0]);
+		{ // draw pencil
+			glBindFramebuffer(GL_FRAMEBUFFER,fbr1.getFBO());
+			glViewport(0, 0, width, height);
+			if (widthPrev != width || height != heightPrev) {
+				frame = 0;
+				fbr1 = GLFrameBuffer(ivec2(width,height));
+				fbr2 = GLFrameBuffer(ivec2(width,height));
+				//glClearColor(0.,0.,0.,0.);
+				//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			} else {
+				glClear(GL_DEPTH_BUFFER_BIT);
+			}
+			glpPencil.bind();
+			setCMNuniforms(glpPencil);
+			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+		}
 
-		glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+		if (1) { // draw temporary elements / dynamic objects
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D,fbr1.getTexCol());
+			glBindFramebuffer(GL_FRAMEBUFFER,fbr2.getFBO());
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glpDO.bind();
+			setCMNuniforms(glpDO);
+			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+		}
 
 		// flood fill pass, requires for loop passes in order to cover whole screen
 		int jfPassCountOrig = ceil(glm::log2((float) fmax(width,height)));
-		{
+		{ // JFA
+			if (widthPrev != width || height != heightPrev) {
+				fbJumpFlood = GLFrameBuffer(ivec2(width,height));
+				fbJumpFlood2 = GLFrameBuffer(ivec2(width,height));
+			}
+
 			glViewport(0, 0, width, height);
 			glBindFramebuffer(GL_FRAMEBUFFER,fbJumpFlood2.getFBO());
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -278,7 +283,7 @@ int run(void)
 
 			// already bound glBindFramebuffer(GL_FRAMEBUFFER,fbJumpFlood.getFBO());
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D,fbr1.getTexCol());
+			glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
 			glUniform1i(glGetUniformLocation(glpJumpFlood.getProgramID(), "u_tex"), 0);           // texture unit 0
 			// render uv
 			glUniform1f(glpJumpFlood.getUnfLoc("u_jfOffset"),0.);
@@ -309,42 +314,49 @@ int run(void)
 			}
 		}
 
-		// RC naive pass
-		glBindFramebuffer(GL_FRAMEBUFFER,0);
-		glViewport(0, 0, width, height);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		{ // RC naive pass
+			glBindFramebuffer(GL_FRAMEBUFFER,0);
+			glViewport(0, 0, width, height);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		glpRCnaive.bind();
-		setCMNuniforms(glpRCnaive);
-		
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D,fbr1.getTexCol());
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D,fbJumpFlood.getTexCol());
+			glpRCnaive.bind();
+			setCMNuniforms(glpRCnaive);
+			
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D,fbJumpFlood.getTexCol());
 
-		//TODO abstract this into GLProgram
-		glUniform1i(glGetUniformLocation(glpRCnaive.getProgramID(), "u_tex"), 0);           // texture unit 0
-		glUniform1i(glGetUniformLocation(glpRCnaive.getProgramID(), "u_texJumpFlood"), 1);  // texture unit 1
+			//TODO abstract this into GLProgram
+			glUniform1i(glGetUniformLocation(glpRCnaive.getProgramID(), "u_tex"), 0);           // texture unit 0
+			glUniform1i(glGetUniformLocation(glpRCnaive.getProgramID(), "u_texJumpFlood"), 1);  // texture unit 1
 
-		glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
-		
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-		{
-			ImGui::Begin("RCnaive");
-			ImGui::DragFloat("pencilSize",&pencilSize,0.001,0.001,10.);
-			ImGui::ColorEdit4("pencilColor",&pencilColor[0]);
-			ImGui::DragInt("rayCount",&rayCount,1,1,100);
-			ImGui::DragInt("raySteps",&raySteps,1,1,100);
-			ImGui::DragFloat("rayNoise",&rayNoise,0.001,0.,1.);
-			ImGui::DragFloat("rayDist",&rayDist,0.001,0.,1.);
-			ImGui::SliderInt("jfPassCountMod",&jfPassCount,0,jfPassCountOrig);
-			ImGui::End();
+			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 		}
+		
+		{ // imgui
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
+			{
+				ImGui::Begin("RCnaive");
+				ImGui::DragFloat("pencilSize",&pencilSize,0.001,0.001,10.);
+				ImGui::ColorEdit4("pencilColor",&pencilColor[0]);
+				ImGui::DragInt("rayCount",&rayCount,1,1,100);
+				ImGui::DragInt("raySteps",&raySteps,1,1,100);
+				ImGui::DragFloat("rayNoise",&rayNoise,0.001,0.,1.);
+				ImGui::DragFloat("rayDist",&rayDist,0.001,0.,1.);
+				ImGui::SliderInt("jfPassCountMod",&jfPassCount,0,jfPassCountOrig);
+				ImGui::Separator();
+				{
+					ImGui::Combo("view pass",&viewPass,viewPassStr,VP_COUNT);
+				}
+				ImGui::End();
+			}
 
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		}
 
 		ehj_gl_err();
 		glfwSwapBuffers(window);
@@ -354,6 +366,9 @@ int run(void)
 		
 		time += deltaTime;
 		frame++;
+		
+		widthPrev = width;
+		heightPrev = height;
 	}
 
 	ImGui_ImplOpenGL3_Shutdown();

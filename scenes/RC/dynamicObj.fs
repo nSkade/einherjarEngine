@@ -16,18 +16,12 @@ uniform vec2 u_mousePrev;
 uniform float u_pencilSize;
 uniform vec4 u_pencilColor;
 
+uniform sampler2D u_tex;
+
 // iq
 float sdCircle( vec2 p, float r )
 {
 	return length(p) - r;
-}
-
-// iq
-float sdSegment( in vec2 p, in vec2 a, in vec2 b )
-{
-	vec2 pa = p-a, ba = b-a;
-	float h = clamp( dot(pa,ba)/dot(ba,ba), 0.0, 1.0 );
-	return length( pa - ba*h );
 }
 
 vec4 pencil(vec2 uv, out bool inside) {
@@ -37,10 +31,7 @@ vec4 pencil(vec2 uv, out bool inside) {
 	vec2 uva=uv; uva.x *= ratio;
 	vec2 mouse = u_mouse/u_resolution; mouse.x *= ratio;
 	inside = false;
-	//if (sdCircle(uva-mouse,radiusSquared) <= 0.) {
-
-	vec2 mousePrev = u_mousePrev/u_resolution; mousePrev.x *= ratio;
-	if (sdSegment(uva,mouse,mousePrev)-radiusSquared <= 0.) {
+	if (sdCircle(uva-mouse,radiusSquared) <= 0.) {
 		ret = u_pencilColor;
 		inside = true;
 	}
@@ -48,18 +39,11 @@ vec4 pencil(vec2 uv, out bool inside) {
 }
 
 void main() {
-	if (u_frame < 2) {
-		color = vec4(0.);
-		return;
-	}
-	vec2 uv = gl_FragCoord.xy/u_resolution.xy;
-	if (u_mbd==1) {
-		bool inside = false;
-		vec4 colorPencil = pencil(uv,inside);
-		if (inside) {
-			color = colorPencil;
-		} else
-			discard;
+	vec2 uv = gl_FragCoord.xy/u_resolution.xy; //texVp/u_resolution;
+	bool inside = false;
+	vec4 colorPencil = pencil(uv,inside);
+	if (inside) {
+		color = colorPencil;
 	} else
-		discard;
+		color = texture(u_tex,uv);
 };

@@ -13,8 +13,8 @@
 using namespace ehj;
 using namespace glm;
 
-#define SCENETYPE RCnaiveScene
-class RCnaiveScene : IScene {
+#define SCENETYPE RCScene
+class RCScene : IScene {
 public:
 	FreeFlyCamera m_cam;
 	Clock m_clock;
@@ -38,8 +38,7 @@ void setup(void) {
 
 };
 
-int run(void)
-{
+int run(void) {
 	GLFWwindow* window;
 
 	glfwSetErrorCallback(error_callback);
@@ -51,7 +50,7 @@ int run(void)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 
 	int width = 640, height = 480;
-	window = glfwCreateWindow(width, height, "ehjE RCnaive", NULL, NULL);
+	window = glfwCreateWindow(width, height, "ehjE RC 2D", NULL, NULL);
 #if 0
 	width = 1920, height = 1027;
 	glfwSetWindowSize(window,width,height);
@@ -111,10 +110,10 @@ int run(void)
 		"scenes/RC/jumpflood.fs"
 	);
 
-	GLProgram glpRCnaive;
-	createPass(glpRCnaive,
+	GLProgram glpRC;
+	createPass(glpRC,
 		"scenes/RC/ssq.vs",
-		"scenes/RC/naive.fs"
+		"scenes/RC/rc.fs"
 	);
 
 	glm::mat4 pvm = glm::ortho(-1.f,1.f,-1.f,1.f);
@@ -127,8 +126,13 @@ int run(void)
 	//glfwGetFramebufferSize(window, &width, &height);
 	ivec2 prevRes = {width,height};
 
-	GLFrameBuffer fbr1(prevRes);
-	GLFrameBuffer fbr2(prevRes);
+	GLFrameBuffer::Opt fbOpt {prevRes,GL_RGBA8,GL_LINEAR};
+	GLFrameBuffer fbr1(fbOpt);
+	GLFrameBuffer fbr2(fbOpt);
+	
+	GLFrameBuffer fbrc1(fbOpt);
+	GLFrameBuffer fbrc2(fbOpt);
+	
 	GLFrameBuffer fbJumpFlood(prevRes);
 	GLFrameBuffer fbJumpFlood2(prevRes);
 
@@ -145,13 +149,19 @@ int run(void)
 
 	float pencilSize = .02;
 	vec4 pencilColor = vec4(1.,0.,0.,1.);
+	bool pencilVisible = true;
+	bool linearFilter = true;
+	bool linearFilterPrev = true;
 
-	int rayCount = 16;
-	int raySteps = 16;
+	int rayCount = 4;
+	int raySteps = 100;
 	float rayNoise = 1.;
 	float rayDist = 1.;
 	int jfPassCount = 11;
 	float lightStr = 1.;
+	
+	int cascadeCount = 5;
+	int viewCascade = 0;
 
 	enum ViewPass {
 		VP_NRM,
@@ -170,6 +180,8 @@ int run(void)
 		
 		bool hoveredImgui = ImGui::IsAnyItemHovered() || ImGui::IsAnyItemActive() || ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow);
 		glfwGetFramebufferSize(window, &width, &height);
+		width = max(1,width);
+		height = max(1,height);
 
 		float deltaTime = m_clock.update();
 		m_cam.kbmActive(true);
@@ -181,7 +193,7 @@ int run(void)
 
 		vec2 mousePrev = mouse;
 		mouse = vec2(GLFWMouseCache::getXPos(),height-GLFWMouseCache::getYPos());
-
+		
 		{ // reload shader
 			static bool suc = true;
 			if (GLFWKeyboardCache::keyReleased(IBCodes::KK_KEY_R))
@@ -202,10 +214,10 @@ int run(void)
 
 				reloadPass(glpPencil,"scenes/RC/pencil.fs");
 				reloadPass(glpDO,"scenes/RC/dynamicObj.fs");
-				reloadPass(glpRCnaive,"scenes/RC/naive.fs");
+				reloadPass(glpRC,"scenes/RC/rc.fs");
 				reloadPass(glpJumpFlood,"scenes/RC/jumpflood.fs");
-				
-				frame = 0;
+				//
+				//frame = 0;
 				suc = sucTmp;
 			}
 			if (!suc) {
@@ -231,12 +243,15 @@ int run(void)
 			glUniformMatrix4fv(glp.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
 			glUniform1f(glp.getUnfLoc("u_pencilSize"),pencilSize);
 			glUniform4fv(glp.getUnfLoc("u_pencilColor"),1,&pencilColor[0]);
+			glUniform1i(glp.getUnfLoc("u_pencilVisible"),pencilVisible);
 			glUniform1i(glp.getUnfLoc("u_rayCount"),rayCount);
 			glUniform1i(glp.getUnfLoc("u_raySteps"),raySteps);
 			glUniform1f(glp.getUnfLoc("u_rayNoise"),rayNoise);
 			glUniform1f(glp.getUnfLoc("u_rayDist"),rayDist);
 			glUniform1i(glp.getUnfLoc("u_viewPass"),viewPass);
 			glUniform1f(glp.getUnfLoc("u_lightStr"),lightStr);
+			glUniform1i(glp.getUnfLoc("u_cascadeCount"),cascadeCount);
+			glUniform1i(glp.getUnfLoc("u_viewCascade"),viewCascade);
 		};
 
 		{ // draw pencil
@@ -244,8 +259,10 @@ int run(void)
 			glViewport(0, 0, width, height);
 			if (widthPrev != width || height != heightPrev) {
 				frame = 0;
-				fbr1 = GLFrameBuffer(ivec2(width,height));
-				fbr2 = GLFrameBuffer(ivec2(width,height));
+				
+				GLFrameBuffer::Opt fbOpt {ivec2(width,height),GL_RGBA8};
+				fbr1 = GLFrameBuffer(fbOpt);
+				fbr2 = GLFrameBuffer(fbOpt);
 				//glClearColor(0.,0.,0.,0.);
 				//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			} else {
@@ -254,9 +271,10 @@ int run(void)
 			glpPencil.bind();
 			setCMNuniforms(glpPencil);
 			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+			glBindFramebuffer(GL_FRAMEBUFFER,0);
 		}
 
-		if (1) { // draw temporary elements / dynamic objects
+		{ // draw temporary elements / dynamic objects
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D,fbr1.getTexCol());
 			glBindFramebuffer(GL_FRAMEBUFFER,fbr2.getFBO());
@@ -305,54 +323,107 @@ int run(void)
 				glUniform1f(glpJumpFlood.getUnfLoc("u_jfOffset"),pow(2,jfPassCount-i-1));
 
 				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+			}
 
-				if (i==jfPassCount-1 && i%2==0) {
-					// blit into fbJFto
-					glBlitNamedFramebuffer(fbJFto->getFBO(),fbJFfrom->getFBO(),
-						0,0,width,height,0,0,width,height,
-						GL_COLOR_BUFFER_BIT,GL_NEAREST);
-				}
+			if (jfPassCount %2==0) {
+				// blit into fbJFto
+				glBlitNamedFramebuffer(fbJumpFlood2.getFBO(),fbJumpFlood.getFBO(),
+					0,0,width,height,0,0,width,height,
+					GL_COLOR_BUFFER_BIT,GL_NEAREST);
 			}
 		}
 
-		{ // RC naive pass
-			glBindFramebuffer(GL_FRAMEBUFFER,0);
+		{ // RC 2D pass
+			if (widthPrev != width || height != heightPrev || linearFilter != linearFilterPrev) {
+				GLFrameBuffer::Opt fbOpt {ivec2(width,height),GL_RGBA8};
+				fbOpt.texturefilter = linearFilter ? GL_LINEAR : GL_NEAREST;
+				fbrc1 = GLFrameBuffer(fbOpt);
+				fbrc2 = GLFrameBuffer(fbOpt);
+			}
+
 			glViewport(0, 0, width, height);
+			glBindFramebuffer(GL_FRAMEBUFFER,fbrc1.getFBO());
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glBindFramebuffer(GL_FRAMEBUFFER,fbrc2.getFBO());
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			glpRCnaive.bind();
-			setCMNuniforms(glpRCnaive);
-			
+			glpRC.bind();
+			setCMNuniforms(glpRC);
+
+			// already bound glBindFramebuffer(GL_FRAMEBUFFER,fbRC.getFBO());
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
+			glUniform1i(glGetUniformLocation(glpRC.getProgramID(), "u_tex"), 0);           // texture unit 0
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D,fbJumpFlood.getTexCol());
+			glUniform1i(glGetUniformLocation(glpRC.getProgramID(), "u_texJumpFlood"), 1);  // texture unit 1
+			// render uv
+			//glUniform1f(glpRC.getUnfLoc("u_jfOffset"),0.);
+			
+			for (int i=cascadeCount-1;i>=0;--i) {
+			//for (int i=0;i<cascadeCount;++i) {
+				auto* fbFrom = &fbrc1;
+				auto* fbTo = &fbrc2;
+				if (i%2!=cascadeCount % 2)
+					std::swap(fbFrom,fbTo);
+				//if (i%2==1)
+				//	std::swap(fbFrom,fbTo);
+				
+				glBindFramebuffer(GL_FRAMEBUFFER,fbTo->getFBO());
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				
+				glUniform1i(glpRC.getUnfLoc("u_cascade"),i);
+				glUniform1i(glpRC.getUnfLoc("u_cascadeCount"),cascadeCount);
+				
+				glActiveTexture(GL_TEXTURE2);
+				glBindTexture(GL_TEXTURE_2D,fbFrom->getTexCol());
+				glUniform1i(glGetUniformLocation(glpRC.getProgramID(), "u_texPrev"), 2);           // texture unit 0
 
-			//TODO abstract this into GLProgram
-			glUniform1i(glGetUniformLocation(glpRCnaive.getProgramID(), "u_tex"), 0);           // texture unit 0
-			glUniform1i(glGetUniformLocation(glpRCnaive.getProgramID(), "u_texJumpFlood"), 1);  // texture unit 1
+				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+			}
+			
+			if (cascadeCount % 2 == 0) { //TODO improve eff
+				glBlitNamedFramebuffer(fbrc2.getFBO(),fbrc1.getFBO(),
+					0,0,width,height,0,0,width,height,
+					GL_COLOR_BUFFER_BIT,GL_NEAREST);
+			}
 
-			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+			{ // blit rc result into buf 0 
+				glBindFramebuffer(GL_FRAMEBUFFER,0);
+				glViewport(0, 0, width, height);
+				//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // shouldnt be required
+				glBlitNamedFramebuffer(fbrc1.getFBO(),0,
+					0,0,width,height,0,0,width,height,
+					GL_COLOR_BUFFER_BIT,GL_NEAREST);
+			}
 		}
 		
+		ehj_gl_err();
+		
 		{ // imgui
+			linearFilterPrev = linearFilter;
+			
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
 			{
-				ImGui::Begin("RCnaive");
+				ImGui::Begin("RC 2D");
+				ImGui::Checkbox("show pencil",&pencilVisible);
 				ImGui::DragFloat("pencilSize",&pencilSize,0.001,0.001,10.);
 				ImGui::ColorEdit4("pencilColor",&pencilColor[0]);
-				ImGui::DragInt("rayCount",&rayCount,1,1,100);
+				ImGui::DragInt("rayCount",&rayCount,1,1,16);
 				ImGui::DragInt("raySteps",&raySteps,1,1,100);
 				ImGui::DragFloat("rayNoise",&rayNoise,0.001,0.,1.);
 				ImGui::DragFloat("rayDist",&rayDist,0.001,0.,1.);
 				ImGui::SliderInt("jfPassCountMod",&jfPassCount,0,jfPassCountOrig);
-				ImGui::DragFloat("lightStr",&lightStr,0.001,0.,10.);
+				ImGui::DragFloat("lightStr",&lightStr,0.001);
 				ImGui::Separator();
 				{
 					ImGui::Combo("view pass",&viewPass,viewPassStr,VP_COUNT);
 				}
+				ImGui::SliderInt("cascade Count",&cascadeCount,0,5);
+				ImGui::SliderInt("viewCascade",&viewCascade,0,cascadeCount);
+				ImGui::Checkbox("linear texture filter",&linearFilter);
 				ImGui::End();
 			}
 

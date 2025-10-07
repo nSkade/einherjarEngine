@@ -15,7 +15,8 @@
 //#include "VulkanTest.hpp"
 
 //#include "PathTracing.hpp"
-#include "RC/RCnaive.hpp"
+//#include "RC/RCnaive.hpp"
+#include "RC/RC.hpp"
 
 //#include "TexturedTri.hpp"
 

@@ -20,30 +20,12 @@ uniform int u_rayCount;
 uniform int u_raySteps;
 uniform float u_rayNoise;
 uniform float u_rayDist;
+uniform float u_lightStr;
 
 uniform sampler2D u_tex;
 uniform sampler2D u_texJumpFlood;
 
 uniform int u_viewPass;
-
-float sdCircle( vec2 p, float r )
-{
-	return length(p) - r;
-}
-
-vec4 pencil(vec2 uv, out bool inside) {
-	vec4 ret = vec4(0.);
-	float radiusSquared = u_pencilSize;
-	float ratio = u_resolution.x/u_resolution.y;
-	vec2 uva=uv; uva.x *= ratio;
-	vec2 mouse = u_mouse/u_resolution; mouse.x *= ratio;
-	inside = false;
-	if (sdCircle(uva-mouse,radiusSquared) <= 0.) {
-		ret = u_pencilColor;
-		inside = true;
-	}
-	return ret;
-}
 
 bool outOfBounds(vec2 uv) {
 	return uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0;
@@ -107,7 +89,7 @@ vec4 raymarch(vec2 uv) {
 			
 			if (dist < 0.001) {
 				vec4 sampleLight = texture(u_tex, sampleUv);
-				radiance += sampleLight;
+				radiance += sampleLight * u_lightStr;
 				break;
 			}
 		}
@@ -135,10 +117,4 @@ void main() {
 #endif
 	
 	color = raymarch(uv);
-
-	bool inside = false;
-	vec4 colorPencil = pencil(uv,inside);
-	if (inside) {
-		color = colorPencil;
-	}
 };

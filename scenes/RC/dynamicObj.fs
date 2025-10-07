@@ -15,6 +15,7 @@ uniform vec2 u_mousePrev;
 
 uniform float u_pencilSize;
 uniform vec4 u_pencilColor;
+uniform bool u_pencilVisible;
 
 uniform sampler2D u_tex;
 
@@ -40,6 +41,10 @@ vec4 pencil(vec2 uv, out bool inside) {
 
 void main() {
 	vec2 uv = gl_FragCoord.xy/u_resolution.xy; //texVp/u_resolution;
+	if (!u_pencilVisible) {
+		color = texture(u_tex,uv);
+		return;
+	}
 	bool inside = false;
 	vec4 colorPencil = pencil(uv,inside);
 	if (inside) {

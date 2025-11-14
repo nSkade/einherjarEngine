@@ -1,5 +1,6 @@
 #include "GAPI/OGL/GLProgram.hpp"
 #include "GAPI/OGL/GLUtils.hpp"
+#include <string>
 #include <suOGL.hpp>
 
 #include <Input/GLFW/GLFWKeyboard.hpp>
@@ -127,11 +128,26 @@ int run(void) {
 	ivec2 prevRes = {width,height};
 
 	GLFrameBuffer::Opt fbOpt {prevRes,GL_RGBA8,GL_LINEAR};
+
 	GLFrameBuffer fbr1(fbOpt);
 	GLFrameBuffer fbr2(fbOpt);
 	
+	//fbOpt = GLFrameBuffer::Opt{prevRes/2,GL_RGBA8,GL_LINEAR};
+	fbOpt = GLFrameBuffer::Opt{prevRes,GL_RGBA8,GL_LINEAR};
+#if 0
 	GLFrameBuffer fbrc1(fbOpt);
 	GLFrameBuffer fbrc2(fbOpt);
+#else
+	GLFrameBuffer fbrc[7] = {
+		GLFrameBuffer(fbOpt),
+		GLFrameBuffer(fbOpt),
+		GLFrameBuffer(fbOpt),
+		GLFrameBuffer(fbOpt),
+		GLFrameBuffer(fbOpt),
+		GLFrameBuffer(fbOpt),
+		GLFrameBuffer(fbOpt)
+	};
+#endif
 	
 	GLFrameBuffer fbJumpFlood(prevRes);
 	GLFrameBuffer fbJumpFlood2(prevRes);
@@ -162,6 +178,8 @@ int run(void) {
 	
 	int cascadeCount = 5;
 	int viewCascade = 0;
+	
+	float rayOverlap = 0.;
 
 	enum ViewPass {
 		VP_NRM,
@@ -175,9 +193,12 @@ int run(void) {
 	};
 
 	vec2 mouse = vec2(0.,0.);
+	GPUTimer gpuTimer;
 
 	while (!glfwWindowShouldClose(window)) {
 		
+		gpuTimer.start();
+
 		bool hoveredImgui = ImGui::IsAnyItemHovered() || ImGui::IsAnyItemActive() || ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow);
 		glfwGetFramebufferSize(window, &width, &height);
 		width = max(1,width);
@@ -274,6 +295,23 @@ int run(void) {
 			glBindFramebuffer(GL_FRAMEBUFFER,0);
 		}
 
+		struct Bl {
+			vec2 p,d;
+		};
+		static std::vector<Bl> bounceLightsC;
+		for (int i=0; i < bounceLightsC.size(); ++i) {
+			auto& b = bounceLightsC[i];
+			b.p += b.d * deltaTime * .2f;
+			if (b.p.x > float(width)/height || b.p.x < 0.) {
+				b.p.x = clamp(b.p.x,0.f,float(width)/height);
+				b.d.x *= -1;
+			}
+			if (b.p.y > 1. || b.p.y < 0.) {
+				b.p.y = clamp(b.p.y,0.f,1.f);
+				b.d.y *= -1;
+			}
+		}
+
 		{ // draw temporary elements / dynamic objects
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D,fbr1.getTexCol());
@@ -281,24 +319,42 @@ int run(void) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glpDO.bind();
 			setCMNuniforms(glpDO);
+
+			std::vector<vec2> bounceLights;
+			for (int i=0;i<bounceLightsC.size();++i)
+				bounceLights.push_back(bounceLightsC[i].p);
+
+			glUniform1i(glpDO.getUnfLoc("u_bounceLightCount"),bounceLights.size());
+			glUniform2fv(glpDO.getUnfLoc("u_bounceLights"), bounceLights.size(), (float*) bounceLights.data());
+
 			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 		}
 
 		// flood fill pass, requires for loop passes in order to cover whole screen
 		int jfPassCountOrig = ceil(glm::log2((float) fmax(width,height)));
+		//if (frame%2==0)
 		{ // JFA
+			//TODO lower res super good but has flickering see JFA channel
+			int wd2 = width/4;
+			int hd2 = height/4;
 			if (widthPrev != width || height != heightPrev) {
-				fbJumpFlood = GLFrameBuffer(ivec2(width,height));
-				fbJumpFlood2 = GLFrameBuffer(ivec2(width,height));
+				//fbJumpFlood = GLFrameBuffer(ivec2(width,height));
+				//fbJumpFlood2 = GLFrameBuffer(ivec2(width,height));
+				GLFrameBuffer::Opt opt = {ivec2(wd2,hd2),GL_RGBA32F,GL_LINEAR};
+				fbJumpFlood = GLFrameBuffer(opt);
+				fbJumpFlood2 = GLFrameBuffer(opt);
 			}
 
-			glViewport(0, 0, width, height);
+			//glViewport(0, 0, width, height);
+			glViewport(0, 0, wd2, hd2);
 			glBindFramebuffer(GL_FRAMEBUFFER,fbJumpFlood2.getFBO());
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glBindFramebuffer(GL_FRAMEBUFFER,fbJumpFlood.getFBO());
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glpJumpFlood.bind();
 			setCMNuniforms(glpJumpFlood);
+			
+			glUniform2f(glpJumpFlood.getUnfLoc("u_resolution"), wd2,hd2);
 
 			// already bound glBindFramebuffer(GL_FRAMEBUFFER,fbJumpFlood.getFBO());
 			glActiveTexture(GL_TEXTURE0);
@@ -328,27 +384,51 @@ int run(void) {
 			if (jfPassCount %2==0) {
 				// blit into fbJFto
 				glBlitNamedFramebuffer(fbJumpFlood2.getFBO(),fbJumpFlood.getFBO(),
-					0,0,width,height,0,0,width,height,
+					//0,0,width,height,0,0,width,height,
+					0,0,wd2,hd2,0,0,wd2,hd2,
 					GL_COLOR_BUFFER_BIT,GL_NEAREST);
 			}
 		}
 
-		{ // RC 2D pass
+		{ // RC 2D pass, TODO upscale with FSR2
 			if (widthPrev != width || height != heightPrev || linearFilter != linearFilterPrev) {
+				//GLFrameBuffer::Opt fbOpt {ivec2(width,height)/2,GL_RGBA8};
 				GLFrameBuffer::Opt fbOpt {ivec2(width,height),GL_RGBA8};
 				fbOpt.texturefilter = linearFilter ? GL_LINEAR : GL_NEAREST;
+#if 0
 				fbrc1 = GLFrameBuffer(fbOpt);
 				fbrc2 = GLFrameBuffer(fbOpt);
+#else
+				for (int i=0;i<7;++i)
+					fbrc[i] = GLFrameBuffer(fbOpt);
+#endif
 			}
 
 			glViewport(0, 0, width, height);
+#if 0
 			glBindFramebuffer(GL_FRAMEBUFFER,fbrc1.getFBO());
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glBindFramebuffer(GL_FRAMEBUFFER,fbrc2.getFBO());
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#else
+			for (int i=0;i<7;++i) {
+				//if (frame%(i*1+1)==0)
+				//if (frame%(max(0,i-1)+1)==0)
+				{
+					glBindFramebuffer(GL_FRAMEBUFFER,fbrc[i].getFBO());
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				}
+			}
+			//else {
+			//	glBindFramebuffer(GL_FRAMEBUFFER,fbrc[0].getFBO());
+			//	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			//}
+#endif
 
 			glpRC.bind();
 			setCMNuniforms(glpRC);
+			//glUniform2f(glpRC.getUnfLoc("u_resolution"), float(width)/2,float(height)/2);
+			glUniform2f(glpRC.getUnfLoc("u_resolution"), width,height);
 
 			// already bound glBindFramebuffer(GL_FRAMEBUFFER,fbRC.getFBO());
 			glActiveTexture(GL_TEXTURE0);
@@ -361,11 +441,19 @@ int run(void) {
 			//glUniform1f(glpRC.getUnfLoc("u_jfOffset"),0.);
 			
 			for (int i=cascadeCount-1;i>=0;--i) {
+				//if (frame%(i*1+1)==0)
+				//if (frame%(max(0,i-1)+1)==0)
+				{
 			//for (int i=0;i<cascadeCount;++i) {
+#if 0
 				auto* fbFrom = &fbrc1;
 				auto* fbTo = &fbrc2;
 				if (i%2!=cascadeCount % 2)
 					std::swap(fbFrom,fbTo);
+#else
+				auto* fbFrom = &fbrc[i+1];
+				auto* fbTo = &fbrc[i];
+#endif
 				//if (i%2==1)
 				//	std::swap(fbFrom,fbTo);
 				
@@ -374,29 +462,43 @@ int run(void) {
 				
 				glUniform1i(glpRC.getUnfLoc("u_cascade"),i);
 				glUniform1i(glpRC.getUnfLoc("u_cascadeCount"),cascadeCount);
+				glUniform1f(glpRC.getUnfLoc("u_overlap"),rayOverlap);
 				
 				glActiveTexture(GL_TEXTURE2);
 				glBindTexture(GL_TEXTURE_2D,fbFrom->getTexCol());
 				glUniform1i(glGetUniformLocation(glpRC.getProgramID(), "u_texPrev"), 2);           // texture unit 0
 
 				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+				}
 			}
-			
+	
+#if 0
 			if (cascadeCount % 2 == 0) { //TODO improve eff
 				glBlitNamedFramebuffer(fbrc2.getFBO(),fbrc1.getFBO(),
 					0,0,width,height,0,0,width,height,
 					GL_COLOR_BUFFER_BIT,GL_NEAREST);
 			}
+#else
+#endif
 
 			{ // blit rc result into buf 0 
 				glBindFramebuffer(GL_FRAMEBUFFER,0);
 				glViewport(0, 0, width, height);
 				//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // shouldnt be required
+#if 0
 				glBlitNamedFramebuffer(fbrc1.getFBO(),0,
+					0,0,width/2,height/2,0,0,width,height,
+					GL_COLOR_BUFFER_BIT,GL_NEAREST);
+#else
+				glBlitNamedFramebuffer(fbrc[0].getFBO(),0,
+					//0,0,width/2,height/2,0,0,width,height,
 					0,0,width,height,0,0,width,height,
 					GL_COLOR_BUFFER_BIT,GL_NEAREST);
+#endif
 			}
 		}
+
+		gpuTimer.end();
 		
 		ehj_gl_err();
 		
@@ -408,6 +510,13 @@ int run(void) {
 			ImGui::NewFrame();
 			{
 				ImGui::Begin("RC 2D");
+				float ms1 = gpuTimer.getMS();
+				static float ms = 1.;
+				ms = ms*.99 + ms1*.01;
+				std::string strMS = "MS: " + std::to_string(ms);
+				ImGui::Text("%s", strMS.c_str());
+				std::string strFPS = "FPS: " + std::to_string(1000./ms);
+				ImGui::Text("%s", strFPS.c_str());
 				ImGui::Checkbox("show pencil",&pencilVisible);
 				ImGui::DragFloat("pencilSize",&pencilSize,0.001,0.001,10.);
 				ImGui::ColorEdit4("pencilColor",&pencilColor[0]);
@@ -421,9 +530,19 @@ int run(void) {
 				{
 					ImGui::Combo("view pass",&viewPass,viewPassStr,VP_COUNT);
 				}
-				ImGui::SliderInt("cascade Count",&cascadeCount,0,5);
+				ImGui::SliderInt("cascade Count",&cascadeCount,0,6);
 				ImGui::SliderInt("viewCascade",&viewCascade,0,cascadeCount);
 				ImGui::Checkbox("linear texture filter",&linearFilter);
+
+				if(ImGui::Button("add bounce light")) {
+					Bl b = {vec2(float(rand())/RAND_MAX,float(rand())/RAND_MAX),
+							vec2(float(rand())/RAND_MAX,float(rand())/RAND_MAX)};
+					bounceLightsC.push_back(b);
+				}
+				if(ImGui::Button("clear bounce lights")) {
+					bounceLightsC.clear();
+				}
+				ImGui::DragFloat("rayOverlap",&rayOverlap,0.001);
 				ImGui::End();
 			}
 

@@ -28,6 +28,8 @@ uniform int u_cascade;
 uniform int u_cascadeCount;
 uniform int u_viewCascade;
 
+uniform float u_overlap; // start / end intervall overlap
+
 bool outOfBounds(vec2 uv) {
 	return uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0;
 }
@@ -40,6 +42,13 @@ vec4 raymarch(vec2 uv) {
 	if (u_viewCascade != 0)
 		if (u_cascade != u_viewCascade-1)
 			return texture(u_texPrev,uv);
+
+	//TODO break early if we sample from light
+	//else {
+	//	vec4 light = texture(u_tex, uv);
+	//	if (light.a > 0.)
+	//		return light;
+	//}
 	
 	//bool lastLayer = u_cascade == u_cascadeCount;
 	float ratio = u_resolution.x/u_resolution.y;
@@ -60,8 +69,14 @@ vec4 raymarch(vec2 uv) {
 	//float endD   = float(pow(base,u_cascade+1)-1.)/(pow(base,u_cascadeCount)-1.) *maxLen*u_rayDist;
 
 	float minRes = min(u_resolution.x,u_resolution.y);
-	float startD = float(pow(base,u_cascade  )) / minRes * maxLen / u_rayDist;
-	float endD   = float(pow(base,u_cascade+1)) / minRes * maxLen / u_rayDist;
+	 // max len to avoid having to use one extra cascade but huge quality loss
+	float startD = float(pow(base,u_cascade  )) / minRes / u_rayDist;// * maxLen;
+	float endD   = float(pow(base,u_cascade+1)) / minRes / u_rayDist;// * maxLen;
+
+	if (u_cascade > 1) {
+		startD -= u_overlap;
+		endD += u_overlap;
+	}
 
 	//if (!lastLayer) endD = length(vec2(ratio,1.)); // maximum dist possible on screenspace
 
@@ -110,6 +125,9 @@ vec4 raymarch(vec2 uv) {
 		for (int j = 0; j< u_raySteps; j++) {
 			vec2 nearestSeed = texture(u_texJumpFlood, sampleUv).xy;
 			float dist = distance(sampleUv, nearestSeed);
+			
+			//TODO(without sdf)
+			//float dist = (endD-startD)/u_raySteps;
 
 			distTotal += dist;
 			if (distTotal > endD)
@@ -168,6 +186,9 @@ void main() {
 			color = light;
 		} else
 			color = raymarch(uv);
+		// srgb
+		//TODO srgb introduces heavy banding on dark areas, they get too bright too quickly, find fix, GL_RGBA32F doesnt fix this
+		color.rgb = pow(color.rgb,vec3(1.0/2.2));
 	} else
 		color = raymarch(uv);
 };

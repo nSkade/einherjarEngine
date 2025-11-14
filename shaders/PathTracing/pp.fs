@@ -15,5 +15,6 @@ void main() {
 	vec2 uv = gl_FragCoord.xy/u_resolution.xy; //texVp/u_resolution;
 	color = texture(u_p,uv);
 	//color.xyz /= float(1+u_frame);
-	color.xyz = pow(color.xyz,vec3(0.4545));
+	//color.xyz = pow(color.xyz,vec3(0.4545));
+	color.xyz = pow(color.xyz,vec3(1./2.2)); // same as above
 };

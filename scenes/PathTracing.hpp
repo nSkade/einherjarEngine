@@ -1,3 +1,4 @@
+#include "GAPI/OGL/GPUTimer.hpp"
 #include <suOGL.hpp>
 
 #include <Input/GLFW/GLFWKeyboard.hpp>
@@ -54,7 +55,7 @@ int run(void)
 		glfwTerminate();
 		exit(EXIT_FAILURE);
 	}
-
+	
 	glfwSetCursorPosCallback(window, m_mouse->mouse_callback);
 	glfwSetMouseButtonCallback(window, m_mouse->mouse_button_callback);
 	glfwSetKeyCallback(window, m_kb->key_callback);
@@ -63,6 +64,13 @@ int run(void)
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 	glfwSwapInterval(1);
 	glEnable(GL_DEPTH_TEST);
+	
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(window,true);
+	ImGui_ImplOpenGL3_Init("#version 460");
+
 
 	GLProgram glProg;
 	glProg.addSourceFromFile("shaders/PathTracing/ssq.vs");
@@ -120,6 +128,8 @@ int run(void)
 	GLFrameBuffer fbr2(prevRes);
 	bool ping = true;
 
+	GPUTimer gpuTimer;
+
 	float time = 0.;
 	int frame = 0;
 	while (!glfwWindowShouldClose(window)) {
@@ -140,6 +150,13 @@ int run(void)
 				if (oglMesh.getAttribNrm()!=-1)
 					glBindAttribLocation(glProg.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
 				ehj_gl_err_continue();
+				
+				suc &= glpPP.addSourceFromFile("shaders/PathTracing/pp.fs");
+				glpPP.createProgram();
+				glBindAttribLocation(glpPP.getProgramID(),oglMesh.getAttribPos(),"vPos");
+				if (oglMesh.getAttribNrm()!=-1)
+					glBindAttribLocation(glpPP.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+				ehj_gl_err_continue();
 				frame = 0;
 			}
 			if (!suc) {
@@ -150,6 +167,8 @@ int run(void)
 				continue;
 			}
 		}
+
+		gpuTimer.start();
 
 		if (ping) {
 			glBindFramebuffer(GL_FRAMEBUFFER,fbr2.getFBO());
@@ -235,12 +254,37 @@ int run(void)
 		}
 
 		glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
- 
+
+		gpuTimer.end();
+
+		{ // imgui
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplGlfw_NewFrame();
+			ImGui::NewFrame();
+			{
+				ImGui::Begin("PT");
+				float ms1 = gpuTimer.getMS();
+				static float ms = 1.;
+				ms = ms*.99 + ms1*.01;
+				std::string strMS = "MS: " + std::to_string(ms);
+				ImGui::Text("%s", strMS.c_str());
+				std::string strFPS = "FPS: " + std::to_string(1000./ms);
+				ImGui::Text("%s", strFPS.c_str());
+				ImGui::End();
+			}
+
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		}
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 		processInput(window); // TODO check esc close window
 	}
+	
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 
 	glfwDestroyWindow(window);
 	glfwTerminate();

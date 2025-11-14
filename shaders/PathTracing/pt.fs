@@ -284,6 +284,7 @@ vec3 shade(Ray r,int iter) {
 			//vec2 uv = gl_FragCoord.xy/u_resolution.xy;
 			//if (uv.x<.5) {
 				vec3 rv = normalize(rand3(pos+n+vec3(UV,i)+vec3(iter+u_time)));
+				//vec3 rv = normalize(rand3(pos+n+vec3(UV,i)+vec3(iter)));
 				nd = normalize(n + rv); // diff // already includes lambert cosine law
 			//}
 			//else {
@@ -334,6 +335,11 @@ vec3 shade(Ray r,int iter) {
 				vec3 mc = spheres[h.id].col; // mat color
 				e += c*(mc*spheres[h.id].e); //TODO split into emission color and color
 				c *= mc*lc; // absorb other wavelengths
+
+				//TODO discarding like this doesnt work because energy is just added when a light was hit later on
+				//float grayscale = dot(vec3(0.2126,0.7152,0.0722),e);
+				//if (grayscale < .0)
+				//	break;
 			//} else { // average direct lighting
 			//	e += de;
 			//	c *= dc;
@@ -351,6 +357,8 @@ vec3 shade(Ray r,int iter) {
 			break;
 		}
 	}
+
+	// bg color
 	if (!anyHit)
 		e = vec3(.01);
 
@@ -375,9 +383,9 @@ void main() {
 #if ACC
 	int samples = 14;
 #else
-	spheres[0].p.x = sin(u_time)*2.;
-	spheres[0].p.z = cos(u_time)*2.;
-	spheres[0].p.y = 4.;
+	//spheres[0].p.x = sin(u_time)*2.;
+	//spheres[0].p.z = cos(u_time)*2.;
+	//spheres[0].p.y = 4.;
 	int samples = 14;
 #endif
 	vec3 c = vec3(0.);

@@ -5,6 +5,7 @@
 //	#define new new(_CLIENT_BLOCK,__FILE__,__LINE__)
 #endif
 
+// tests
 //#include "TriHelloWorldScene.hpp"
 //#include "SampleScene.hpp"
 //#include "ComputeShaderTestScene.hpp"
@@ -14,11 +15,15 @@
 //#include "FSRTestScene.hpp"
 //#include "VulkanTest.hpp"
 
+//#include "TexturedTri.hpp"
+
+// lighting
 //#include "PathTracing.hpp"
 //#include "RC/RCnaive.hpp"
-#include "RC/RC.hpp"
+//#include "RC/RC.hpp"
 
-//#include "TexturedTri.hpp"
+// tools
+#include "plotGlsl2D/plotGlsl2D.hpp"
 
 #ifndef SCENETYPE
 #error "SCENETYPE inside scene header undefined, "#define SCENETYPE <scene class name>" in your header"

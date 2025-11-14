@@ -1,12 +1,15 @@
 cmake_minimum_required (VERSION 3.10)
 
-project ("einherjarEngine")
-
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 SET(VCPKG_BOOTSTRAP_OPTIONS "-disableMetrics") # Disable telemetry for vcpkg.
 SET(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)          # Install vcpkg dependencies automatically(experimental - might be changed or removed later; see: https://github.com/microsoft/vcpkg/issues/1653). 
+
+# use local vcpkg_installed folder at the root of the project
+set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed")
+message(VCPKG_TARGET_TRIPLET "${VCPKG_TARGET_TRIPLET}")
+list(APPEND CMAKE_PREFIX_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 
 #include(CMakePrintHelpers)
 #cmake_print_variables(CMAKE_TOOLCHAIN_FILE)
@@ -16,7 +19,10 @@ SET(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)          # Install vcpkg dependencies auto
 #    message(STATUS "${_variableName}=${${_variableName}}")
 #endforeach()
 
+project ("einherjarEngine")
+
 find_package(Vulkan REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -24,10 +30,8 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 include_directories(einherjarEngine
 	lib/
-	lib/glad           #TODO add git submodule
-	lib/imgui          #TODO add git submodule
-	lib/imgui/backends #TODO add git submodule
-	lib/glfw3          #TODO add git submodule
+	lib/glad           #TODOf add vcpkg
+	lib/glfw3          #TODOf add vcpkg
 	lib/stb
 	src/
 	${Stb_INCLUDE_DIR}
@@ -42,20 +46,12 @@ SET(CMAKE_COLOR_MAKEFILE OFF)
 file(GLOB_RECURSE einherjarEngine_SRC
 	"src/*.cpp"
 )
-file(GLOB imgui_SRC
-	"lib/imgui/*.cpp"
-)
 set(ehjSourceFiles )
 list(APPEND ehjSourceFiles
 	"xicon/my.rc"
 	${einherjarEngine_SRC}
 	
 	"lib/glad/glad.c"
-
-	${imgui_SRC}
-	"lib/imgui/backends/imgui_impl_opengl3.cpp"
-	"lib/imgui/backends/imgui_impl_glfw.cpp"
-	"lib/imgui/misc/cpp/imgui_stdlib.cpp"
 )
 
 add_executable (ehjEngine
@@ -82,6 +78,7 @@ set_property(TARGET ehjEngineMY PROPERTY OUTPUT_NAME einherjarEngineMY)
 set(linkedLibraries
 	glfw3
 	Vulkan::Vulkan
+	imgui::imgui
 )
 target_link_libraries(ehjEngine ${linkedLibraries})
 target_link_libraries(ehjEngineMY ${linkedLibraries})
@@ -89,10 +86,10 @@ target_link_libraries(ehjEngineMY ${linkedLibraries})
 target_compile_definitions(ehjEngine PUBLIC $<$<CONFIG:Debug>:EHJ_DBG>)
 target_compile_definitions(ehjEngineMY PUBLIC $<$<CONFIG:Debug>:EHJ_DBG>)
 
-set_target_properties (ehjEngine PROPERTIES CXX_STANDARD 17)
+#set_target_properties (ehjEngine PROPERTIES CXX_STANDARD 17)
 set_target_properties (ehjEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 set_target_properties (ehjEngine PROPERTIES DEBUG_POSTFIX "Dbg")
 
-set_target_properties (ehjEngineMY PROPERTIES CXX_STANDARD 17)
+#set_target_properties (ehjEngineMY PROPERTIES CXX_STANDARD 17)
 set_target_properties (ehjEngineMY PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
 set_target_properties (ehjEngineMY PROPERTIES DEBUG_POSTFIX "Dbg")

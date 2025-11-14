@@ -7,7 +7,7 @@ using namespace glm;
 class GLFrameBuffer {
 public:
 	struct Opt {
-		ivec2 res;
+		ivec2 res = ivec2(1,1);
 		GLint internalformat = GL_RGBA32F;
 		GLint texturefilter = GL_LINEAR;
 	};

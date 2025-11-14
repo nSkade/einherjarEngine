@@ -1,6 +1,16 @@
 {
 	"dependencies": [
 		"vulkan",
-		"tinyobjloader"
+		"tinyobjloader",
+		{
+			"name": "imgui",
+			"default-features": false,
+			"features": [
+				"opengl3-binding",
+				"vulkan-binding",
+				"glfw-binding",
+				"docking-experimental"
+			]
+		}
 	]
 }

@@ -2,8 +2,6 @@
 
 #include <glad/glad.h>
 
-#include "GLUtils.hpp"
-
 #include <string>
 #include <map>
 
@@ -16,7 +14,7 @@ public:
 	void createProgram();
 	
 	void bind(); //TODO remove?
-	GLint getProgramID(); //TODO remove?
+	inline GLint getID() { return m_programID; };
 	GLuint getShaderID(GLenum shaderType);
 	
 	/**

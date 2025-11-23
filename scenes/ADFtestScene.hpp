@@ -100,7 +100,7 @@ public:
 		mainGLP.addSourceFromFile("shaders/basic_f.frag");
 
 		mainGLP.createProgram();
-		program = mainGLP.getProgramID();
+		program = mainGLP.getID();
 		glBindAttribLocation(program,oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
 			glBindAttribLocation(program,oglMesh.getAttribNrm(),"vNrm");

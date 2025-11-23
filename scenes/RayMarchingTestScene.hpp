@@ -95,9 +95,9 @@ public:
 		mainGLP.addSourceFromFile("shaders/"+fragShader);
 
 		mainGLP.createProgram();
-		glBindAttribLocation(mainGLP.getProgramID(),oglMesh.getAttribPos(),"vPos");
+		glBindAttribLocation(mainGLP.getID(),oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
-			glBindAttribLocation(mainGLP.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+			glBindAttribLocation(mainGLP.getID(),oglMesh.getAttribNrm(),"vNrm");
 		ehj_gl_err();
 		mainGLP.bind();
 
@@ -123,9 +123,9 @@ public:
 
 				mainGLP.createProgram();
 		
-				glBindAttribLocation(mainGLP.getProgramID(),oglMesh.getAttribPos(),"vPos");
+				glBindAttribLocation(mainGLP.getID(),oglMesh.getAttribPos(),"vPos");
 				if (oglMesh.getAttribNrm()!=-1)
-					glBindAttribLocation(mainGLP.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+					glBindAttribLocation(mainGLP.getID(),oglMesh.getAttribNrm(),"vNrm");
 				mainGLP.bind();
 			}
 			if (GLFWKeyboardCache::keyPressed(IBCodes::KK_KEY_F)) {

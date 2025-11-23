@@ -88,9 +88,9 @@ int run(void)
 		glp.addSourceFromFile(fs);
 		ehj_gl_err();
 		glp.createProgram();
-		glBindAttribLocation(glp.getProgramID(),oglMesh.getAttribPos(),"vPos");
+		glBindAttribLocation(glp.getID(),oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
-			glBindAttribLocation(glp.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+			glBindAttribLocation(glp.getID(),oglMesh.getAttribNrm(),"vNrm");
 		ehj_gl_err();
 	};
 	GLProgram glpPencil;
@@ -194,9 +194,9 @@ int run(void)
 				auto reloadPass = [&](GLProgram& glp, std::string fs) {
 					suc &= glp.addSourceFromFile(fs);
 					glp.createProgram();
-					glBindAttribLocation(glp.getProgramID(),oglMesh.getAttribPos(),"vPos");
+					glBindAttribLocation(glp.getID(),oglMesh.getAttribPos(),"vPos");
 					if (oglMesh.getAttribNrm()!=-1)
-						glBindAttribLocation(glp.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+						glBindAttribLocation(glp.getID(),oglMesh.getAttribNrm(),"vNrm");
 					ehj_gl_err_continue();
 				};
 
@@ -285,7 +285,7 @@ int run(void)
 			// already bound glBindFramebuffer(GL_FRAMEBUFFER,fbJumpFlood.getFBO());
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
-			glUniform1i(glGetUniformLocation(glpJumpFlood.getProgramID(), "u_tex"), 0);           // texture unit 0
+			glUniform1i(glGetUniformLocation(glpJumpFlood.getID(), "u_tex"), 0);           // texture unit 0
 			// render uv
 			glUniform1f(glpJumpFlood.getUnfLoc("u_jfOffset"),0.);
 			
@@ -301,7 +301,7 @@ int run(void)
 				
 				glActiveTexture(GL_TEXTURE1);
 				glBindTexture(GL_TEXTURE_2D,fbJFfrom->getTexCol());
-				glUniform1i(glGetUniformLocation(glpJumpFlood.getProgramID(), "u_texJumpFlood"), 1);  // texture unit 1
+				glUniform1i(glGetUniformLocation(glpJumpFlood.getID(), "u_texJumpFlood"), 1);  // texture unit 1
 				glUniform1f(glpJumpFlood.getUnfLoc("u_jfOffset"),pow(2,jfPassCount-i-1));
 
 				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
@@ -329,8 +329,8 @@ int run(void)
 			glBindTexture(GL_TEXTURE_2D,fbJumpFlood.getTexCol());
 
 			//TODO abstract this into GLProgram
-			glUniform1i(glGetUniformLocation(glpRCnaive.getProgramID(), "u_tex"), 0);           // texture unit 0
-			glUniform1i(glGetUniformLocation(glpRCnaive.getProgramID(), "u_texJumpFlood"), 1);  // texture unit 1
+			glUniform1i(glGetUniformLocation(glpRCnaive.getID(), "u_tex"), 0);           // texture unit 0
+			glUniform1i(glGetUniformLocation(glpRCnaive.getID(), "u_texJumpFlood"), 1);  // texture unit 1
 
 			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 		}

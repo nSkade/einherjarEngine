@@ -92,9 +92,9 @@ public:
 
 		glpMain.createProgram();
 
-		glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribPos(),"vPos");
+		glBindAttribLocation(glpMain.getID(),oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
-			glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+			glBindAttribLocation(glpMain.getID(),oglMesh.getAttribNrm(),"vNrm");
 		ehj_gl_err();
 		glpMain.bind();
 
@@ -125,9 +125,9 @@ public:
 
 				glpMain.createProgram();
 		
-				glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribPos(),"vPos");
+				glBindAttribLocation(glpMain.getID(),oglMesh.getAttribPos(),"vPos");
 				if (oglMesh.getAttribNrm()!=-1)
-					glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+					glBindAttribLocation(glpMain.getID(),oglMesh.getAttribNrm(),"vNrm");
 			}
 			if (GLFWKeyboardCache::keyPressed(IBCodes::KK_KEY_F)) {
 				fps30 = !fps30;

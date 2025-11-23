@@ -123,7 +123,7 @@ int run(void)
 		//glm::mat4 p = glm::perspectiveFov(45,10,10,0.1,1000);
 		glm::mat4 mvp = p*m;
 		//mvp = proj;
-		glUseProgram(shadProg.getProgramID());
+		glUseProgram(shadProg.getID());
 		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &(mvp[0].x));
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 

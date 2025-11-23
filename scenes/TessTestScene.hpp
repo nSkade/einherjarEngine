@@ -1,17 +1,17 @@
 #include "../src/suOGL.hpp"
+#include "glm/gtx/quaternion.hpp"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
 #include <chrono>
-#include <fstream>
-#include <sstream>
+//#include <fstream>
+//#include <sstream>
 
-#include <stdlib.h>
 #define sleep _sleep
 
-#define SCENETYPE SampleScene
-class SampleScene : IScene {
+#define SCENETYPE TessTestScene
+class TessTestScene : IScene {
 public:
 
 //static const struct
@@ -117,10 +117,7 @@ int run() {
 	
 	GLFWwindow* window;
 	//GLuint vertex_buffer;
-	GLuint program;
-	GLint mvp_location;
-	
-	GLProgram mainGLProgram;
+	GLProgram glp;
 
 	glfwSetErrorCallback(error_callback);
 	
@@ -203,93 +200,97 @@ int run() {
 	
 	// load model
 	//ehj::Mesh mesh = ehj::SSMesh(false);
-	ehj::Mesh mesh; mesh.loadOBJ("models/ssn4.obj");
+	ehj::Mesh mesh;
+	mesh.loadOBJ("models/ssn4.obj");
 	mesh.toTriangles();
+	GLMesh glMesh(mesh);
+	glMesh.bind(0);
+	ehj_gl_err();
 	
-	GLuint attribPos = 0;
+	glBindVertexArray(glMesh.getVAO());
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh.getEBO());
+	ehj_gl_err();
+	
+	//GLuint attribPos = 0;
 	//GLuint attribCol = 1;
-	GLuint attribNrm = 1;
+	//GLuint attribNrm = 1;
 	
-	std::vector<float> VAO = mesh.getVertexBuffer();
-	std::vector<int> EBO = mesh.getIndexBuffer();
+	//std::vector<float> VAO = mesh.getVertexBuffer();
+	//std::vector<int> EBO = mesh.getIndexBuffer();
+	//
+	//uint32_t BP = mesh.getMP();
+	//uint32_t Dim = mesh.getDim();
+	//uint32_t BPC = 1;
+	//if (BP & ehj::Mesh::MP_NORMAL)
+	//	BPC++;
 	
-	uint32_t BP = mesh.getMP();
-	uint32_t Dim = mesh.getDim();
-	uint32_t BPC = 1;
-	if (BP & ehj::Mesh::MP_NORMAL)
-		BPC++;
-	
-	uint32_t quadVBO; // vertex buffer object
-	glCreateBuffers(1,&quadVBO);
-	glNamedBufferStorage(quadVBO, VAO.size()*sizeof(float), &VAO[0], GL_DYNAMIC_STORAGE_BIT);
+	//uint32_t quadVBO; // vertex buffer object
+	//glCreateBuffers(1,&quadVBO);
+	//glNamedBufferStorage(quadVBO, VAO.size()*sizeof(float), &VAO[0], GL_DYNAMIC_STORAGE_BIT);
 
-	uint32_t quadVAO; // vertex array object
-	glCreateVertexArrays(1,&quadVAO);
+	//uint32_t quadVAO; // vertex array object
+	//glCreateVertexArrays(1,&quadVAO);
 
-	GLuint vaoBindingPoint = 0;
-	glVertexArrayVertexBuffer(quadVAO,vaoBindingPoint,quadVBO,0,sizeof(float)*Dim*BPC);
+	//GLuint vaoBindingPoint = 0;
+	//glVertexArrayVertexBuffer(quadVAO,vaoBindingPoint,quadVBO,0,sizeof(float)*Dim*BPC);
 
-	glEnableVertexArrayAttrib(quadVAO,attribPos);
-	glEnableVertexArrayAttrib(quadVAO,attribNrm);
+	//glEnableVertexArrayAttrib(quadVAO,attribPos);
+	//glEnableVertexArrayAttrib(quadVAO,attribNrm);
 
-	glVertexArrayAttribFormat(quadVAO,attribPos,3,GL_FLOAT,GL_FALSE,0);
-	glVertexArrayAttribFormat(quadVAO,attribNrm,3,GL_FLOAT,GL_FALSE,3*sizeof(float));
+	//glVertexArrayAttribFormat(quadVAO,attribPos,3,GL_FLOAT,GL_FALSE,0);
+	//glVertexArrayAttribFormat(quadVAO,attribNrm,3,GL_FLOAT,GL_FALSE,3*sizeof(float));
 
-	glVertexArrayAttribBinding(quadVAO,attribPos,vaoBindingPoint);
-	glVertexArrayAttribBinding(quadVAO,attribNrm,vaoBindingPoint);
+	//glVertexArrayAttribBinding(quadVAO,attribPos,vaoBindingPoint);
+	//glVertexArrayAttribBinding(quadVAO,attribNrm,vaoBindingPoint);
 
-	uint32_t quadEBO; // element buffer object
-	glCreateBuffers(1,&quadEBO);
+	//uint32_t quadEBO; // element buffer object
+	//glCreateBuffers(1,&quadEBO);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, EBO.size()*sizeof(int), &EBO[0], GL_DYNAMIC_DRAW); //TODO static draw?
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
+	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, EBO.size()*sizeof(int), &EBO[0], GL_DYNAMIC_DRAW); //TODO static draw?
 
-	glBindVertexArray(quadVAO);
-	std::cout << "check0\n";
+	//glBindVertexArray(quadVAO);
+	//std::cout << "check0\n";
 	ehj_gl_err();
 	
 	// tesselation maximum supported vertices
 	//GLint MaxPatchVertices = 0;
 	//glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);
 	//std::cout << "Max supported patch vertices "<< MaxPatchVertices << "\n";
-	glPatchParameteri(GL_PATCH_VERTICES, 4);
 
-	//mainGLProgram.loadProgramFromFolder("shaders/tessQ");
-	ehj_gl_err();
-	mainGLProgram.addSourceFromFile("shaders/basic_v.vert", GL_VERTEX_SHADER);
-	//mainGLProgram.addSourceFromFile("shaders/tessQ/basic_v.vert", GL_VERTEX_SHADER);
-	ehj_gl_err();
-	//mainGLProgram.addSourceFromFile("shaders/tellu.frag",GL_FRAGMENT_SHADER);
-	mainGLProgram.addSourceFromFile("shaders/basic_f.frag",GL_FRAGMENT_SHADER);
-	//mainGLProgram.addSourceFromFile("shaders/tessQ/basic_f.frag",GL_FRAGMENT_SHADER);
-	ehj_gl_err();
-	//mainGLProgram.addSourceFromFile("shaders/tessQ/basic_tcsQ.glsl", GL_TESS_CONTROL_SHADER);
-	ehj_gl_err();
-	//mainGLProgram.addSourceFromFile("shaders/tessQ/basic_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
-	//mainGLProgram.addSourceFromFile("shaders/tellu_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
+	//TODO
+	//glPatchParameteri(GL_PATCH_VERTICES, 4);
 
+	//glp.loadProgramFromFolder("shaders/tessQ");
 	ehj_gl_err();
-	mainGLProgram.createProgram();
+	glp.addSourceFromFile("shaders/basic_v.vert");
+	//glp.addSourceFromFile("shaders/tessQ/basic_v.vert", GL_VERTEX_SHADER);
 	ehj_gl_err();
-	program = mainGLProgram.getProgramID();
-	glBindAttribLocation(program,attribPos,"vPos");
-	glBindAttribLocation(program,attribNrm,"vNrm");
+	//glp.addSourceFromFile("shaders/tellu.frag",GL_FRAGMENT_SHADER);
+	glp.addSourceFromFile("shaders/basic_f.frag");
+	//glp.addSourceFromFile("shaders/tessQ/basic_f.frag",GL_FRAGMENT_SHADER);
 	ehj_gl_err();
-	glUseProgram(program);
+	//glp.addSourceFromFile("shaders/tessQ/basic_tcsQ.glsl", GL_TESS_CONTROL_SHADER);
+	//ehj_gl_err();
+	//glp.addSourceFromFile("shaders/tessQ/basic_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
+	//glp.addSourceFromFile("shaders/tellu_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
+	//ehj_gl_err();
+
+	glp.createProgram();
+	glp.bind();
+	glBindAttribLocation(glp.getID(),glMesh.getAttribPos(),"vPos");
+	//if (glMesh.getAttribNrm()!=-1)
+	glBindAttribLocation(glp.getID(),glMesh.getAttribNrm(),"vNrm");
+	//if (glMesh.getAttribCol()!=-1)
+	glBindAttribLocation(glp.getID(),glMesh.getAttribCol(),"vCol");
+	//if (glMesh.getAttribUV()!=-1)
+	glBindAttribLocation(glp.getID(),glMesh.getAttribUV(),"vUV");
 	
 	std::cout << "check1\n";
 	ehj_gl_err();
-	mvp_location = glGetUniformLocation(program, "MVP");
 	//GLuint vpos_location = 0;//glGetAttribLocation(program, "vPos");
 	//GLuint vcol_location = 1;//glGetAttribLocation(program, "vCol");
-	GLint utime_location = glGetUniformLocation(program, "u_time");
-	GLint ures_location = glGetUniformLocation(program, "u_resolution");
-	GLint uview_location = glGetUniformLocation(program, "u_view");
 
-	GLint tessQ_location = glGetUniformLocation(program, "u_tessQ");
-	std::cout << "\n tessQ: " << tessQ_location << "\n";
-	
-	std::cout << program << " " <<mvp_location << " " << utime_location << " " << ures_location;
 	//glEnableVertexAttribArray(vpos_location);
 	//glVertexAttribPointer(vpos_location, 3, GL_FLOAT, GL_FALSE,
 	//					sizeof(vertices[0]), (void*) 0);
@@ -308,7 +309,7 @@ int run() {
 	//glFrontFace(GL_CW);
 
 	//proj
-	glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)windowW/(float)windowH,0.01f,100.0f);
+	//glm::mat4 proj = glm::perspective(glm::radians(45.0f), (float)windowW/(float)windowH,0.01f,100.0f);
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -326,6 +327,7 @@ int run() {
 		int width, height;
 		//mat4x4 m, p, mvp;
 
+#if 0
 		//camera
 		static glm::vec3 camPos = glm::vec3(0.0f,0.0f,3.0f);
 		static glm::vec3 camTar = glm::vec3(0.0f,0.0f,0.0f);
@@ -351,8 +353,7 @@ int run() {
 			camPos -= glm::normalize(glm::cross(-camDir, camUp)) * cameraSpeed;
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 			camPos += glm::normalize(glm::cross(-camDir, camUp)) * cameraSpeed;
-		
-		glm::mat4 view = glm::lookAt(camPos,camPos-camDir,camUp);
+#endif
 		
 		glfwGetFramebufferSize(window, &width, &height);
 		
@@ -361,34 +362,36 @@ int run() {
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glBindVertexArray(quadVAO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
+		//glBindVertexArray(quadVAO);
+		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);
 
-		glm::mat4 m = glm::mat4(1.0f); // identity
-		//m = glm::rotate(m,(float) glfwGetTime(), glm::vec3(0.f,1.f,0.f));
-		//m = glm::translate(m,glm::vec3(0.0f,0.0f,0.0f));
-		glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
-		//glm::mat4 p = glm::perspectiveFov(45,10,10,0.1,1000);
-		glm::mat4 mvp = p*m;
-		//mvp = proj;
-		
-		glUseProgram(program);
-		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, &mvp[0][0]);
+		//glm::mat4 m = glm::mat4(1.0f); // identity
+		////m = glm::rotate(m,(float) glfwGetTime(), glm::vec3(0.f,1.f,0.f));
+		////m = glm::translate(m,glm::vec3(0.0f,0.0f,0.0f));
+		//glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
+		////glm::mat4 p = glm::perspectiveFov(45,10,10,0.1,1000);
+		//glm::mat4 mvp = p*m;
+		////mvp = proj;
+		//
+		//glUniformMatrix4fv(glp.getUnfLoc("u_pvm"), 1, GL_FALSE, &mvp[0][0]);
 		
 		auto elapsed = std::chrono::steady_clock::now() - chrStartTime;
 		GLfloat utime = double(std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count()*0.000001);
 		//std::cout << utime << "\n";
 		
-		glUniform1f(utime_location, utime);
-		glUniform2f(ures_location, width, height);
-		glUniform1i(tessQ_location, (GLint) guiTess);
+		glUniform1f(glp.getUnfLoc("u_time"), utime);
+		glUniform2f(glp.getUnfLoc("u_resolution"), width, height);
+		glUniform1i(glp.getUnfLoc("u_tessQ"), (GLint) guiTess);
 
 		//const float radius = 10.0f;
 		//float camX = sin(glfwGetTime()) * radius;
 		//float camZ = cos(glfwGetTime()) * radius;
 		//view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-		view = glm::mat4(1.0f);
-		glUniformMatrix4fv(uview_location,1,GL_FALSE,glm::value_ptr(view));
+		
+		glm::mat4 view = glm::mat4(1.0f);
+		//view = glm::lookAt(camPos,camPos-camDir,camUp);
+		view = glm::mat4(glm::rotation(vec3(0.,1.,0.),vec3(0.,0.,1.)));
+		glUniformMatrix4fv(glp.getUnfLoc("u_pvm"),1,GL_FALSE,glm::value_ptr(view));
 		
 		ehj_gl_err();
 		
@@ -396,7 +399,9 @@ int run() {
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
 		//glDrawElements(GL_TRIANGLES,EBO.size(),GL_UNSIGNED_INT,0);
 		//glDrawArrays(GL_PATCHES,0,6);
-		glDrawElements(GL_TRIANGLES,EBO.size(),GL_UNSIGNED_INT,0);
+		//glDrawElements(GL_TRIANGLES,EBO.size(),GL_UNSIGNED_INT,0);
+
+		glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 		//glDrawArrays(GL_QUADS,0,EBO.size());
 		//glDrawElements(GL_PATCHES, EBO.size(),GL_UNSIGNED_INT,0);
 		fragSTimer.end();

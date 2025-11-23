@@ -101,13 +101,13 @@ int run(void)
 	ehj_gl_err();
  
 	glProg.bind();
-	glBindAttribLocation(glProg.getProgramID(),oglMesh.getAttribPos(),"vPos");
+	glBindAttribLocation(glProg.getID(),oglMesh.getAttribPos(),"vPos");
 	if (oglMesh.getAttribNrm()!=-1)
-		glBindAttribLocation(glProg.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+		glBindAttribLocation(glProg.getID(),oglMesh.getAttribNrm(),"vNrm");
 	glpPP.bind();
-	glBindAttribLocation(glpPP.getProgramID(),oglMesh.getAttribPos(),"vPos");
+	glBindAttribLocation(glpPP.getID(),oglMesh.getAttribPos(),"vPos");
 	if (oglMesh.getAttribNrm()!=-1)
-		glBindAttribLocation(glpPP.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+		glBindAttribLocation(glpPP.getID(),oglMesh.getAttribNrm(),"vNrm");
 
 	glProg.bind();
 	glBindVertexArray(oglMesh.getVAO());
@@ -146,16 +146,16 @@ int run(void)
 
 				glProg.createProgram();
 			
-				glBindAttribLocation(glProg.getProgramID(),oglMesh.getAttribPos(),"vPos");
+				glBindAttribLocation(glProg.getID(),oglMesh.getAttribPos(),"vPos");
 				if (oglMesh.getAttribNrm()!=-1)
-					glBindAttribLocation(glProg.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+					glBindAttribLocation(glProg.getID(),oglMesh.getAttribNrm(),"vNrm");
 				ehj_gl_err_continue();
 				
 				suc &= glpPP.addSourceFromFile("shaders/PathTracing/pp.fs");
 				glpPP.createProgram();
-				glBindAttribLocation(glpPP.getProgramID(),oglMesh.getAttribPos(),"vPos");
+				glBindAttribLocation(glpPP.getID(),oglMesh.getAttribPos(),"vPos");
 				if (oglMesh.getAttribNrm()!=-1)
-					glBindAttribLocation(glpPP.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+					glBindAttribLocation(glpPP.getID(),oglMesh.getAttribNrm(),"vNrm");
 				ehj_gl_err_continue();
 				frame = 0;
 			}

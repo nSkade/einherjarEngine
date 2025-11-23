@@ -7,10 +7,10 @@
 
 // tests
 //#include "TriHelloWorldScene.hpp"
-//#include "SampleScene.hpp"
+//#include "TessTestScene.hpp"
 //#include "ComputeShaderTestScene.hpp"
 //#include "ADFtestScene.hpp"
-//#include "EnvirScene.hpp"
+#include "EnvirScene.hpp"
 //#include "RayMarchingTestScene.hpp"
 //#include "FSRTestScene.hpp"
 //#include "VulkanTest.hpp"
@@ -23,7 +23,7 @@
 //#include "RC/RC.hpp"
 
 // tools
-#include "plotGlsl2D/plotGlsl2D.hpp"
+//#include "plotGlsl2D/plotGlsl2D.hpp"
 
 #ifndef SCENETYPE
 #error "SCENETYPE inside scene header undefined, "#define SCENETYPE <scene class name>" in your header"

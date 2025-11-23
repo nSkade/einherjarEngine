@@ -34,10 +34,6 @@ void GLProgram::createProgram() {
 	m_shaders.clear();
 }
 
-GLint GLProgram::getProgramID() {
-	return m_programID;
-}
-
 void GLProgram::bind() {
 	glUseProgram(m_programID);
 }

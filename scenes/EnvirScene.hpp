@@ -65,8 +65,6 @@ public:
 	}
 
 	int run() {
-		GLuint program;
-		GLint pvm_location;
 		//glfwSetErrorCallback(error_callback); //TODO
 		//TODO //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -79,38 +77,31 @@ public:
 		}
 	#endif
 		
-		GLProgram mainGLP;
+		//ehj::Mesh mesh("models/monkey.obj");
+		//ehj::Mesh mesh("myModels/cornellBoxObj.obj");
+		ehj::Mesh mesh("myModels/sponza/obj/Sponza.obj");
 		
-		//ehj::Mesh mesh; mesh.loadOBJ("models/monkey.obj");
-		ehj::Mesh mesh; mesh.loadOBJ("myModels/sponza/Sponza.obj");
 		mesh.toTriangles();
-		OGLMesh oglMesh(mesh, GL_DYNAMIC_DRAW);
-		oglMesh.bind(0);
-
+		GLMesh glMesh(mesh, GL_DYNAMIC_DRAW);
+		glMesh.bind(0);
 		ehj_gl_err();
-		glBindVertexArray(oglMesh.getVAO());
+
+		glBindVertexArray(glMesh.getVAO());
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh.getEBO());
 		ehj_gl_err();
 		
-		// tesselation maximum supported vertices
-		//GLint MaxPatchVertices = 0;
-		//glGetIntegerv(GL_MAX_PATCH_VERTICES, &MaxPatchVertices);
-		//std::cout << "Max supported patch vertices "<< MaxPatchVertices << "\n";
-		//glPatchParameteri(GL_PATCH_VERTICES, 4);
+		GLProgram glp;
+		glp.addSourceFromFile("shaders/basic_v.vert");
+		glp.addSourceFromFile("shaders/basic_f.frag");
+
+		glp.createProgram();
+		glp.bind();
 		ehj_gl_err();
 		
-		mainGLP.loadProgramFromFolder("shaders");
-		mainGLP.addSourceFromFile("shaders/basic_f.frag");
-		//mainGLP.addSourceFromFile("shaders/basic_v.vert", GL_FRAGMENT_SHADER);
-		//mainGLP.loadProgramFromFolder("shaders/tessQ/");
-		//mainGLP.addSourceFromFile("shaders/tessQ/basic_tesQ.glsl",GL_TESS_EVALUATION_SHADER);
-
-		mainGLP.createProgram();
-		program = mainGLP.getProgramID();
-		glBindAttribLocation(program,oglMesh.getAttribPos(),"vPos");
-		if (oglMesh.getAttribNrm()!=-1)
-			glBindAttribLocation(program,oglMesh.getAttribNrm(),"vNrm");
+		glBindAttribLocation(glp.getID(),glMesh.getAttribPos(),"vPos");
+		glBindAttribLocation(glp.getID(),glMesh.getAttribNrm(),"vNrm");
+		glBindAttribLocation(glp.getID(),glMesh.getAttribUV(),"vUV");
 		ehj_gl_err();
-		glUseProgram(program);
 
 		GPUTimer fragSTimer;
 
@@ -131,6 +122,9 @@ public:
 		glDepthFunc(GL_LESS);
 		//glDepthMask(true);
 		//glDepthRangef(0.0f,1.0f);
+
+		// set init cam pos
+		m_cam.setPos({0.,0.,2.});
 		
 		while (!glfwWindowShouldClose(m_pWindow))
 		{
@@ -145,40 +139,28 @@ public:
 			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			glBindVertexArray(oglMesh.getVAO());
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oglMesh.getEBO());
-
 			m_cam.setProj(glm::perspective(glm::radians(90.0f), (float)m_windowRes.x/(float)m_windowRes.y,0.01f,100.0f));
 			glm::mat4 pvm = m_cam.getPV();
 		
-			glUseProgram(program);
-			glUniformMatrix4fv(mainGLP.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
+			glUniformMatrix4fv(glp.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
 
-			glUniform1f(mainGLP.getUnfLoc("u_time"), time);
-			glUniform2f(mainGLP.getUnfLoc("u_resolution"), width, height);
-			glUniform1i(mainGLP.getUnfLoc("u_tess"), (GLint) guiTess);
-		//	glm::vec3 cPos = m_cam.getPos();
-		//	glUniform3f(mainGLP.getUnfLoc("u_cPos"), cPos.x,cPos.y,cPos.z);
-		//	glm::vec3 cDir = m_cam.getDir();
-		//	glUniform3f(mainGLP.getUnfLoc("u_cDir"), cDir.x,cDir.y,cDir.z);
-		//	glm::vec3 cUp = m_cam.getUp();
-		//	glUniform3f(mainGLP.getUnfLoc("u_cUp"), cUp.x,cUp.y,cUp.z);
-		//	glm::vec3 cRgt = m_cam.getRight();
-		//	glUniform3f(mainGLP.getUnfLoc("u_cRgt"), cRgt.x,cRgt.y,cRgt.z);
-		//	float cFoc = m_cam.getFocus();
-		//	glUniform1f(mainGLP.getUnfLoc("u_cFoc"), cFoc);
+			glUniform1f(glp.getUnfLoc("u_time"), time);
+			glUniform2f(glp.getUnfLoc("u_resolution"), width, height);
+			glUniform1i(glp.getUnfLoc("u_tess"), (GLint) guiTess);
 
 			ehj_gl_err();
 			//glDepthMask(GL_TRUE);
 			fragSTimer.start();
-				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+				glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 			fragSTimer.end();
 
-			pvm = m_cam.getPV();
-			glm::mat4 t2(1.f);
-			pvm = pvm * glm::translate(t2,glm::vec3(1.f,0.f,0.f));
-			glUniformMatrix4fv(mainGLP.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
-			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+			{ // test render model second time
+				//pvm = m_cam.getPV();
+				//glm::mat4 t2(1.f);
+				//pvm = pvm * glm::translate(t2,glm::vec3(1.f,0.f,0.f));
+				//glUniformMatrix4fv(mainGLP.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
+				//glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+			}
 
 			ehj_gl_err();
 

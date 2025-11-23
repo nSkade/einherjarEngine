@@ -102,14 +102,14 @@ public:
 		std::string fxaaShader = "fxaa.frag";
 		glpFXAA.addSourceFromFileRecursive("shaders/"+fxaaShader);
 		glpFXAA.createProgram();
-		glBindAttribLocation(glpFXAA.getProgramID(),oglMesh.getAttribPos(),"vPos");
+		glBindAttribLocation(glpFXAA.getID(),oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
-			glBindAttribLocation(glpFXAA.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+			glBindAttribLocation(glpFXAA.getID(),oglMesh.getAttribNrm(),"vNrm");
 		ehj_gl_err();
 
-		glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribPos(),"vPos");
+		glBindAttribLocation(glpMain.getID(),oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
-			glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+			glBindAttribLocation(glpMain.getID(),oglMesh.getAttribNrm(),"vNrm");
 		ehj_gl_err();
 		glpMain.bind();
 
@@ -118,9 +118,9 @@ public:
 		glpEASU.addSourceFromFileRecursive("shaders/"+fragShader2);
 
 		glpEASU.createProgram();
-		glBindAttribLocation(glpEASU.getProgramID(),oglMesh.getAttribPos(),"vPos");
+		glBindAttribLocation(glpEASU.getID(),oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
-			glBindAttribLocation(glpEASU.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+			glBindAttribLocation(glpEASU.getID(),oglMesh.getAttribNrm(),"vNrm");
 		ehj_gl_err();
 		//glpEASU.bind();
 
@@ -158,9 +158,9 @@ public:
 
 				glpMain.createProgram();
 		
-				glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribPos(),"vPos");
+				glBindAttribLocation(glpMain.getID(),oglMesh.getAttribPos(),"vPos");
 				if (oglMesh.getAttribNrm()!=-1)
-					glBindAttribLocation(glpMain.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+					glBindAttribLocation(glpMain.getID(),oglMesh.getAttribNrm(),"vNrm");
 			}
 			if (GLFWKeyboardCache::keyPressed(IBCodes::KK_KEY_F)) {
 				fps30 = !fps30;

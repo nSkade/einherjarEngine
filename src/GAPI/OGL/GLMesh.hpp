@@ -1,18 +1,18 @@
 #pragma once
 
+#include <Mesh.hpp>
+
 #include <glad/glad.h>
-
-#include "../../Mesh.hpp"
-
 #include <stdint.h>
 
-class OGLMesh {
+class GLMesh {
 public:
 	/**
 	 * @param usage either GL_STATIC_DRAW, GL_DYNAMIC_DRAW, GL_STREAM_DRAW
 	*/
-	OGLMesh(ehj::Mesh mesh, GLenum usage);
-	~OGLMesh();
+	GLMesh(ehj::Mesh mesh) : GLMesh(mesh,GL_DYNAMIC_DRAW) {};
+	GLMesh(ehj::Mesh mesh, GLenum usage);
+	~GLMesh();
 
 	void bind(uint32_t bindingIndex);
 
@@ -23,6 +23,7 @@ public:
 	int32_t getAttribPos();
 	int32_t getAttribNrm();
 	int32_t getAttribCol();
+	int32_t getAttribUV();
 
 private:
 	uint32_t m_MP = 0; // mesh properties
@@ -34,9 +35,11 @@ private:
 	
 	uint32_t m_EBOsize;
 
+	//TODO abstract this
 	GLuint m_attribPos = 0;
 	GLuint m_attribNrm = 1;
 	GLuint m_attribCol = 2;
+	GLuint m_attribUV = 3;
 
 	GLuint m_vaoBindingPoint = 0; //TODO manage
 };

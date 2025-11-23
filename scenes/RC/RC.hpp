@@ -75,12 +75,12 @@ int run(void) {
  
 	ehj::SSMesh mesh;
 	mesh.toTriangles();
-	OGLMesh oglMesh(mesh, GL_DYNAMIC_DRAW);
-	oglMesh.bind(0);
+	GLMesh glMesh(mesh, GL_DYNAMIC_DRAW);
+	glMesh.bind(0);
 
 	ehj_gl_err();
-	glBindVertexArray(oglMesh.getVAO());
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oglMesh.getEBO());
+	glBindVertexArray(glMesh.getVAO());
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh.getEBO());
 
 	auto createPass = [&](GLProgram& glp, std::string vs, std::string fs) {
 		glp.addSourceFromFile(vs); //TODO make abstraction to make reloading easier
@@ -88,9 +88,9 @@ int run(void) {
 		glp.addSourceFromFile(fs);
 		ehj_gl_err();
 		glp.createProgram();
-		glBindAttribLocation(glp.getProgramID(),oglMesh.getAttribPos(),"vPos");
-		if (oglMesh.getAttribNrm()!=-1)
-			glBindAttribLocation(glp.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+		glBindAttribLocation(glp.getID(),glMesh.getAttribPos(),"vPos");
+		if (glMesh.getAttribNrm()!=-1)
+			glBindAttribLocation(glp.getID(),glMesh.getAttribNrm(),"vNrm");
 		ehj_gl_err();
 	};
 	GLProgram glpPencil;
@@ -227,9 +227,9 @@ int run(void) {
 				auto reloadPass = [&](GLProgram& glp, std::string fs) {
 					suc &= glp.addSourceFromFile(fs);
 					glp.createProgram();
-					glBindAttribLocation(glp.getProgramID(),oglMesh.getAttribPos(),"vPos");
-					if (oglMesh.getAttribNrm()!=-1)
-						glBindAttribLocation(glp.getProgramID(),oglMesh.getAttribNrm(),"vNrm");
+					glBindAttribLocation(glp.getID(),glMesh.getAttribPos(),"vPos");
+					if (glMesh.getAttribNrm()!=-1)
+						glBindAttribLocation(glp.getID(),glMesh.getAttribNrm(),"vNrm");
 					ehj_gl_err_continue();
 				};
 
@@ -291,7 +291,7 @@ int run(void) {
 			}
 			glpPencil.bind();
 			setCMNuniforms(glpPencil);
-			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+			glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 			glBindFramebuffer(GL_FRAMEBUFFER,0);
 		}
 
@@ -327,7 +327,7 @@ int run(void) {
 			glUniform1i(glpDO.getUnfLoc("u_bounceLightCount"),bounceLights.size());
 			glUniform2fv(glpDO.getUnfLoc("u_bounceLights"), bounceLights.size(), (float*) bounceLights.data());
 
-			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+			glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 		}
 
 		// flood fill pass, requires for loop passes in order to cover whole screen
@@ -359,11 +359,11 @@ int run(void) {
 			// already bound glBindFramebuffer(GL_FRAMEBUFFER,fbJumpFlood.getFBO());
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
-			glUniform1i(glGetUniformLocation(glpJumpFlood.getProgramID(), "u_tex"), 0);           // texture unit 0
+			glUniform1i(glGetUniformLocation(glpJumpFlood.getID(), "u_tex"), 0);           // texture unit 0
 			// render uv
 			glUniform1f(glpJumpFlood.getUnfLoc("u_jfOffset"),0.);
 			
-			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+			glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 			for (int i=0;i< jfPassCount;++i) {
 				auto* fbJFfrom = &fbJumpFlood;
 				auto* fbJFto = &fbJumpFlood2;
@@ -375,10 +375,10 @@ int run(void) {
 				
 				glActiveTexture(GL_TEXTURE1);
 				glBindTexture(GL_TEXTURE_2D,fbJFfrom->getTexCol());
-				glUniform1i(glGetUniformLocation(glpJumpFlood.getProgramID(), "u_texJumpFlood"), 1);  // texture unit 1
+				glUniform1i(glGetUniformLocation(glpJumpFlood.getID(), "u_texJumpFlood"), 1);  // texture unit 1
 				glUniform1f(glpJumpFlood.getUnfLoc("u_jfOffset"),pow(2,jfPassCount-i-1));
 
-				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+				glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 			}
 
 			if (jfPassCount %2==0) {
@@ -433,10 +433,10 @@ int run(void) {
 			// already bound glBindFramebuffer(GL_FRAMEBUFFER,fbRC.getFBO());
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
-			glUniform1i(glGetUniformLocation(glpRC.getProgramID(), "u_tex"), 0);           // texture unit 0
+			glUniform1i(glGetUniformLocation(glpRC.getID(), "u_tex"), 0);           // texture unit 0
 			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D,fbJumpFlood.getTexCol());
-			glUniform1i(glGetUniformLocation(glpRC.getProgramID(), "u_texJumpFlood"), 1);  // texture unit 1
+			glUniform1i(glGetUniformLocation(glpRC.getID(), "u_texJumpFlood"), 1);  // texture unit 1
 			// render uv
 			//glUniform1f(glpRC.getUnfLoc("u_jfOffset"),0.);
 			
@@ -466,9 +466,9 @@ int run(void) {
 				
 				glActiveTexture(GL_TEXTURE2);
 				glBindTexture(GL_TEXTURE_2D,fbFrom->getTexCol());
-				glUniform1i(glGetUniformLocation(glpRC.getProgramID(), "u_texPrev"), 2);           // texture unit 0
+				glUniform1i(glGetUniformLocation(glpRC.getID(), "u_texPrev"), 2);           // texture unit 0
 
-				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+				glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 				}
 			}
 	

@@ -23,6 +23,8 @@ project ("einherjarEngine")
 
 find_package(Vulkan REQUIRED)
 find_package(imgui CONFIG REQUIRED)
+#find_package(tinyobjloader REQUIRED)
+find_package(RapidObj CONFIG REQUIRED)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -32,9 +34,9 @@ include_directories(einherjarEngine
 	lib/
 	lib/glad           #TODOf add vcpkg
 	lib/glfw3          #TODOf add vcpkg
-	lib/stb
+	lib/stb            #TODOf add vcpkg
 	src/
-	${Stb_INCLUDE_DIR}
+	${Stb_INCLUDE_DIR} #TODO required?
 )
 LINK_DIRECTORIES(lib/glad)
 LINK_DIRECTORIES(lib/glfw3)
@@ -79,7 +81,13 @@ set(linkedLibraries
 	glfw3
 	Vulkan::Vulkan
 	imgui::imgui
+
+	# always link release
+	#$<$<CONFIG:Debug>:"vcpkg_installed/x64-windows/lib/tinyobjloader">
+	#$<$<CONFIG:Release>:tinyobjloader::tinyobjloader>
+	rapidobj::rapidobj
 )
+
 target_link_libraries(ehjEngine ${linkedLibraries})
 target_link_libraries(ehjEngineMY ${linkedLibraries})
 

@@ -1,16 +1,17 @@
 {
-	"dependencies": [
-		"vulkan",
-		"tinyobjloader",
-		{
-			"name": "imgui",
-			"default-features": false,
-			"features": [
-				"opengl3-binding",
-				"vulkan-binding",
-				"glfw-binding",
-				"docking-experimental"
-			]
-		}
-	]
+  "dependencies": [
+    "vulkan",
+    "rapidobj",
+    {
+      "name": "imgui",
+      "default-features": false,
+      "features": [
+        "opengl3-binding",
+        "vulkan-binding",
+        "glfw-binding",
+        "docking-experimental"
+      ]
+    }
+  ],
+  "builtin-baseline": "f4fc135de213885b8d072203d324976e4aa1f171"
 }

@@ -5,6 +5,9 @@
 
 #include <iostream>
 
+//#include <tiny_obj_loader.h>
+#include <rapidobj/rapidobj.hpp>
+
 namespace ehj {
 
 Mesh::Mesh() {
@@ -41,6 +44,7 @@ uint32_t Mesh::getDim() {
 }
 
 void Mesh::storeOBJ(std::string path) {
+	//TODO rewrite with rapidobj
 	std::ofstream file(path, std::ostream::out | std::ostream::trunc);
 	std::string ret;
 	
@@ -66,7 +70,123 @@ void Mesh::storeOBJ(std::string path) {
 	file << ret;
 }
 
+#if 1
 void Mesh::loadOBJ(std::string path) {
+	rapidobj::Result result = rapidobj::ParseFile(path);
+	if (result.error) {
+		return;
+	}
+
+	//TODO result.materials[0].diffuse_texname
+	
+	const rapidobj::Attributes& attrib = result.attributes;
+
+	if (result.shapes[0].mesh.num_face_vertices[0]==4) //TODO
+		m_MP |= MP_QUAD;
+	
+	m_vertices.reserve(attrib.positions.size() / 3);
+	for (size_t i = 0; i < attrib.positions.size(); i += 3) {
+		const auto& v = attrib.positions;
+		m_vertices.emplace_back(v[i + 0], v[i + 1], v[i + 2], 1.);
+	}
+
+	m_normals.reserve(attrib.normals.size() / 3);
+	for (size_t i = 0; i < attrib.normals.size(); i += 3) {
+		const auto& n = attrib.normals;
+		m_normals.emplace_back(n[i + 0], n[i + 1], n[i + 2], 1.);
+	}
+	if (!attrib.normals.empty()) {
+		m_MP |= MP_NORMAL;
+	}
+
+	m_texUVs.reserve(attrib.texcoords.size() / 2);
+	for (size_t i = 0; i < attrib.texcoords.size(); i += 2) {
+		const auto& t = attrib.texcoords;
+		m_texUVs.emplace_back(t[i + 0], t[i + 1], 0., 0.);
+	}
+	if (!attrib.texcoords.empty()) {
+		m_MP |= MP_UV;
+	}
+
+	for (const auto& shape : result.shapes) {
+		size_t index_offset = 0;
+		for (size_t fv_count : shape.mesh.num_face_vertices) {
+			Face newFace;
+			for (size_t v = 0; v < fv_count; v++) {
+				const rapidobj::Index idx = shape.mesh.indices[index_offset + v];
+				if (v < 4) {
+					newFace.vertsI[v] = idx.position_index;
+					newFace.normalI[v] = idx.normal_index;
+					newFace.texUVI[v] = idx.texcoord_index;
+				}
+			}
+			m_faces.push_back(newFace);
+			index_offset += fv_count;
+		}
+	}
+}
+#endif
+#if 0
+void Mesh::loadOBJ(std::string path) {
+	tinyobj::attrib_t attrib;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> materials;
+
+	//std::map<std::string, int> textures;
+	
+	std::string warn;
+	std::string err;
+
+	bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str());
+	if (!ret) {
+		//TODO error
+		return;
+	}
+
+	m_vertices.reserve(attrib.vertices.size() / 3);
+	for (size_t i = 0; i < attrib.vertices.size(); i += 3) {
+		auto& v = attrib.vertices;
+		m_vertices.emplace_back(v[i+0],v[i+1],v[i+2],1.);
+	}
+	
+	m_normals.reserve(attrib.normals.size() / 3);
+	for (size_t i = 0; i < attrib.normals.size(); i += 3) {
+		auto& n = attrib.normals;
+		m_normals.emplace_back(n[i+0],n[i+1],n[i+2],1.);
+	}
+	m_MP |= MP_NORMAL;
+
+	m_texUVs.reserve(attrib.texcoords.size() / 2);
+	for (size_t i = 0; i < attrib.texcoords.size(); i += 2) {
+		auto& t = attrib.texcoords;
+		m_texUVs.emplace_back(t[i+0],t[i+1],0.,0.);
+	}
+	m_MP |= MP_UV;
+
+	for (const auto& shape : shapes) {
+		int io = 0; // index offset
+		for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
+			size_t fv = (size_t)shape.mesh.num_face_vertices[f];
+			Face newFace;
+			
+			for (size_t v = 0; v < fv; v++) {
+				tinyobj::index_t idx = shape.mesh.indices[io + v];
+
+				if (v < 4) {
+					newFace.vertsI[v] = idx.vertex_index;
+					newFace.normalI[v] = idx.normal_index;
+					newFace.texUVI[v] = idx.texcoord_index;
+				}
+			}
+			
+			m_faces.push_back(newFace);
+			io += fv;
+		}
+	}
+}
+#endif
+
+void Mesh::loadOBJcust(std::string path) {
 	std::ifstream file(path, std::ifstream::in);
 	std::string line;
 
@@ -104,10 +224,10 @@ void Mesh::loadOBJ(std::string path) {
 				v[3] = -1;
 				// face is vert/tex/nrm vert/tex/nrm vert/tex/nrm
 
-				iss >> x;
-				for (uint32_t i=0;i<3;++i) {
-					iss;
-				}
+				iss >> x; //TODO
+				//for (uint32_t i=0;i<3;++i) {
+				//	iss;
+				//}
 
 				if (m_MP & MP_NORMAL)
 					iss >> x >> v[0] >> x >> x >> n[0] >> v[1] >> x >> x >> n[1] >> v[2] >> x >> x >> n[2];
@@ -135,6 +255,68 @@ void Mesh::loadOBJ(std::string path) {
 	}
 }
 
+#if 1
+std::vector<float> Mesh::getVertexBuffer() {
+	std::vector<float> res;
+	std::vector<int> nIdxLuNRM(m_vertices.size(), -1);
+	std::vector<int> nIdxLuUV(m_vertices.size(), -1);
+
+	// reserve size
+	int resSize = m_Dim;
+	resSize += m_MP & MP_NORMAL ? m_Dim : 0;
+	resSize += m_MP & MP_UV ? 2 : 0;
+	res.reserve(m_vertices.size() * resSize);
+
+	if (m_MP & MP_NORMAL) {
+		for (const auto& f : m_faces)
+			for (uint32_t l = 0; l < 3; ++l) {
+				int vIdx = f.vertsI[l];
+				if (vIdx >= 0 && vIdx < m_vertices.size() && nIdxLuNRM[vIdx] == -1)
+					nIdxLuNRM[vIdx] = f.normalI[l];
+			}
+	}
+	if (m_MP & MP_UV) {
+		for (const auto& f : m_faces)
+			for (uint32_t l = 0; l < 2; ++l) { //TODO this could be 3
+				int vIdx = f.vertsI[l];
+				if (vIdx >= 0 && vIdx < m_vertices.size() && nIdxLuUV[vIdx] == -1)
+					nIdxLuUV[vIdx] = f.texUVI[l];
+			}
+	}
+
+	for (uint32_t i = 0; i < m_vertices.size(); ++i) {
+		for (uint32_t j = 0; j < m_Dim; ++j) {
+			res.emplace_back(m_vertices[i][j]);
+		}
+		if (m_MP & MP_NORMAL) {
+			int nIdx = nIdxLuNRM[i];
+			if (nIdx >= 0 && nIdx < m_normals.size()) {
+				for (uint32_t j = 0; j < m_Dim; ++j) {
+					res.emplace_back(m_normals[nIdx][j]);
+				}
+			} else {
+				for (uint32_t j = 0; j < m_Dim; ++j) {
+					res.emplace_back(m_normals[0][j]);
+				}
+			}
+		}
+		if (m_MP & MP_UV) {
+			int nIdx = nIdxLuUV[i];
+			if (nIdx >= 0 && nIdx < m_texUVs.size()) {
+				for (uint32_t j = 0; j < 2; ++j) { //TODO could be 3
+					res.emplace_back(m_texUVs[nIdx][j]);
+				}
+			} else {
+				for (uint32_t j = 0; j < 2; ++j) { //TODO could be 3
+					res.emplace_back(m_texUVs[0][j]);
+				}
+			}
+		}
+	}
+	
+	return res;
+}
+#else
 std::vector<float> Mesh::getVertexBuffer() {
 	std::vector<float> res;
 	for (uint32_t i=0;i<m_vertices.size();++i) {
@@ -174,6 +356,7 @@ std::vector<float> Mesh::getVertexBuffer() {
 
 	return res;
 }
+#endif
 
 std::vector<int> Mesh::getIndexBuffer() {
 	std::vector<int> res;
@@ -259,10 +442,10 @@ SSMesh::SSMesh(bool triangles) {
 			float n1,n2,n3;
 		} vertices[4] =
 		{
-			{ -1.0f, -1.0f, 0.f, 0.f,     0.0f,0.0f,1.0f },
-			{  1.0f, -1.0f, 1.f, 0.f,     0.0f,0.0f,1.0f },
-			{  1.0f,  1.0f, 1.f, 1.f,     0.0f,0.0f,1.0f },
-			{ -1.0f,  1.0f, 0.f, 1.f,     0.0f,0.0f,1.0f },
+			{ -1.0f, -1.0f, 0.f, 0.f,	  0.0f,0.0f,1.0f },
+			{  1.0f, -1.0f, 1.f, 0.f,	  0.0f,0.0f,1.0f },
+			{  1.0f,  1.0f, 1.f, 1.f,	  0.0f,0.0f,1.0f },
+			{ -1.0f,  1.0f, 0.f, 1.f,	  0.0f,0.0f,1.0f },
 		};
 		// add vertices
 		for (uint32_t i=0;i<4;++i) {

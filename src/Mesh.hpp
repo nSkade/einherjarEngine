@@ -7,8 +7,9 @@
 
 namespace ehj {
 
-class Mesh {
-public:
+//class Mesh {
+//public:
+struct Mesh {
 	Mesh();
 	Mesh(Mesh& mesh);
 	Mesh(std::string path);
@@ -16,6 +17,7 @@ public:
 
 	void storeOBJ(std::string path);
 	void loadOBJ(std::string path);
+	void loadOBJcust(std::string path);
 
 	std::vector<float> getVertexBuffer();
 	std::vector<int> getIndexBuffer();
@@ -41,7 +43,6 @@ public:
 
 	void toTriangles();
 	
-protected:
 	std::vector<glm::vec4> m_vertices;
 	std::vector<glm::vec4> m_normals;
 	std::vector<glm::vec4> m_colors;
@@ -49,15 +50,14 @@ protected:
 	std::vector<Face> m_faces;
 	
 	// Buffer Properties
-	uint32_t m_MP = 0;
+	uint32_t m_MP = 0; // mesh properties
 	uint32_t m_Dim = 3; // dimension of object
 };
 
 /**
  * @brief SceenSpace Mesh
 */
-class SSMesh : public Mesh {
-public:
+struct SSMesh : public Mesh {
 	SSMesh(bool triangles = false);
 };
 

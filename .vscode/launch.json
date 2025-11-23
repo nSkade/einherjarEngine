@@ -2,32 +2,40 @@
 	// Use IntelliSense to learn about possible attributes. https://go.microsoft.com/fwlink/?linkid=830387
 	"version": "0.2.0",
 	"configurations": [
-
 		{
-			//"preLaunchTask": "buildCMake",
 			"name": "cl debug",
 			"type": "lldb",
 			"request": "launch",
 			"program": "${workspaceFolder}\\einherjarEngineDbg.exe",
 			"args": [],
-			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
-			"environment": [],
-			//"console": "externalTerminal",
-			//"console": "internalConsole",
 			"console": "integratedTerminal",
-			//"postDebugTask": "buildTestEnd",
 		},
 		{
-			//"preLaunchTask": "buildCMake MY",
 			"name": "cl MYENVIR",
 			"type": "lldb",
 			"request": "launch",
 			"program": "${workspaceFolder}\\einherjarEngineMYDbg.exe",
 			"args": [],
-			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
-			"environment": [],
+			"console": "integratedTerminal",
+		},
+		{
+			"name": "cl debug REL",
+			"type": "lldb",
+			"request": "launch",
+			"program": "${workspaceFolder}\\einherjarEngine.exe",
+			"args": [],
+			"cwd": "${workspaceFolder}",
+			"console": "integratedTerminal",
+		},
+		{
+			"name": "cl MYENVIR REL",
+			"type": "lldb",
+			"request": "launch",
+			"program": "${workspaceFolder}\\einherjarEngineMY.exe",
+			"args": [],
+			"cwd": "${workspaceFolder}",
 			"console": "integratedTerminal",
 		}
 	]

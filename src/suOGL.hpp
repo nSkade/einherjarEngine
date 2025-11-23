@@ -23,12 +23,13 @@
 #include "GAPI/OGL/GLProgram.hpp"
 #include "GAPI/OGL/GLFrameBuffer.hpp"
 #include "GAPI/OGL/GLUtils.hpp"
-#include "GAPI/OGL/OGLMesh.hpp"
+#include "GAPI/OGL/GLMesh.hpp"
+#include "GAPI/OGL/GLTexture.hpp"
 
 //TODO seems not to work, remove
 // try and use dedicated Graphics
 // enable optimus!
-extern "C" {
-	_declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
-	_declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
-}
+//extern "C" {
+//	_declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+//	_declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
+//}

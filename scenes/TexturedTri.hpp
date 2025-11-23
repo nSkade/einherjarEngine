@@ -12,17 +12,6 @@ using namespace glm;
 class TexturedTriScene : IScene {
 public:
 
-//static constexpr struct
-//{
-//	float x, y;
-//	float r, g, b;
-//} vertices[3] =
-//{
-//	{ -0.6f, -0.4f, 1.f, 0.f, 0.f },
-//	{  0.6f, -0.4f, 0.f, 1.f, 0.f },
-//	{   0.f,  0.6f, 0.f, 0.f, 1.f }
-//};
-
 static constexpr struct
 {
 	glm::vec2 pos;
@@ -39,13 +28,13 @@ static constexpr struct
 
 static constexpr char* vertex_shader_text = (char*)
 "#version 330 core\n"
-"uniform mat4 MVP;\n"
+"uniform mat4 u_pvm;\n"
 "attribute vec2 vPos;\n"
 "attribute vec2 vTex;\n"
 "varying vec2 texUV;\n"
 "void main()\n"
 "{\n"
-"    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
+"    gl_Position = u_pvm * vec4(vPos, 0.0, 1.0);\n"
 "    texUV = vTex;\n"
 "}\n";
  
@@ -55,7 +44,6 @@ static constexpr char* fragment_shader_text = (char*)
 "varying vec2 texUV;\n"
 "void main()\n"
 "{\n"
-"    gl_FragColor = vec4(1.0);\n"
 "    gl_FragColor = vec4(texture(u_tex,texUV).xyz,0.);\n"
 "}\n";
 
@@ -76,8 +64,9 @@ void setup(void) {
 int run(void)
 {
 	GLFWwindow* window;
-	GLuint vertex_buffer, vertex_shader, fragment_shader, program;
-	GLint mvp_location, vpos_location, vcol_location;
+	GLuint vertex_buffer;//, vertex_shader, fragment_shader, program;
+
+	GLint vpos_location, vcol_location;
 
 	glfwSetErrorCallback(error_callback);
 
@@ -113,15 +102,17 @@ int run(void)
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	GLProgram shadProg;
-	shadProg.addSourceFromString(std::string(vertex_shader_text),GL_VERTEX_SHADER);
-	shadProg.addSourceFromString(std::string(fragment_shader_text),GL_FRAGMENT_SHADER);
-	shadProg.createProgram();
-	shadProg.bind();
+	GLProgram glp;
+	glp.addSourceFromString(std::string(vertex_shader_text),GL_VERTEX_SHADER);
+	glp.addSourceFromString(std::string(fragment_shader_text),GL_FRAGMENT_SHADER);
+	//glp.addSourceFromFile("shaders/basic_v.vert");
+	//glp.addSourceFromFile("shaders/basic_f.frag");
 
-	mvp_location = shadProg.getUnfLoc("MVP");
-	vpos_location = shadProg.getAttribLoc("vPos");
-	vcol_location = shadProg.getAttribLoc("vTex");
+	glp.createProgram();
+	glp.bind();
+
+	vpos_location = glp.getAttribLoc("vPos");
+	vcol_location = glp.getAttribLoc("vTex");
 
 	glEnableVertexAttribArray(vpos_location);
 	std::cout << sizeof(vertices[0]) << std::endl;
@@ -131,10 +122,19 @@ int run(void)
 	glVertexAttribPointer(vcol_location, 2, GL_FLOAT, GL_FALSE,
 						  sizeof(vertices[0]), (void*) (sizeof(GLfloat) * 2));
 
-	ivec2 t_res;
-	int t_channels;
 	stbi_set_flip_vertically_on_load(true);
 	stbi_flip_vertically_on_write(true);
+
+#if 1
+	GLTexture::Opt gltOpt;
+	gltOpt.texturefilter=GL_NEAREST;
+
+	gltOpt.path = "models/test.png";
+	GLTexture glt(gltOpt);
+
+#else // manual
+	ivec2 t_res;
+	int t_channels;
 
 	GLubyte* data = stbi_load("models/test.png",&t_res[0],&t_res[1], &t_channels,0);
 	//GLubyte* data = stbi_load("myModels/pb.png",&t_res[0],&t_res[1], &t_channels,0);
@@ -161,12 +161,12 @@ int run(void)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D,texture);
 	ehj_gl_err();
+#endif
+	glp.bind();
 
-	while (!glfwWindowShouldClose(window))
-	{
+	while (!glfwWindowShouldClose(window)) {
 		float ratio;
 		int width, height;
-	//	mat4x4 m, p, mvp;
  
 		glfwGetFramebufferSize(window, &width, &height);
 		ratio = width / (float) height;
@@ -174,15 +174,10 @@ int run(void)
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
  
-		glm::mat4 m = glm::mat4(1.0f); // identity
-		//m = glm::rotate(m,(float) glfwGetTime(), glm::vec3(0.f,1.f,0.f));
-		//m = glm::translate(m,glm::vec3(0.0f,0.0f,0.0f));
+		glm::mat4 m = glm::mat4(1.0f);
 		glm::mat4 p = glm::ortho(-1.f,1.f,-1.f,1.f);
-		//glm::mat4 p = glm::perspectiveFov(45,10,10,0.1,1000);
 		glm::mat4 mvp = p*m;
-		//mvp = proj;
-		glUseProgram(shadProg.getProgramID());
-		glUniformMatrix4fv(mvp_location, 1, GL_FALSE, (const GLfloat*) &(mvp[0].x));
+		glUniformMatrix4fv(glp.getUnfLoc("u_pvm"), 1, GL_FALSE, (const GLfloat*) &(mvp[0].x));
 		glDrawArrays(GL_TRIANGLES, 0, sizeof(vertices)/sizeof(vertices[0]));
 
 		glfwSwapBuffers(window);

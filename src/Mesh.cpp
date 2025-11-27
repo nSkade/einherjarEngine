@@ -1,4 +1,5 @@
 #include "Mesh.hpp"
+#include "glm/gtx/norm.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -14,14 +15,61 @@ Mesh::Mesh() {
 	
 }
 
-Mesh::Mesh(Mesh& mesh) {
-	this->m_MP = mesh.m_MP;
-	this->m_colors = mesh.m_colors;
-	this->m_Dim = mesh.m_Dim;
-	this->m_faces = mesh.m_faces;
-	this->m_normals = mesh.m_normals;
-	this->m_texUVs = mesh.m_texUVs;
-	this->m_vertices = mesh.m_vertices;
+//Mesh::Mesh(Mesh& mesh) {
+//	this->m_MP = mesh.m_MP;
+//	this->m_colors = mesh.m_colors;
+//	this->m_Dim = mesh.m_Dim;
+//	this->m_faces = mesh.m_faces;
+//	this->m_normals = mesh.m_normals;
+//	this->m_texUVs = mesh.m_texUVs;
+//	this->m_vertices = mesh.m_vertices;
+//}
+
+//TODO sort pos
+void Mesh::computeNormals() {
+	if (m_vertices.empty()) return;
+
+	std::size_t vertexCount = m_vertices.size();
+	m_normals.clear();
+	m_normals.resize(vertexCount, glm::vec4(0.0f));
+
+	for (auto& face : m_faces) {
+		face.normalI = face.vertsI;
+	}
+
+	for (const auto& face : m_faces) {
+		int i0 = face.vertsI.x;
+		int i1 = face.vertsI.y;
+		int i2 = face.vertsI.z;
+
+		if (i0 < 0 || i1 < 0 || i2 < 0 || 
+			i0 >= vertexCount || i1 >= vertexCount || i2 >= vertexCount) 
+		{
+			continue;
+		}
+
+		glm::vec3 v0 = m_vertices[i0];
+		glm::vec3 v1 = m_vertices[i1];
+		glm::vec3 v2 = m_vertices[i2];
+
+		glm::vec3 edge1 = v1 - v0;
+		glm::vec3 edge2 = v2 - v0;
+
+		glm::vec3 faceNormal = glm::cross(edge1, edge2);
+
+		m_normals[i0] += glm::vec4(faceNormal, 0.0f);
+		m_normals[i1] += glm::vec4(faceNormal, 0.0f);
+		m_normals[i2] += glm::vec4(faceNormal, 0.0f);
+	}
+
+	for (auto& normalVec4 : m_normals) {
+		if (glm::length2(glm::vec3(normalVec4)) > 1e-6) {
+			glm::vec3 normalized = glm::normalize(glm::vec3(normalVec4));
+			normalVec4 = glm::vec4(normalized, 0.0f);
+		} else {
+			normalVec4 = glm::vec4(0.0f, 0.0f, 1.0f, 0.0f);
+		}
+	}
 }
 
 Mesh::Mesh(std::string path) {
@@ -377,7 +425,7 @@ void Mesh::toTriangles() {
 	Mesh mesh = Mesh(*this);
 	m_faces.clear();
 	for (uint32_t i=0;i<mesh.m_faces.size();++i) {
-		std::cout << "toTriangles: " << i << "/" << mesh.m_faces.size() << " " << float(i)/mesh.m_faces.size()*100. << "%" << std::endl;
+		//std::cout << "toTriangles: " << i << "/" << mesh.m_faces.size() << " " << float(i)/mesh.m_faces.size()*100. << "%" << std::endl;
 		Face fq = mesh.m_faces[i];
 		Face t1,t2;
 		t1.vertsI = {fq.vertsI[0],fq.vertsI[1],fq.vertsI[2],-1};
@@ -399,7 +447,6 @@ void Mesh::toTriangles() {
 }
 
 SSMesh::SSMesh(bool triangles) {
-	m_MP |= MP_VRTNRM;
 	m_MP |= MP_NORMAL;
 	if (triangles) {
 		static const struct

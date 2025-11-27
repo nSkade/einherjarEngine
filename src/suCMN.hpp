@@ -57,6 +57,7 @@ inline void SetupImGuiStyle(bool is_dark_style, float alpha_threshold) {
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Mesh.hpp"
+#include "Model.hpp"
 #include "Camera.hpp"
 #include "Clock.hpp" //TODO replace with "Utility/Timer.hpp"
 #include "Utility/Timer.hpp"

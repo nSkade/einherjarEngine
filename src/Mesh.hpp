@@ -11,7 +11,7 @@ namespace ehj {
 //public:
 struct Mesh {
 	Mesh();
-	Mesh(Mesh& mesh);
+	//Mesh(Mesh& mesh);
 	Mesh(std::string path);
 	void clear();
 
@@ -33,15 +33,15 @@ struct Mesh {
 	enum MeshProperty {
 		MP_QUAD     = 1,
 		MP_NORMAL   = 1 << 1,
-		MP_VRTNRM   = 1 << 2,
-		MP_COLOR    = 1 << 3,
-		MP_UV       = 1 << 4,
+		MP_COLOR    = 1 << 2,
+		MP_UV       = 1 << 3,
 	};
 	
 	uint32_t getMP();
 	uint32_t getDim();
 
 	void toTriangles();
+	void computeNormals();
 	
 	std::vector<glm::vec4> m_vertices;
 	std::vector<glm::vec4> m_normals;

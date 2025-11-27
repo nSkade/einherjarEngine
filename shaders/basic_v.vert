@@ -14,7 +14,8 @@ out vec2 uvV;
 
 void main()
 {
-	gl_Position = u_pvm * vec4(vPos, 1.0f);
+	vec4 pos = u_pvm * vec4(vPos, 1.0f);
+	gl_Position = pos;
 	colorV = vec3(1.0f);//vCol;
 	normalV = vNrm;
 	uvV = vUV;

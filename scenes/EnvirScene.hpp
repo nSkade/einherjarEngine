@@ -79,8 +79,11 @@ public:
 		
 		//ehj::Mesh mesh("models/monkey.obj");
 		//ehj::Mesh mesh("myModels/cornellBoxObj.obj");
-		ehj::Mesh mesh("myModels/sponza/obj/Sponza.obj");
+		//ehj::Mesh mesh("myModels/sponza/obj/Sponza.obj");
+		ehj::Model model("myModels/sponza/gltf/Sponza.gltf");
 		
+		ehj::Mesh& mesh = model.m_meshes[0];
+
 		mesh.toTriangles();
 		GLMesh glMesh(mesh, GL_DYNAMIC_DRAW);
 		glMesh.bind(0);
@@ -140,7 +143,7 @@ public:
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			m_cam.setProj(glm::perspective(glm::radians(90.0f), (float)m_windowRes.x/(float)m_windowRes.y,0.01f,100.0f));
-			glm::mat4 pvm = m_cam.getPV();
+			glm::mat4 pvm = m_cam.getPV() * glm::scale(mat4(1.),vec3(0.01));
 		
 			glUniformMatrix4fv(glp.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
 

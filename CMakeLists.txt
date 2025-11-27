@@ -25,6 +25,7 @@ find_package(Vulkan REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 #find_package(tinyobjloader REQUIRED)
 find_package(RapidObj CONFIG REQUIRED)
+find_package(fastgltf CONFIG REQUIRED)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -86,6 +87,7 @@ set(linkedLibraries
 	#$<$<CONFIG:Debug>:"vcpkg_installed/x64-windows/lib/tinyobjloader">
 	#$<$<CONFIG:Release>:tinyobjloader::tinyobjloader>
 	rapidobj::rapidobj
+	fastgltf::fastgltf
 )
 
 target_link_libraries(ehjEngine ${linkedLibraries})

@@ -2,6 +2,7 @@
   "dependencies": [
     "vulkan",
     "rapidobj",
+    "fastgltf",
     {
       "name": "imgui",
       "default-features": false,

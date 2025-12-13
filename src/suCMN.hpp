@@ -10,6 +10,7 @@
 //#endif
 
 #include <imgui.h>
+#include <imgui_stdlib.h>
 
 //TODO remove
 //#if defined(__clang__)

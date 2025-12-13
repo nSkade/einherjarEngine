@@ -2,6 +2,9 @@ cmake_minimum_required (VERSION 3.10)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(VCPKG_TARGET_TRIPLET x64-mingw-dynamic)
+set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg-clang-mingw.cmake")
+
 set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 SET(VCPKG_BOOTSTRAP_OPTIONS "-disableMetrics") # Disable telemetry for vcpkg.
 SET(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)          # Install vcpkg dependencies automatically(experimental - might be changed or removed later; see: https://github.com/microsoft/vcpkg/issues/1653). 
@@ -21,7 +24,6 @@ list(APPEND CMAKE_PREFIX_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 
 project ("einherjarEngine")
 
-find_package(Vulkan REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 #find_package(tinyobjloader REQUIRED)
 find_package(RapidObj CONFIG REQUIRED)

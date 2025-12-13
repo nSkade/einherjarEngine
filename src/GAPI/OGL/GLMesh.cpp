@@ -104,15 +104,15 @@ uint32_t GLMesh::getEBOsize() {
 	return m_EBOsize;
 }
 
-int32_t GLMesh::getAttribPos() {
+int32_t GLMesh::getAttribPos() const {
 	return m_attribPos;
 }
-int32_t GLMesh::getAttribNrm() {
+int32_t GLMesh::getAttribNrm() const {
 	return m_attribNrm;
 }
-int32_t GLMesh::getAttribCol() {
+int32_t GLMesh::getAttribCol() const {
 	return m_attribCol;
 }
-int32_t GLMesh::getAttribUV() {
+int32_t GLMesh::getAttribUV() const {
 	return m_attribUV;
 }

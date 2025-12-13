@@ -20,10 +20,10 @@ public:
 	uint32_t getEBO();
 	uint32_t getEBOsize();
 
-	int32_t getAttribPos();
-	int32_t getAttribNrm();
-	int32_t getAttribCol();
-	int32_t getAttribUV();
+	int32_t getAttribPos() const;
+	int32_t getAttribNrm() const;
+	int32_t getAttribCol() const;
+	int32_t getAttribUV()  const;
 
 private:
 	uint32_t m_MP = 0; // mesh properties

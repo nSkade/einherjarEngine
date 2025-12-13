@@ -1,0 +1,9 @@
+[
+    {
+        "name": "Clang-LLVM-MinGW (UCRT)",
+        "compilers": {
+            "C": "C:/LLVM-MinGW/bin/clang.exe",
+            "CXX": "C:/LLVM-MinGW/bin/clang++.exe"
+        }
+    }
+]

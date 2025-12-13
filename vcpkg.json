@@ -1,6 +1,6 @@
 {
   "dependencies": [
-    "vulkan",
+    "vulkan-loader",
     "rapidobj",
     "fastgltf",
     {

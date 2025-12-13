@@ -2,6 +2,8 @@
 #include <thread>
 #include <chrono>
 
+#include <functional>
+
 namespace ehj {
 
 /**
@@ -21,6 +23,14 @@ public:
 		auto overhead = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::microseconds(m_interval) - dt);
 		if (overhead.count() > 0)
 			std::this_thread::sleep_for(overhead);
+		m_tp = std::chrono::steady_clock::now();
+	}
+	
+	void wait(std::function<void(double)> sleepFunc) {
+		auto dt = std::chrono::steady_clock::now()-m_tp;
+		auto overhead = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::microseconds(m_interval) - dt);
+		if (overhead.count() > 0)
+			sleepFunc(overhead.count());
 		m_tp = std::chrono::steady_clock::now();
 	}
 

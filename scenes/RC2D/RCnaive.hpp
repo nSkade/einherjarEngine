@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "JFA.hpp"
+
 using namespace ehj;
 using namespace glm;
 
@@ -75,12 +77,12 @@ int run(void)
  
 	ehj::SSMesh mesh;
 	mesh.toTriangles();
-	OGLMesh oglMesh(mesh, GL_DYNAMIC_DRAW);
-	oglMesh.bind(0);
+	GLMesh glMesh(mesh, GL_DYNAMIC_DRAW);
+	glMesh.bind(0);
 
 	ehj_gl_err();
-	glBindVertexArray(oglMesh.getVAO());
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oglMesh.getEBO());
+	glBindVertexArray(glMesh.getVAO());
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh.getEBO());
 
 	auto createPass = [&](GLProgram& glp, std::string vs, std::string fs) {
 		glp.addSourceFromFile(vs); //TODO make abstraction to make reloading easier
@@ -88,33 +90,37 @@ int run(void)
 		glp.addSourceFromFile(fs);
 		ehj_gl_err();
 		glp.createProgram();
-		glBindAttribLocation(glp.getID(),oglMesh.getAttribPos(),"vPos");
-		if (oglMesh.getAttribNrm()!=-1)
-			glBindAttribLocation(glp.getID(),oglMesh.getAttribNrm(),"vNrm");
+		glBindAttribLocation(glp.getID(),glMesh.getAttribPos(),"vPos");
+		if (glMesh.getAttribNrm()!=-1)
+			glBindAttribLocation(glp.getID(),glMesh.getAttribNrm(),"vNrm");
 		ehj_gl_err();
 	};
 	GLProgram glpPencil;
 	createPass(glpPencil,
-		"scenes/RC/ssq.vs",
-		"scenes/RC/pencil.fs"
+		"scenes/RC2D/ssq.vs",
+		"scenes/RC2D/pencil.fs"
 	);
 	
 	GLProgram glpDO; // dynamic objects
 	createPass(glpDO,
-		"scenes/RC/ssq.vs",
-		"scenes/RC/dynamicObj.fs"
+		"scenes/RC2D/ssq.vs",
+		"scenes/RC2D/dynamicObj.fs"
 	);
 	
-	GLProgram glpJumpFlood;
-	createPass(glpJumpFlood,
-		"scenes/RC/ssq.vs",
-		"scenes/RC/jumpflood.fs"
-	);
+	//glfwGetFramebufferSize(window, &width, &height);
+	ivec2 prevRes = {width,height};
+	
+	JFA jfa(prevRes,glMesh);
+	//GLProgram glpJumpFlood;
+	//createPass(glpJumpFlood,
+	//	"scenes/RC2D/ssq.vs",
+	//	"scenes/RC2D/jumpflood.fs"
+	//);
 
 	GLProgram glpRCnaive;
 	createPass(glpRCnaive,
-		"scenes/RC/ssq.vs",
-		"scenes/RC/naive.fs"
+		"scenes/RC2D/ssq.vs",
+		"scenes/RC2D/naive.fs"
 	);
 
 	glm::mat4 pvm = glm::ortho(-1.f,1.f,-1.f,1.f);
@@ -124,13 +130,11 @@ int run(void)
 	m_cam.setDir(vec3(0.,0.,-1.));
 
 	GLFWfpsLimiter fpsLimiter;
-	//glfwGetFramebufferSize(window, &width, &height);
-	ivec2 prevRes = {width,height};
 
 	GLFrameBuffer fbr1(prevRes);
 	GLFrameBuffer fbr2(prevRes);
-	GLFrameBuffer fbJumpFlood(prevRes);
-	GLFrameBuffer fbJumpFlood2(prevRes);
+	//GLFrameBuffer fbJumpFlood(prevRes);
+	//GLFrameBuffer fbJumpFlood2(prevRes);
 
 	float time = 0.;
 	int frame = 0;
@@ -150,7 +154,7 @@ int run(void)
 	int raySteps = 16;
 	float rayNoise = 1.;
 	float rayDist = 1.;
-	int jfPassCount = 11;
+	//int jfPassCount = 11;
 	float lightStr = 1.;
 
 	enum ViewPass {
@@ -194,16 +198,16 @@ int run(void)
 				auto reloadPass = [&](GLProgram& glp, std::string fs) {
 					suc &= glp.addSourceFromFile(fs);
 					glp.createProgram();
-					glBindAttribLocation(glp.getID(),oglMesh.getAttribPos(),"vPos");
-					if (oglMesh.getAttribNrm()!=-1)
-						glBindAttribLocation(glp.getID(),oglMesh.getAttribNrm(),"vNrm");
+					glBindAttribLocation(glp.getID(),glMesh.getAttribPos(),"vPos");
+					if (glMesh.getAttribNrm()!=-1)
+						glBindAttribLocation(glp.getID(),glMesh.getAttribNrm(),"vNrm");
 					ehj_gl_err_continue();
 				};
 
-				reloadPass(glpPencil,"scenes/RC/pencil.fs");
-				reloadPass(glpDO,"scenes/RC/dynamicObj.fs");
-				reloadPass(glpRCnaive,"scenes/RC/naive.fs");
-				reloadPass(glpJumpFlood,"scenes/RC/jumpflood.fs");
+				reloadPass(glpPencil,"scenes/RC2D/pencil.fs");
+				reloadPass(glpDO,"scenes/RC2D/dynamicObj.fs");
+				reloadPass(glpRCnaive,"scenes/RC2D/naive.fs");
+				//reloadPass(glpJumpFlood,"scenes/RC2D/jumpflood.fs");
 				
 				frame = 0;
 				suc = sucTmp;
@@ -253,7 +257,7 @@ int run(void)
 			}
 			glpPencil.bind();
 			setCMNuniforms(glpPencil);
-			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+			glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 		}
 
 		if (1) { // draw temporary elements / dynamic objects
@@ -263,57 +267,12 @@ int run(void)
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glpDO.bind();
 			setCMNuniforms(glpDO);
-			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+			glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 		}
 
-		// flood fill pass, requires for loop passes in order to cover whole screen
-		int jfPassCountOrig = ceil(glm::log2((float) fmax(width,height)));
-		{ // JFA
-			if (widthPrev != width || height != heightPrev) {
-				fbJumpFlood = GLFrameBuffer(ivec2(width,height));
-				fbJumpFlood2 = GLFrameBuffer(ivec2(width,height));
-			}
-
-			glViewport(0, 0, width, height);
-			glBindFramebuffer(GL_FRAMEBUFFER,fbJumpFlood2.getFBO());
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glBindFramebuffer(GL_FRAMEBUFFER,fbJumpFlood.getFBO());
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glpJumpFlood.bind();
-			setCMNuniforms(glpJumpFlood);
-
-			// already bound glBindFramebuffer(GL_FRAMEBUFFER,fbJumpFlood.getFBO());
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
-			glUniform1i(glGetUniformLocation(glpJumpFlood.getID(), "u_tex"), 0);           // texture unit 0
-			// render uv
-			glUniform1f(glpJumpFlood.getUnfLoc("u_jfOffset"),0.);
-			
-			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
-			for (int i=0;i< jfPassCount;++i) {
-				auto* fbJFfrom = &fbJumpFlood;
-				auto* fbJFto = &fbJumpFlood2;
-				if (i%2==1)
-					std::swap(fbJFfrom,fbJFto);
-				
-				glBindFramebuffer(GL_FRAMEBUFFER,fbJFto->getFBO());
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-				
-				glActiveTexture(GL_TEXTURE1);
-				glBindTexture(GL_TEXTURE_2D,fbJFfrom->getTexCol());
-				glUniform1i(glGetUniformLocation(glpJumpFlood.getID(), "u_texJumpFlood"), 1);  // texture unit 1
-				glUniform1f(glpJumpFlood.getUnfLoc("u_jfOffset"),pow(2,jfPassCount-i-1));
-
-				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
-
-				if (i==jfPassCount-1 && i%2==0) {
-					// blit into fbJFto
-					glBlitNamedFramebuffer(fbJFto->getFBO(),fbJFfrom->getFBO(),
-						0,0,width,height,0,0,width,height,
-						GL_COLOR_BUFFER_BIT,GL_NEAREST);
-				}
-			}
-		}
+		if (widthPrev != width || height != heightPrev)
+			jfa.updateBufferSize(ivec2(width,height));
+		jfa.passJFA(glMesh,fbr2,pvm);
 
 		{ // RC naive pass
 			glBindFramebuffer(GL_FRAMEBUFFER,0);
@@ -326,13 +285,13 @@ int run(void)
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
 			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D,fbJumpFlood.getTexCol());
+			glBindTexture(GL_TEXTURE_2D,jfa.m_fb1.getTexCol());
 
 			//TODO abstract this into GLProgram
 			glUniform1i(glGetUniformLocation(glpRCnaive.getID(), "u_tex"), 0);           // texture unit 0
 			glUniform1i(glGetUniformLocation(glpRCnaive.getID(), "u_texJumpFlood"), 1);  // texture unit 1
 
-			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+			glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 		}
 		
 		{ // imgui
@@ -347,7 +306,7 @@ int run(void)
 				ImGui::DragInt("raySteps",&raySteps,1,1,100);
 				ImGui::DragFloat("rayNoise",&rayNoise,0.001,0.,1.);
 				ImGui::DragFloat("rayDist",&rayDist,0.001,0.,1.);
-				ImGui::SliderInt("jfPassCountMod",&jfPassCount,0,jfPassCountOrig);
+				ImGui::SliderInt("jfPassCountMod",&jfa.m_jfPassCount,0,jfa.getMaxJfPassCount());
 				ImGui::DragFloat("lightStr",&lightStr,0.001,0.,10.);
 				ImGui::Separator();
 				{

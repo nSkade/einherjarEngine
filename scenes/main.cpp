@@ -10,7 +10,7 @@
 //#include "TessTestScene.hpp"
 //#include "ComputeShaderTestScene.hpp"
 //#include "ADFtestScene.hpp"
-#include "EnvirScene.hpp"
+//#include "EnvirScene.hpp"
 //#include "RayMarchingTestScene.hpp"
 //#include "FSRTestScene.hpp"
 //#include "VulkanTest.hpp"
@@ -19,8 +19,8 @@
 
 // lighting
 //#include "PathTracing.hpp"
-//#include "RC/RCnaive.hpp"
-//#include "RC/RC.hpp"
+//#include "RC2D/RCnaive.hpp"
+#include "RC2D/RC.hpp"
 
 // tools
 //#include "plotGlsl2D/plotGlsl2D.hpp"

@@ -54,7 +54,7 @@ file(GLOB_RECURSE einherjarEngine_SRC
 )
 set(ehjSourceFiles )
 list(APPEND ehjSourceFiles
-	"xicon/my.rc"
+	"lib/ehjEicon/my.rc"
 	${einherjarEngine_SRC}
 	
 	#TODO remove

@@ -1,5 +1,7 @@
 #include "Mesh.hpp"
-#include "glm/gtx/norm.hpp"
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/norm.hpp>
 
 #include <fstream>
 #include <sstream>

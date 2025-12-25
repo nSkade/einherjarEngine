@@ -24,6 +24,9 @@ list(APPEND CMAKE_PREFIX_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 
 project ("einherjarEngine")
 
+find_package(glm CONFIG REQUIRED)
+find_package(glfw3 CONFIG REQUIRED)
+find_package(glad CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 #find_package(tinyobjloader REQUIRED)
 find_package(RapidObj CONFIG REQUIRED)
@@ -34,15 +37,13 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 include_directories(einherjarEngine
-	lib/
-	lib/glad           #TODOf add vcpkg
-	lib/glfw3          #TODOf add vcpkg
-	lib/stb            #TODOf add vcpkg
 	src/
-	${Stb_INCLUDE_DIR} #TODO required?
+	lib/
+	lib/stb
+	${Stb_INCLUDE_DIR} #TODOf required?
 )
-LINK_DIRECTORIES(lib/glad)
-LINK_DIRECTORIES(lib/glfw3)
+#LINK_DIRECTORIES(lib/glad)
+#LINK_DIRECTORIES(lib/glfw3)
 LINK_DIRECTORIES(/)
 
 SET(CMAKE_COLOR_MAKEFILE OFF)
@@ -56,7 +57,8 @@ list(APPEND ehjSourceFiles
 	"xicon/my.rc"
 	${einherjarEngine_SRC}
 	
-	"lib/glad/glad.c"
+	#TODO remove
+	#"lib/glad/glad.c"
 )
 
 add_executable (ehjEngine
@@ -81,7 +83,9 @@ set_property(TARGET ehjEngineMY PROPERTY OUTPUT_NAME einherjarEngineMY)
 #add_dependencies(ehjEngineMY file_toucherMY)
 
 set(linkedLibraries
-	glfw3
+	glm::glm
+	glfw
+	glad::glad
 	Vulkan::Vulkan
 	imgui::imgui
 
@@ -99,9 +103,9 @@ target_compile_definitions(ehjEngine PUBLIC $<$<CONFIG:Debug>:EHJ_DBG>)
 target_compile_definitions(ehjEngineMY PUBLIC $<$<CONFIG:Debug>:EHJ_DBG>)
 
 #set_target_properties (ehjEngine PROPERTIES CXX_STANDARD 17)
-set_target_properties (ehjEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
+set_target_properties (ehjEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set_target_properties (ehjEngine PROPERTIES DEBUG_POSTFIX "Dbg")
 
 #set_target_properties (ehjEngineMY PROPERTIES CXX_STANDARD 17)
-set_target_properties (ehjEngineMY PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
+set_target_properties (ehjEngineMY PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set_target_properties (ehjEngineMY PROPERTIES DEBUG_POSTFIX "Dbg")

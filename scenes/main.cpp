@@ -11,6 +11,7 @@
 //#include "ComputeShaderTestScene.hpp"
 //#include "ADFtestScene.hpp"
 //#include "EnvirScene.hpp"
+//#include "EnvirTexScene/EnvirTexScene.hpp"
 //#include "RayMarchingTestScene.hpp"
 //#include "FSRTestScene.hpp"
 //#include "VulkanTest.hpp"
@@ -29,11 +30,17 @@
 #error "SCENETYPE inside scene header undefined, "#define SCENETYPE <scene class name>" in your header"
 #endif
 
+#include <filesystem>
+
 int main(int argc, char** argv) {
 #ifdef EHJ_DBG
 	std::cout << "EHJ_DBG defined, running DEBUG mode.\n";
 #endif
 	{
+	if (argv[0]) // set working directory to parent
+		std::filesystem::current_path( // omit filename
+			std::filesystem::absolute(argv[0]).parent_path().parent_path()
+		);
 	SCENETYPE scene;
 
 	scene.setup();

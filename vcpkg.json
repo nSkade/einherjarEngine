@@ -21,7 +21,8 @@
         "glfw-binding",
         "docking-experimental"
       ]
-    }
+    },
+    "jsoncpp"
   ],
   "builtin-baseline": "f4fc135de213885b8d072203d324976e4aa1f171"
 }

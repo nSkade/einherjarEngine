@@ -31,6 +31,7 @@ find_package(imgui CONFIG REQUIRED)
 #find_package(tinyobjloader REQUIRED)
 find_package(RapidObj CONFIG REQUIRED)
 find_package(fastgltf CONFIG REQUIRED)
+find_package(jsoncpp CONFIG REQUIRED)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -94,6 +95,8 @@ set(linkedLibraries
 	#$<$<CONFIG:Release>:tinyobjloader::tinyobjloader>
 	rapidobj::rapidobj
 	fastgltf::fastgltf
+
+	JsonCpp::JsonCpp
 )
 
 target_link_libraries(ehjEngine ${linkedLibraries})

@@ -11,6 +11,7 @@
     },
     "vulkan-loader",
     "rapidobj",
+    "stb",
     "fastgltf",
     {
       "name": "imgui",

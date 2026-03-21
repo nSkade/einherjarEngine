@@ -41,6 +41,7 @@ void GLProgram::bind() {
 bool GLProgram::addSourceFromString(std::string shaderSource, GLenum shaderType, const std::string& filePath) {
 	auto itr = m_shaders.toID.find(shaderType);
 	if (itr != m_shaders.toID.end()) { // shader does already exist
+		std::cout << "Note: loaded shader overwritten\n";
 		GLuint oldID = itr->second;
 		glDeleteShader(oldID);
 		m_shaders.remove(oldID);

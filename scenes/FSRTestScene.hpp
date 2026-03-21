@@ -62,6 +62,7 @@ public:
 
 		glfwMakeContextCurrent(m_pWindow);
 		gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+		ehj_gl_err_callback();
 		glViewport(0, 0, m_windowRes.x, m_windowRes.y);
 		glfwSwapInterval(0);
 	}
@@ -87,9 +88,9 @@ public:
 		OGLMesh oglMesh(mesh, GL_DYNAMIC_DRAW);
 		oglMesh.bind(0);
 
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		glBindVertexArray(oglMesh.getVAO());
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		
 		//glpMain.loadProgramFromFolder("shaders");
 		glpMain.addSourceFromFile("shaders/basic_v.vert");
@@ -105,12 +106,12 @@ public:
 		glBindAttribLocation(glpFXAA.getID(),oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
 			glBindAttribLocation(glpFXAA.getID(),oglMesh.getAttribNrm(),"vNrm");
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 
 		glBindAttribLocation(glpMain.getID(),oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
 			glBindAttribLocation(glpMain.getID(),oglMesh.getAttribNrm(),"vNrm");
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		glpMain.bind();
 
 		glpEASU.addSourceFromFile("shaders/basic_v.vert");
@@ -121,7 +122,7 @@ public:
 		glBindAttribLocation(glpEASU.getID(),oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
 			glBindAttribLocation(glpEASU.getID(),oglMesh.getAttribNrm(),"vNrm");
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		//glpEASU.bind();
 
 		GPUTimer fragSTimer;
@@ -203,15 +204,15 @@ public:
 			float cFoc = m_cam.getFocus();
 			glUniform1f(glpMain.getUnfLoc("u_cFoc"), cFoc);
 
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 			glDepthMask(GL_TRUE);
 			fragSTimer.start();
 				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 			fragSTimer.end();
 
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 			glBindFramebuffer(GL_FRAMEBUFFER,fbFxaa.getFBO());
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 
 			glpFXAA.bind();
 			glUniformMatrix4fv(glpFXAA.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
@@ -220,28 +221,28 @@ public:
 			glUniform2f(glpFXAA.getUnfLoc("u_resolution"), renderRes.x, renderRes.y);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D,fbr.getTexCol());
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 
 			//fbr.update(m_windowRes);
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 			glBindFramebuffer(GL_FRAMEBUFFER,0);
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 
 			fsrTimer.start();
 			glpEASU.bind();
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 			glUniformMatrix4fv(glpEASU.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
 			glUniform1f(glpEASU.getUnfLoc("u_time"), time);
 			glUniform1i(glpEASU.getUnfLoc("u_enableFSR"), enable_fsr);
 			glUniform2f(glpEASU.getUnfLoc("u_texRes"), renderRes.x, renderRes.y);
 			glUniform2f(glpEASU.getUnfLoc("u_resolution"), m_windowRes.x, m_windowRes.y);
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D,fbFxaa.getTexCol());
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 			glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 			fsrTimer.end();
 
 			ImGui_ImplOpenGL3_NewFrame();
@@ -269,7 +270,7 @@ public:
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 
 			glfwSwapBuffers(m_pWindow);
 			glfwPollEvents();

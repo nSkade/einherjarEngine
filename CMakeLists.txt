@@ -30,6 +30,7 @@ find_package(glad CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 #find_package(tinyobjloader REQUIRED)
 find_package(RapidObj CONFIG REQUIRED)
+find_package(Stb REQUIRED)
 find_package(fastgltf CONFIG REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
 
@@ -40,8 +41,7 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 include_directories(einherjarEngine
 	src/
 	lib/
-	lib/stb
-	${Stb_INCLUDE_DIR} #TODOf required?
+	${Stb_INCLUDE_DIR}
 )
 #LINK_DIRECTORIES(lib/glad)
 #LINK_DIRECTORIES(lib/glfw3)
@@ -83,6 +83,9 @@ set_property(TARGET ehjEngineMY PROPERTY OUTPUT_NAME einherjarEngineMY)
 #add_dependencies(ehjEngine file_toucher)
 #add_dependencies(ehjEngineMY file_toucherMY)
 
+target_compile_definitions(ehjEngine PRIVATE EHJ_ROOT_PATH="${CMAKE_SOURCE_DIR}")
+target_compile_definitions(ehjEngineMY PRIVATE EHJ_ROOT_PATH="${CMAKE_SOURCE_DIR}")
+
 set(linkedLibraries
 	glm::glm
 	glfw
@@ -101,6 +104,9 @@ set(linkedLibraries
 
 target_link_libraries(ehjEngine ${linkedLibraries})
 target_link_libraries(ehjEngineMY ${linkedLibraries})
+
+target_precompile_headers(ehjEngine PRIVATE scenes/pch.h)
+target_precompile_headers(ehjEngineMY PRIVATE myScenes/pch.h)
 
 target_compile_definitions(ehjEngine PUBLIC $<$<CONFIG:Debug>:EHJ_DBG>)
 target_compile_definitions(ehjEngineMY PUBLIC $<$<CONFIG:Debug>:EHJ_DBG>)

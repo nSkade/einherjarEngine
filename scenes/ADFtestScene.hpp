@@ -58,6 +58,7 @@ public:
 
 		glfwMakeContextCurrent(m_pWindow);
 		gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+		ehj_gl_err_callback();
 		glViewport(0, 0, m_windowRes.x, m_windowRes.y);
 	}
 
@@ -90,11 +91,11 @@ public:
 
 		//mesh.storeOBJ("modelsOut/sdfc.obj");
 
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		glBindVertexArray(oglMesh.getVAO());
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		
 		mainGLP.loadProgramFromFolder("shaders");
 		mainGLP.addSourceFromFile("shaders/basic_f.frag");
@@ -104,7 +105,7 @@ public:
 		glBindAttribLocation(program,oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
 			glBindAttribLocation(program,oglMesh.getAttribNrm(),"vNrm");
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		glUseProgram(program);
 
 		GPUTimer fragSTimer;
@@ -149,12 +150,12 @@ public:
 			glUniform2f(mainGLP.getUnfLoc("u_resolution"), width, height);
 			glUniform1i(mainGLP.getUnfLoc("u_tess"), (GLint) guiTess);
 
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 			fragSTimer.start();
 				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 			fragSTimer.end();
 
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 
 			glfwSwapBuffers(m_pWindow);
 			glfwPollEvents();

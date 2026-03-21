@@ -79,6 +79,7 @@ int run(void)
 
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+		ehj_gl_err_callback();
 	glfwSwapInterval(1);
 	// NOTE: OpenGL error checks have been omitted for brevity
 	glEnable(GL_DEPTH_TEST);

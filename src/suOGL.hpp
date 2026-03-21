@@ -1,5 +1,7 @@
-// Scene Utilities OpenGl
 #pragma once
+/*
+ * @brief scene utility OpenGL
+ */
 
 #include "suCMN.hpp"
 

@@ -62,6 +62,7 @@ public:
 
 		glfwMakeContextCurrent(m_pWindow);
 		gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+		ehj_gl_err_callback();
 		glViewport(0, 0, m_windowRes.x, m_windowRes.y);
 	}
 
@@ -84,11 +85,11 @@ public:
 		OGLMesh oglMesh(mesh, GL_DYNAMIC_DRAW);
 		oglMesh.bind(0);
 
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		glBindVertexArray(oglMesh.getVAO());
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		
 		mainGLP.loadProgramFromFolder("shaders");
 		std::string fragShader = "tellu.frag";
@@ -98,7 +99,7 @@ public:
 		glBindAttribLocation(mainGLP.getID(),oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
 			glBindAttribLocation(mainGLP.getID(),oglMesh.getAttribNrm(),"vNrm");
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		mainGLP.bind();
 
 		GPUTimer fragSTimer;
@@ -170,7 +171,7 @@ public:
 			float cFoc = m_cam.getFocus();
 			glUniform1f(mainGLP.getUnfLoc("u_cFoc"), cFoc);
 
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 			glDepthMask(GL_TRUE);
 			fragSTimer.start();
 				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
@@ -191,7 +192,7 @@ public:
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 
 			glfwSwapBuffers(m_pWindow);
 			glfwPollEvents();

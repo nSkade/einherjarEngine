@@ -1,13 +1,22 @@
 #pragma once
 
-#include <glad/glad.h>
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
+#ifndef EHJ_EXIT_ON_GL_ERR
+#define EHJ_EXIT_ON_GL_ERR 1
+#endif
 
-#define EXIT_ON_GL_ERR 1
+/**
+ * @brief automatic callback func on ogl error
+ */
+void ehj_gl_err_callback();
 
-#include <stdint.h>
-#include <iostream>
-
+/**
+ * @brief manual callback func on ogl error, breaks on error
+ * deprecated, use ehj_gl_err_callback instead
+ */
 uint32_t ehj_gl_err();
+
+/**
+ * @brief manual callback func on ogl error, continues on error
+ * deprecated, use ehj_gl_err_callback instead
+ */
 uint32_t ehj_gl_err_continue();

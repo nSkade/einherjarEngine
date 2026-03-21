@@ -59,6 +59,7 @@ public:
 
 		glfwMakeContextCurrent(m_pWindow);
 		gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+		ehj_gl_err_callback();
 		glViewport(0, 0, m_windowRes.x, m_windowRes.y);
 		glfwSwapInterval(0);
 	}
@@ -82,9 +83,9 @@ public:
 		OGLMesh oglMesh(mesh, GL_DYNAMIC_DRAW);
 		oglMesh.bind(0);
 
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		glBindVertexArray(oglMesh.getVAO());
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		
 		//glpMain.loadProgramFromFolder("shaders");
 		glpMain.addSourceFromFile("shaders/basic_v.vert");
@@ -95,7 +96,7 @@ public:
 		glBindAttribLocation(glpMain.getID(),oglMesh.getAttribPos(),"vPos");
 		if (oglMesh.getAttribNrm()!=-1)
 			glBindAttribLocation(glpMain.getID(),oglMesh.getAttribNrm(),"vNrm");
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		glpMain.bind();
 
 		//GPUTimer fragSTimer;
@@ -145,7 +146,7 @@ public:
 			int width, height;
 			glfwGetFramebufferSize(m_pWindow, &width, &height);
 			m_windowRes = glm::ivec2(width,height);
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 
 			//m_cam.setProj(glm::perspective(glm::radians(90.0f), (float)renderRes.x/(float)renderRes.y,0.01f,100.0f));
 			glm::mat4 pvm = m_cam.getPV();
@@ -191,7 +192,7 @@ public:
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-			ehj_gl_err();
+			//TODO remove,,, ehj_gl_err();
 
 			glfwSwapBuffers(m_pWindow);
 			glfwPollEvents();

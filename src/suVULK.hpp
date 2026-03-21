@@ -1,5 +1,8 @@
 // Scene Utilities Vulkan
 #pragma once
+/*
+ * @brief scene utility Vulkan
+ */
 
 #include "suCMN.hpp"
 
@@ -9,4 +12,4 @@
 //#include <Volk/volk.h>
 
 #define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+//TODO pch, remove, #include <GLFW/glfw3.h>

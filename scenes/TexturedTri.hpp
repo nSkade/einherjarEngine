@@ -89,6 +89,7 @@ int run(void)
 
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+		ehj_gl_err_callback();
 	glfwSwapInterval(1);
 	// NOTE: OpenGL error checks have been omitted for brevity
 	glEnable(GL_DEPTH_TEST);
@@ -160,7 +161,7 @@ int run(void)
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D,texture);
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 #endif
 	glp.bind();
 

@@ -158,6 +158,7 @@ int run() {
 	
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+		ehj_gl_err_callback();
 	if (!FRAME_CAP)
 		glfwSwapInterval(0);
 	
@@ -205,11 +206,11 @@ int run() {
 	mesh.toTriangles();
 	GLMesh glMesh(mesh);
 	glMesh.bind(0);
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 	
 	glBindVertexArray(glMesh.getVAO());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh.getEBO());
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 	
 	//GLuint attribPos = 0;
 	//GLuint attribCol = 1;
@@ -251,7 +252,7 @@ int run() {
 
 	//glBindVertexArray(quadVAO);
 	//std::cout << "check0\n";
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 	
 	// tesselation maximum supported vertices
 	//GLint MaxPatchVertices = 0;
@@ -262,19 +263,19 @@ int run() {
 	//glPatchParameteri(GL_PATCH_VERTICES, 4);
 
 	//glp.loadProgramFromFolder("shaders/tessQ");
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 	glp.addSourceFromFile("shaders/basic_v.vert");
 	//glp.addSourceFromFile("shaders/tessQ/basic_v.vert", GL_VERTEX_SHADER);
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 	//glp.addSourceFromFile("shaders/tellu.frag",GL_FRAGMENT_SHADER);
 	glp.addSourceFromFile("shaders/basic_f.frag");
 	//glp.addSourceFromFile("shaders/tessQ/basic_f.frag",GL_FRAGMENT_SHADER);
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 	//glp.addSourceFromFile("shaders/tessQ/basic_tcsQ.glsl", GL_TESS_CONTROL_SHADER);
-	//ehj_gl_err();
+	////TODO remove,,, ehj_gl_err();
 	//glp.addSourceFromFile("shaders/tessQ/basic_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
 	//glp.addSourceFromFile("shaders/tellu_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
-	//ehj_gl_err();
+	////TODO remove,,, ehj_gl_err();
 
 	glp.createProgram();
 	glp.bind();
@@ -287,7 +288,7 @@ int run() {
 	glBindAttribLocation(glp.getID(),glMesh.getAttribUV(),"vUV");
 	
 	std::cout << "check1\n";
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 	//GLuint vpos_location = 0;//glGetAttribLocation(program, "vPos");
 	//GLuint vcol_location = 1;//glGetAttribLocation(program, "vCol");
 
@@ -299,7 +300,7 @@ int run() {
 	//					sizeof(vertices[0]), (void*) (sizeof(float) * 3));
 	
 	std::cout << "check2\n";
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 	GPUTimer fragSTimer;
 	
 	//glLineWidth(1.0f);
@@ -393,7 +394,7 @@ int run() {
 		view = glm::mat4(glm::rotation(vec3(0.,1.,0.),vec3(0.,0.,1.)));
 		glUniformMatrix4fv(glp.getUnfLoc("u_pvm"),1,GL_FALSE,glm::value_ptr(view));
 		
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 		
 		fragSTimer.start();
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -407,7 +408,7 @@ int run() {
 		fragSTimer.end();
 		//fragSTimer.print();
 
-		ehj_gl_err();
+		//TODO remove,,, ehj_gl_err();
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();

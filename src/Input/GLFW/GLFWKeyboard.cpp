@@ -2,6 +2,7 @@
 
 namespace ehj {
 
+//TODOff remove singleton, make struct pass by ref
 std::weak_ptr<GLFWKeyboard> GLFWKeyboard::m_pInstance;
 
 std::shared_ptr<GLFWKeyboard> GLFWKeyboard::instance() {

@@ -13,27 +13,26 @@ public:
 	struct Opt {
 		GLint internalformat = GL_RGBA32F;
 		GLint texturefilter = GL_LINEAR;
-		std::string path;
-	};
+		std::string path = "";
+		int width=0;
+		int height=0;
+	} m_opt;
 
 	GLTexture(std::string path) :
-		m_path(path)
+		m_opt(Opt{GL_RGBA32F,GL_LINEAR,path})
 		{
 		construct();
 	}
 
 	GLTexture(Opt opt) :
-		m_internalformat(opt.internalformat),
-		m_texturefilter(opt.texturefilter),
-		m_path(opt.path)
+		m_opt(opt)
 		{
 		construct();
 	}
 
 	GLTexture(const GLTexture& a) {
 		m_res = a.m_res;
-		m_internalformat = a.m_internalformat;
-		m_texturefilter = a.m_texturefilter;
+		m_opt = a.m_opt;
 		construct();
 	}
 
@@ -41,8 +40,7 @@ public:
 		if (this != &a) {
 			destruct();     // Clean old resources
 			m_res = a.m_res;
-			m_internalformat = a.m_internalformat;
-			m_texturefilter = a.m_texturefilter;
+			m_opt=a.m_opt;
 			construct();    // Re-create with new size
 		}
 		return *this;
@@ -60,9 +58,6 @@ private:
 	void destruct() {
 		glDeleteTextures(1,&m_tex);
 	}
-	std::string m_path;
 	GLuint m_tex; // color texture
 	glm::ivec2 m_res;
-	GLint m_internalformat = GL_RGBA32F;
-	GLint m_texturefilter = GL_LINEAR; //TODO
 };

@@ -62,6 +62,7 @@ int run(void)
 
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+		ehj_gl_err_callback();
 	glfwSwapInterval(1);
 	glEnable(GL_DEPTH_TEST);
 	
@@ -74,18 +75,18 @@ int run(void)
 
 	GLProgram glProg;
 	glProg.addSourceFromFile("shaders/PathTracing/ssq.vs");
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 	glProg.addSourceFromFile("shaders/PathTracing/pt.fs");
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 
 	glProg.createProgram();
 	glProg.bind();
 
 	GLProgram glpPP;
 	glpPP.addSourceFromFile("shaders/PathTracing/ssq.vs");
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 	glpPP.addSourceFromFile("shaders/PathTracing/pp.fs");
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 
 	glpPP.createProgram();
 	glpPP.bind();
@@ -96,9 +97,9 @@ int run(void)
 	OGLMesh oglMesh(mesh, GL_DYNAMIC_DRAW);
 	oglMesh.bind(0);
 
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 	glBindVertexArray(oglMesh.getVAO());
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
  
 	glProg.bind();
 	glBindAttribLocation(glProg.getID(),oglMesh.getAttribPos(),"vPos");

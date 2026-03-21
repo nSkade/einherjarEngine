@@ -3,6 +3,7 @@
 
 namespace ehj {
 
+//TODOff remove singleton, make struct pass by ref
 std::weak_ptr<GLFWMouse> GLFWMouse::m_pInstance;
 
 std::shared_ptr<GLFWMouse> GLFWMouse::instance() {

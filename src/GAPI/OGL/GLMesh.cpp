@@ -49,11 +49,11 @@ void GLMesh::bind(uint32_t bindingIndex) {
 	if (m_MP & ehj::Mesh::MP_UV)
 		MPC += 2;
 
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 	glVertexArrayVertexBuffer(m_VAO,m_vaoBindingPoint,m_VBO,0,sizeof(float)*MPC);
 	//glVertexArrayVertexBuffer(m_VAO,m_vaoBindingPoint,m_VBO,0,sizeof(float)*Dim*MPC);
 
-	ehj_gl_err();
+	//TODO remove,,, ehj_gl_err();
 
 	// position
 	glEnableVertexArrayAttrib(m_VAO, m_attribPos);

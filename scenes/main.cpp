@@ -8,7 +8,7 @@
 // tests
 //#include "TriHelloWorldScene.hpp"
 //#include "TessTestScene.hpp"
-//#include "ComputeShaderTestScene.hpp"
+#include "computeShaderExample/ComputeShaderTestScene.hpp"
 //#include "ADFtestScene.hpp"
 //#include "EnvirScene.hpp"
 //#include "EnvirTexScene/EnvirTexScene.hpp"
@@ -21,7 +21,7 @@
 // lighting
 //#include "PathTracing.hpp"
 //#include "RC2D/RCnaive.hpp"
-#include "RC2D/RC.hpp"
+//#include "RC2D/RC.hpp"
 
 // tools
 //#include "plotGlsl2D/plotGlsl2D.hpp"

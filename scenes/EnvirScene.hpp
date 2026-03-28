@@ -61,6 +61,7 @@ public:
 
 		glfwMakeContextCurrent(m_pWindow);
 		gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+		ehj_gl_err_callback();
 		glViewport(0, 0, m_windowRes.x, m_windowRes.y);
 	}
 
@@ -77,21 +78,20 @@ public:
 		}
 	#endif
 		
-		//ehj::Mesh mesh("models/monkey.obj");
+		ehj::Mesh mesh("models/monkey.obj");
 		//ehj::Mesh mesh("myModels/cornellBoxObj.obj");
 		//ehj::Mesh mesh("myModels/sponza/obj/Sponza.obj");
-		ehj::Model model("myModels/sponza/gltf/Sponza.gltf");
-		
-		ehj::Mesh& mesh = model.m_meshes[0];
+
+		//ehj::Model model("myModels/sponza/gltf/Sponza.gltf");
+		//ehj::Mesh& mesh = model.m_meshes[0];
 
 		mesh.toTriangles();
+		mesh.m_vertexData.assembleVertexBuffer({&mesh});
+		GLVertexBuffer glVb(mesh.m_vertexData);
 		GLMesh glMesh(mesh, GL_DYNAMIC_DRAW);
-		glMesh.bind(0);
-		ehj_gl_err();
 
-		glBindVertexArray(glMesh.getVAO());
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh.getEBO());
-		ehj_gl_err();
+		glVb.bind(0); // instead of glBindVertexArray(glMesh.getVAO());
+		glMesh.bind();
 		
 		GLProgram glp;
 		glp.addSourceFromFile("shaders/basic_v.vert");
@@ -99,12 +99,12 @@ public:
 
 		glp.createProgram();
 		glp.bind();
-		ehj_gl_err();
+
 		
-		glBindAttribLocation(glp.getID(),glMesh.getAttribPos(),"vPos");
-		glBindAttribLocation(glp.getID(),glMesh.getAttribNrm(),"vNrm");
-		glBindAttribLocation(glp.getID(),glMesh.getAttribUV(),"vUV");
-		ehj_gl_err();
+		glBindAttribLocation(glp.getID(),glVb.getAttribPos(),"vPos");
+		glBindAttribLocation(glp.getID(),glVb.getAttribNrm(),"vNrm");
+		glBindAttribLocation(glp.getID(),glVb.getAttribUV(),"vUV");
+
 
 		GPUTimer fragSTimer;
 
@@ -143,7 +143,8 @@ public:
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 			m_cam.setProj(glm::perspective(glm::radians(90.0f), (float)m_windowRes.x/(float)m_windowRes.y,0.01f,100.0f));
-			glm::mat4 pvm = m_cam.getPV() * glm::scale(mat4(1.),vec3(0.01));
+			glm::mat4 pvm = m_cam.getPV();
+			//pvm = pvm* glm::scale(mat4(1.),vec3(0.005));
 		
 			glUniformMatrix4fv(glp.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
 
@@ -151,7 +152,7 @@ public:
 			glUniform2f(glp.getUnfLoc("u_resolution"), width, height);
 			glUniform1i(glp.getUnfLoc("u_tess"), (GLint) guiTess);
 
-			ehj_gl_err();
+	
 			//glDepthMask(GL_TRUE);
 			fragSTimer.start();
 				glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
@@ -165,7 +166,7 @@ public:
 				//glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 			}
 
-			ehj_gl_err();
+	
 
 			glfwSwapBuffers(m_pWindow);
 			glfwPollEvents();

@@ -1,6 +1,5 @@
 #include "GPUTimer.hpp"
 
-#include <iostream>
 
 void GPUTimer::start() {
 	if (m_query_read) {

@@ -11,15 +11,19 @@ using namespace glm;
 class GLTexture {
 public:
 	struct Opt {
+		std::string path = "";
 		GLint internalformat = GL_RGBA32F;
 		GLint texturefilter = GL_LINEAR;
-		std::string path = "";
+		GLint wrapS = GL_CLAMP_TO_BORDER;
+		GLint wrapT = GL_CLAMP_TO_BORDER;
 		int width=0;
 		int height=0;
+		unsigned char* data = nullptr;
+		int nrChannels=4;
 	} m_opt;
 
 	GLTexture(std::string path) :
-		m_opt(Opt{GL_RGBA32F,GL_LINEAR,path})
+		m_opt(Opt{path})
 		{
 		construct();
 	}

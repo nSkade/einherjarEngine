@@ -25,6 +25,7 @@
 #include "GAPI/OGL/GLProgram.hpp"
 #include "GAPI/OGL/GLFrameBuffer.hpp"
 #include "GAPI/OGL/GLUtils.hpp"
+#include "GAPI/OGL/GLVertexBuffer.hpp"
 #include "GAPI/OGL/GLMesh.hpp"
 #include "GAPI/OGL/GLTexture.hpp"
 

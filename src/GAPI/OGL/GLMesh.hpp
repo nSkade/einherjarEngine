@@ -3,7 +3,6 @@
 #include <Mesh.hpp>
 
 #include <glad/glad.h>
-#include <stdint.h>
 
 class GLMesh {
 public:
@@ -14,33 +13,17 @@ public:
 	GLMesh(ehj::Mesh mesh, GLenum usage);
 	~GLMesh();
 
-	void bind(uint32_t bindingIndex);
+	void bind() {
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
+	};
 
-	uint32_t getVAO();
+	void draw() {
+		glDrawElements(GL_TRIANGLES,m_EBOsize,GL_UNSIGNED_INT,0);
+	}
+
 	uint32_t getEBO();
 	uint32_t getEBOsize();
-
-	int32_t getAttribPos() const;
-	int32_t getAttribNrm() const;
-	int32_t getAttribCol() const;
-	int32_t getAttribUV()  const;
-
 private:
-	uint32_t m_MP = 0; // mesh properties
-	uint32_t m_Dim = 3;
-
-	uint32_t m_VAO; // vertex array object
-	uint32_t m_VBO; // vertex buffer object
 	uint32_t m_EBO; // element buffer object
-	
 	uint32_t m_EBOsize;
-
-	//TODO abstract this
-	GLuint m_attribPos = 0;
-	GLuint m_attribNrm = 1;
-	GLuint m_attribCol = 2;
-	GLuint m_attribUV = 3;
-
-	GLuint m_vaoBindingPoint = 0; //TODO manage
 };
-

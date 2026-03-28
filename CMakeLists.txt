@@ -7,7 +7,7 @@ set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg-clang-mingw.cmake"
 
 set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
 SET(VCPKG_BOOTSTRAP_OPTIONS "-disableMetrics") # Disable telemetry for vcpkg.
-SET(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)          # Install vcpkg dependencies automatically(experimental - might be changed or removed later; see: https://github.com/microsoft/vcpkg/issues/1653). 
+SET(X_VCPKG_APPLOCAL_DEPS_INSTALL ON)		   # Install vcpkg dependencies automatically(experimental - might be changed or removed later; see: https://github.com/microsoft/vcpkg/issues/1653). 
 
 # use local vcpkg_installed folder at the root of the project
 set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed")
@@ -19,7 +19,7 @@ list(APPEND CMAKE_PREFIX_PATH "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}")
 #get_cmake_property(_variableNames VARIABLES)
 #list (SORT _variableNames)
 #foreach (_variableName ${_variableNames})
-#    message(STATUS "${_variableName}=${${_variableName}}")
+#	 message(STATUS "${_variableName}=${${_variableName}}")
 #endforeach()
 
 project ("einherjarEngine")
@@ -53,6 +53,16 @@ SET(CMAKE_COLOR_MAKEFILE OFF)
 file(GLOB_RECURSE einherjarEngine_SRC
 	"src/*.cpp"
 )
+
+foreach(source_file ${einherjarEngine_SRC})
+	if(source_file MATCHES "libImpl.cpp$")
+		set_source_files_properties("${source_file}" PROPERTIES 
+			COMPILE_FLAGS "$<$<CONFIG:Debug>:-O3 -DNDEBUG>"
+			SKIP_PRECOMPILE_HEADERS ON
+		)
+	endif()
+endforeach()
+
 set(ehjSourceFiles )
 list(APPEND ehjSourceFiles
 	"lib/ehjEicon/my.rc"

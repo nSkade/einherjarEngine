@@ -35,6 +35,9 @@
 // std libs
 ///////////
 
+#include <vector>
 #include <stdint.h>
+#include <string>
 #include <iostream>
 #include <filesystem>
+#include <memory>

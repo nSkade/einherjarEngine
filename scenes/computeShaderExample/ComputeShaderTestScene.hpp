@@ -6,7 +6,6 @@
 //TODO pch, remove, #include <GLFW/glfw3.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <iostream>
 #include <vector>
 #include <string>
 
@@ -188,6 +187,8 @@ public:
 		
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo); // binding point 0
 
+		//glBindBuffer(GL_SHADER_STORAGE_BUFFER,0);//TODO need to rebind, what if we want to bind multiple ssbo?
+
 		ivec3 ls; // local work group size
 		glGetProgramiv(glp.getID(), GL_COMPUTE_WORK_GROUP_SIZE, &ls[0]);
 
@@ -196,6 +197,8 @@ public:
 		int wgsy= (computeShaderDims[1]+ls[1]-1) / ls[1];
 		
 		glDispatchCompute(wgsx,wgsy,1);
+
+		glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
 		float* compute_data = (float*)glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_READ_ONLY);
 		memcpy(values.data(),compute_data,values.size()*sizeof(float));

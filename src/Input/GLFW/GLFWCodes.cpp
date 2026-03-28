@@ -1,5 +1,4 @@
 #include "GLFWCodes.hpp"
-#include <memory>
 
 namespace ehj {
 

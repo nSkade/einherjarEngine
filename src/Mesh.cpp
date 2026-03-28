@@ -1,4 +1,5 @@
 #include "Mesh.hpp"
+#include <stdexcept>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/norm.hpp>
@@ -6,43 +7,30 @@
 #include <fstream>
 #include <sstream>
 
-#include <iostream>
-
 //#include <tiny_obj_loader.h>
 #include <rapidobj/rapidobj.hpp>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
+#include <unordered_map>
+
 namespace ehj {
 
-Mesh::Mesh() {
-	
-}
+void VertexData::computeNormals(std::vector<Face>& faces) {
+	if (positions.empty()) return;
 
-//Mesh::Mesh(Mesh& mesh) {
-//	this->m_MP = mesh.m_MP;
-//	this->m_colors = mesh.m_colors;
-//	this->m_Dim = mesh.m_Dim;
-//	this->m_faces = mesh.m_faces;
-//	this->m_normals = mesh.m_normals;
-//	this->m_texUVs = mesh.m_texUVs;
-//	this->m_vertices = mesh.m_vertices;
-//}
+	std::size_t vertexCount = positions.size();
+	normals.clear();
+	normals.resize(vertexCount, glm::vec4(0.0f));
 
-//TODO sort pos
-void Mesh::computeNormals() {
-	if (m_vertices.empty()) return;
-
-	std::size_t vertexCount = m_vertices.size();
-	m_normals.clear();
-	m_normals.resize(vertexCount, glm::vec4(0.0f));
-
-	for (auto& face : m_faces) {
-		face.normalI = face.vertsI;
+	for (auto& face : faces) {
+		face.normalI = face.possI;
 	}
 
-	for (const auto& face : m_faces) {
-		int i0 = face.vertsI.x;
-		int i1 = face.vertsI.y;
-		int i2 = face.vertsI.z;
+	for (const auto& face : faces) {
+		int i0 = face.possI.x;
+		int i1 = face.possI.y;
+		int i2 = face.possI.z;
 
 		if (i0 < 0 || i1 < 0 || i2 < 0 || 
 			i0 >= vertexCount || i1 >= vertexCount || i2 >= vertexCount) 
@@ -50,21 +38,21 @@ void Mesh::computeNormals() {
 			continue;
 		}
 
-		glm::vec3 v0 = m_vertices[i0];
-		glm::vec3 v1 = m_vertices[i1];
-		glm::vec3 v2 = m_vertices[i2];
+		glm::vec3 v0 = positions[i0];
+		glm::vec3 v1 = positions[i1];
+		glm::vec3 v2 = positions[i2];
 
 		glm::vec3 edge1 = v1 - v0;
 		glm::vec3 edge2 = v2 - v0;
 
 		glm::vec3 faceNormal = glm::cross(edge1, edge2);
 
-		m_normals[i0] += glm::vec4(faceNormal, 0.0f);
-		m_normals[i1] += glm::vec4(faceNormal, 0.0f);
-		m_normals[i2] += glm::vec4(faceNormal, 0.0f);
+		normals[i0] += glm::vec4(faceNormal, 0.0f);
+		normals[i1] += glm::vec4(faceNormal, 0.0f);
+		normals[i2] += glm::vec4(faceNormal, 0.0f);
 	}
 
-	for (auto& normalVec4 : m_normals) {
+	for (auto& normalVec4 : normals) {
 		if (glm::length2(glm::vec3(normalVec4)) > 1e-6) {
 			glm::vec3 normalized = glm::normalize(glm::vec3(normalVec4));
 			normalVec4 = glm::vec4(normalized, 0.0f);
@@ -74,53 +62,55 @@ void Mesh::computeNormals() {
 	}
 }
 
+Mesh::Mesh() {
+	
+}
+
 Mesh::Mesh(std::string path) {
 	loadOBJ(path);
 }
 
-void Mesh::clear() {
-	m_vertices.clear();
-	m_normals.clear();
-	m_colors.clear();
-	
-	m_faces.clear();
+void VertexData::clear() {
+	positions.clear();
+	normals.clear();
+	colors.clear();
 }
 
-uint32_t Mesh::getMP() {
-	return m_MP;
-}
-uint32_t Mesh::getDim() {
-	return m_Dim;
-}
-
+//TODOff implement with rapidobj
 void Mesh::storeOBJ(std::string path) {
+	if (!m_hasVertexData) {
+		throw std::runtime_error("cannot store obj without VertexData");
+	}
+
 	//TODO rewrite with rapidobj
 	std::ofstream file(path, std::ostream::out | std::ostream::trunc);
 	std::string ret;
+
+	auto& vertices = m_vertexData.positions;
 	
-	for (uint32_t i=0;i<m_vertices.size();i++) {
+	for (uint32_t i=0;i<vertices.size();i++) {
 		if (i==0)
 			ret.append("v ");
 		else
 			ret.append("\nv ");
-		ret.append(std::to_string(m_vertices[i][0]).append(" "));
-		ret.append(std::to_string(m_vertices[i][1]).append(" "));
-		ret.append(std::to_string(m_vertices[i][2]));
+		ret.append(std::to_string(vertices[i][0]).append(" "));
+		ret.append(std::to_string(vertices[i][1]).append(" "));
+		ret.append(std::to_string(vertices[i][2]));
 	}
 
 	for (uint32_t i=0;i<m_faces.size();i++) {
 		ret.append("\nf ");
 		for (uint32_t j=0;j<3;j++) {
-			ret.append(std::to_string(m_faces[i].vertsI[j]+1)).append(" ");
+			ret.append(std::to_string(m_faces[i].possI[j]+1)).append(" ");
 		}
 		if (m_MP & MP_QUAD)
-			ret.append(std::to_string(m_faces[i].vertsI[3]+1)).append(" ");
+			ret.append(std::to_string(m_faces[i].possI[3]+1)).append(" ");
 	}
 	ret.append("\n");
 	file << ret;
 }
 
-#if 1
+#if 1 // load using rapidobj
 void Mesh::loadOBJ(std::string path) {
 	rapidobj::Result result = rapidobj::ParseFile(path);
 	if (result.error) {
@@ -133,29 +123,34 @@ void Mesh::loadOBJ(std::string path) {
 
 	if (result.shapes[0].mesh.num_face_vertices[0]==4) //TODO
 		m_MP |= MP_QUAD;
+
+	m_hasVertexData=true;
+	auto& vertices = m_vertexData.positions;
+	auto& normals = m_vertexData.normals;
+	auto& texUVs = m_vertexData.texUVs;
 	
-	m_vertices.reserve(attrib.positions.size() / 3);
+	vertices.reserve(attrib.positions.size() / 3);
 	for (size_t i = 0; i < attrib.positions.size(); i += 3) {
 		const auto& v = attrib.positions;
-		m_vertices.emplace_back(v[i + 0], v[i + 1], v[i + 2], 1.);
+		vertices.emplace_back(v[i + 0], v[i + 1], v[i + 2], 1.);
 	}
 
-	m_normals.reserve(attrib.normals.size() / 3);
+	normals.reserve(attrib.normals.size() / 3);
 	for (size_t i = 0; i < attrib.normals.size(); i += 3) {
 		const auto& n = attrib.normals;
-		m_normals.emplace_back(n[i + 0], n[i + 1], n[i + 2], 1.);
+		normals.emplace_back(n[i + 0], n[i + 1], n[i + 2], 1.);
 	}
 	if (!attrib.normals.empty()) {
-		m_MP |= MP_NORMAL;
+		m_vertexData.m_VP |= VertexData::VP_NORMAL;
 	}
 
-	m_texUVs.reserve(attrib.texcoords.size() / 2);
+	texUVs.reserve(attrib.texcoords.size() / 2);
 	for (size_t i = 0; i < attrib.texcoords.size(); i += 2) {
 		const auto& t = attrib.texcoords;
-		m_texUVs.emplace_back(t[i + 0], t[i + 1], 0., 0.);
+		texUVs.emplace_back(t[i + 0], t[i + 1], 0., 0.);
 	}
 	if (!attrib.texcoords.empty()) {
-		m_MP |= MP_UV;
+		m_vertexData.m_VP |= VertexData::VP_UV;
 	}
 
 	for (const auto& shape : result.shapes) {
@@ -165,7 +160,7 @@ void Mesh::loadOBJ(std::string path) {
 			for (size_t v = 0; v < fv_count; v++) {
 				const rapidobj::Index idx = shape.mesh.indices[index_offset + v];
 				if (v < 4) {
-					newFace.vertsI[v] = idx.position_index;
+					newFace.possI[v] = idx.position_index;
 					newFace.normalI[v] = idx.normal_index;
 					newFace.texUVI[v] = idx.texcoord_index;
 				}
@@ -176,7 +171,7 @@ void Mesh::loadOBJ(std::string path) {
 	}
 }
 #endif
-#if 0
+#if 0 // load using tinyObj
 void Mesh::loadOBJ(std::string path) {
 	tinyobj::attrib_t attrib;
 	std::vector<tinyobj::shape_t> shapes;
@@ -223,7 +218,7 @@ void Mesh::loadOBJ(std::string path) {
 				tinyobj::index_t idx = shape.mesh.indices[io + v];
 
 				if (v < 4) {
-					newFace.vertsI[v] = idx.vertex_index;
+					newFace.possI[v] = idx.vertex_index;
 					newFace.normalI[v] = idx.normal_index;
 					newFace.texUVI[v] = idx.texcoord_index;
 				}
@@ -240,31 +235,36 @@ void Mesh::loadOBJcust(std::string path) {
 	std::ifstream file(path, std::ifstream::in);
 	std::string line;
 
+	m_hasVertexData=true;
+	auto& vertices=m_vertexData.positions;
+	auto& normals=m_vertexData.normals;
+	auto& texUVs=m_vertexData.texUVs;
+
 	if (file.good()) {
 		while (getline(file,line)) {
 			if (line[0]=='#') continue; // comment
 			else if (line.substr(0,2).compare("vn")==0) { // face normal?
-				m_MP |= MP_NORMAL;
+				m_vertexData.m_VP |= VertexData::VP_NORMAL;
 				std::istringstream iss(line);
 				std::string n;
 				float v1,v2,v3,v4 = 0.0f;
 				iss >> n >> v1 >> v2 >> v3;
-				m_normals.emplace_back(v1,v2,v3,v4);
+				normals.emplace_back(v1,v2,v3,v4);
 			}
 			else if (line.substr(0,2).compare("vt")==0) { // face normal?
-				m_MP |= MP_UV;
+				m_vertexData.m_VP |= VertexData::VP_UV;
 				std::istringstream iss(line);
 				std::string n;
 				float v1,v2,v3,v4 = 0.0f;
 				iss >> n >> v1 >> v2;
-				m_texUVs.emplace_back(v1,v2,v3,v4);
+				texUVs.emplace_back(v1,v2,v3,v4);
 			}
 			else if (line[0]=='v') { //vertex
 				std::istringstream iss(line);
 				char n;
 				float v1,v2,v3,v4 = 0.0f;
 				iss >> n >> v1 >> v2 >> v3;
-				m_vertices.emplace_back(v1,v2,v3,v4);
+				vertices.emplace_back(v1,v2,v3,v4);
 			}
 			else if (line[0]=='f') { // face
 				std::istringstream iss(line);
@@ -279,7 +279,7 @@ void Mesh::loadOBJcust(std::string path) {
 				//	iss;
 				//}
 
-				if (m_MP & MP_NORMAL)
+				if (m_vertexData.m_VP & VertexData::VP_NORMAL)
 					iss >> x >> v[0] >> x >> x >> n[0] >> v[1] >> x >> x >> n[1] >> v[2] >> x >> x >> n[2];
 				else
 					iss >> x >> v[0] >> v[1] >> v[2];
@@ -294,8 +294,8 @@ void Mesh::loadOBJcust(std::string path) {
 				}
 				Face f;
 				for (uint32_t i=0;i<4;++i) {
-					f.vertsI[i] = v[i]-1;
-					if (m_MP & MP_NORMAL)
+					f.possI[i] = v[i]-1;
+					if (m_vertexData.m_VP & VertexData::VP_NORMAL)
 						f.normalI[i] = n[i]-1;
 				}
 				m_faces.push_back(f);
@@ -305,108 +305,59 @@ void Mesh::loadOBJcust(std::string path) {
 	}
 }
 
-#if 1
-std::vector<float> Mesh::getVertexBuffer() {
-	std::vector<float> res;
-	std::vector<int> nIdxLuNRM(m_vertices.size(), -1);
-	std::vector<int> nIdxLuUV(m_vertices.size(), -1);
+// using the fat vertex approach
+//TODOff  (for a simple one vao vertex buffer we need to look which of the vertex attribute vector is largest and take that as reference)
+void VertexData::assembleVertexBuffer(std::vector<Mesh*> ms) {
+	std::vector<float>& res = merged;
+	res.clear();
+
+	// unify normals and uvs to position
+	std::vector<int> nIdxLuNRM(positions.size(), -1);
+	std::vector<int> nIdxLuUV(positions.size(), -1);
+
+	//TODO incorporate meshoptimizer here
+	// can use index to compress vertex buffer, most of the time probably not worth it
+	// std::unordered_map<glm::ivec4, uint32_t> vertex_to_index;
 
 	// reserve size
 	int resSize = m_Dim;
-	resSize += m_MP & MP_NORMAL ? m_Dim : 0;
-	resSize += m_MP & MP_UV ? 2 : 0;
-	res.reserve(m_vertices.size() * resSize);
+	resSize += m_VP & VP_NORMAL ? m_Dim : 0;
+	resSize += m_VP & VP_UV ? 2 : 0;
+	res.reserve(positions.size() * resSize);
 
-	if (m_MP & MP_NORMAL) {
-		for (const auto& f : m_faces)
-			for (uint32_t l = 0; l < 3; ++l) {
-				int vIdx = f.vertsI[l];
-				if (vIdx >= 0 && vIdx < m_vertices.size() && nIdxLuNRM[vIdx] == -1)
-					nIdxLuNRM[vIdx] = f.normalI[l];
-			}
-	}
-	if (m_MP & MP_UV) {
-		for (const auto& f : m_faces)
-			for (uint32_t l = 0; l < 2; ++l) { //TODO this could be 3
-				int vIdx = f.vertsI[l];
-				if (vIdx >= 0 && vIdx < m_vertices.size() && nIdxLuUV[vIdx] == -1)
-					nIdxLuUV[vIdx] = f.texUVI[l];
-			}
-	}
-
-	for (uint32_t i = 0; i < m_vertices.size(); ++i) {
-		for (uint32_t j = 0; j < m_Dim; ++j) {
-			res.emplace_back(m_vertices[i][j]);
-		}
-		if (m_MP & MP_NORMAL) {
-			int nIdx = nIdxLuNRM[i];
-			if (nIdx >= 0 && nIdx < m_normals.size()) {
-				for (uint32_t j = 0; j < m_Dim; ++j) {
-					res.emplace_back(m_normals[nIdx][j]);
-				}
-			} else {
-				for (uint32_t j = 0; j < m_Dim; ++j) {
-					res.emplace_back(m_normals[0][j]);
-				}
-			}
-		}
-		if (m_MP & MP_UV) {
-			int nIdx = nIdxLuUV[i];
-			if (nIdx >= 0 && nIdx < m_texUVs.size()) {
-				for (uint32_t j = 0; j < 2; ++j) { //TODO could be 3
-					res.emplace_back(m_texUVs[nIdx][j]);
-				}
-			} else {
-				for (uint32_t j = 0; j < 2; ++j) { //TODO could be 3
-					res.emplace_back(m_texUVs[0][j]);
-				}
-			}
-		}
-	}
-	
-	return res;
-}
-#else
-std::vector<float> Mesh::getVertexBuffer() {
-	std::vector<float> res;
-	for (uint32_t i=0;i<m_vertices.size();++i) {
-		for (uint32_t j=0;j<m_Dim;++j) {
-			res.emplace_back(m_vertices[i][j]);
-		}
-		bool nrmFound = false;
-		if (m_MP & MP_NORMAL) {
-			for (uint32_t k=0;k<m_faces.size();++k) {
-				for (uint32_t l=0;l<3;++l) {
-					if (m_faces[k].normalI[l]==i) {
-						for (uint32_t j=0;j<m_Dim;++j)
-							res.emplace_back(m_normals[m_faces[k].normalI[l]][j]);
-						nrmFound = true;
-						break;
+	int vertId=0;
+	//int total=0;
+	for (Mesh* m : ms) {
+		for (Face& f : m->m_faces) {
+			for (int i=0;i<4;++i) {
+				//total++;
+				glm::ivec4 key(f.possI[i], f.normalI[i], f.texUVI[i], f.colorI[i]);
+				//if (vertex_to_index.find(key) == vertex_to_index.end()) { // new unique vertex
+					f.mergedI[i] = vertId;
+					
+					for (uint32_t j = 0; j < m_Dim; ++j) {
+						res.emplace_back(positions[key.x][j]);
 					}
-				}
-				if (nrmFound) break;
-			}
-			if (!nrmFound) {
-				for (uint32_t j=0;j<m_Dim;++j)
-					res.emplace_back(m_normals[0][j]); //TODO fix
-			}
-		}
-	}
-
-	//TODO
-	//for (uint32_t i=0;i<m_faces.size();++i) {
-	//	for (uint32_t j=0;j<4;++j) {
-	//		for (uint32_t k=0;k<m_Dim;++k)
-	//			res.push_back(m_vertices[m_faces[i].vertsI[j]][k]);
-	//		if (m_MP & MP_NORMAL)
-	//			for (uint32_t k=0;k<m_Dim;++k)
-	//				res.push_back(m_normals[m_faces[i].normalI[j]][k]);
-	//	}
-	//}
-
-	return res;
+					if (m_VP & VP_NORMAL) {
+						for (uint32_t j = 0; j < m_Dim; ++j)
+							res.emplace_back(normals[key.y][j]);
+					}
+					if (m_VP & VP_UV) {
+						for (uint32_t j = 0; j < 2; ++j) //TODO could be 3
+							res.emplace_back(texUVs[key.z][j]);
+					}
+					//vertex_to_index[key]=vertId;
+					vertId++;
+				//} else { // vertex already indexed
+				//	f.mergedI[i] = vertex_to_index[key];
+				//}
+			} // vertices
+		} // faces
+	}// mesh
+	//std::cout << "new vert count: " << vertId+1 << std::endl;
+	//std::cout << "old vert count: " << total+1 << std::endl;
+	//std::cout << "%  " << float(vertId+1)/(total+1)*100. << std::endl;
 }
-#endif
 
 std::vector<int> Mesh::getIndexBuffer() {
 	std::vector<int> res;
@@ -415,7 +366,7 @@ std::vector<int> Mesh::getIndexBuffer() {
 		if (m_MP & MP_QUAD)
 			s = 4;
 		for (uint32_t j=0;j<s;++j) {
-			res.emplace_back(m_faces[i].vertsI[j]);
+			res.emplace_back(m_faces[i].mergedI[j]);
 		}
 	}
 	return res;
@@ -430,8 +381,8 @@ void Mesh::toTriangles() {
 		//std::cout << "toTriangles: " << i << "/" << mesh.m_faces.size() << " " << float(i)/mesh.m_faces.size()*100. << "%" << std::endl;
 		Face fq = mesh.m_faces[i];
 		Face t1,t2;
-		t1.vertsI = {fq.vertsI[0],fq.vertsI[1],fq.vertsI[2],-1};
-		t2.vertsI = {fq.vertsI[2],fq.vertsI[3],fq.vertsI[0],-1};
+		t1.possI = {fq.possI[0],fq.possI[1],fq.possI[2],-1};
+		t2.possI = {fq.possI[2],fq.possI[3],fq.possI[0],-1};
 
 		t1.normalI = {fq.normalI[0],fq.normalI[1],fq.normalI[2],-1};
 		t2.normalI = {fq.normalI[2],fq.normalI[3],fq.normalI[0],-1};
@@ -449,7 +400,8 @@ void Mesh::toTriangles() {
 }
 
 SSMesh::SSMesh(bool triangles) {
-	m_MP |= MP_NORMAL;
+	m_vertexData.m_VP |= VertexData::VP_NORMAL;
+	m_hasVertexData=true;
 	if (triangles) {
 		static const struct
 		{
@@ -472,13 +424,13 @@ SSMesh::SSMesh(bool triangles) {
 
 		// add vertices
 		for (uint32_t i=0;i<6;++i) {
-			m_vertices.push_back(glm::vec4(vertices[i].x,vertices[i].y,0.0,1.0));
-			m_normals.push_back(glm::vec4(0.0f,0.0f,1.0f,1.0f));
-			m_texUVs.push_back(glm::vec4(vertices[i].u,vertices[i].v,0.0,1.0));
+			m_vertexData.positions.push_back(glm::vec4(vertices[i].x,vertices[i].y,0.0,1.0));
+			m_vertexData.normals.push_back(glm::vec4(0.0f,0.0f,1.0f,1.0f));
+			m_vertexData.texUVs.push_back(glm::vec4(vertices[i].u,vertices[i].v,0.0,1.0));
 		}
 		for (uint32_t i=0;i<2;++i) {
 			Face f;
-			f.vertsI = f.texUVI = f.normalI = {indices[i*3],indices[i*3+1],indices[i*3+2],0};
+			f.possI = f.texUVI = f.normalI = {indices[i*3],indices[i*3+1],indices[i*3+2],0};
 			m_faces.push_back(f);
 		}
 
@@ -498,12 +450,12 @@ SSMesh::SSMesh(bool triangles) {
 		};
 		// add vertices
 		for (uint32_t i=0;i<4;++i) {
-			m_vertices.push_back(glm::vec4(vertices[i].x,vertices[i].y,0.0,1.0));
-			m_normals.push_back(glm::vec4(0.0f,0.0f,1.0f,1.0f));
-			m_texUVs.push_back(glm::vec4(vertices[i].u,vertices[i].v,0.0,1.0));
+			m_vertexData.positions.push_back(glm::vec4(vertices[i].x,vertices[i].y,0.0,1.0));
+			m_vertexData.normals.push_back(glm::vec4(0.0f,0.0f,1.0f,1.0f));
+			m_vertexData.texUVs.push_back(glm::vec4(vertices[i].u,vertices[i].v,0.0,1.0));
 		}
 		Face f;
-		f.vertsI = f.texUVI = f.normalI = {0,1,2,3};
+		f.possI = f.texUVI = f.normalI = {0,1,2,3};
 		m_faces.push_back(f);
 	}
 }

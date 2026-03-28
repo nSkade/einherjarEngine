@@ -1,4 +1,5 @@
 #include "Model.hpp"
+#include "glm/gtc/type_ptr.hpp"
 
 #include <rapidobj/rapidobj.hpp>
 
@@ -6,9 +7,11 @@
 #include <fastgltf/types.hpp>
 #include <fastgltf/tools.hpp>
 
-#include <iostream> //TODO
+#include <stdexcept>
 
 namespace ehj {
+
+using namespace glm;
 
 Model::Model(std::string path) {
 	//TODO split for 2 support
@@ -16,27 +19,23 @@ Model::Model(std::string path) {
 	//loadOBJ(path);
 }
 
-// Helper lambdas to convert fastgltf types to glm types (and add a 4th component)
-auto to_glm_vec4_pos = [](const fastgltf::math::fvec3& v) -> glm::vec4 {
-	return glm::vec4(v.x(), v.y(), v.z(), 1.0f); // Position gets w=1.0
-};
-auto to_glm_vec4_uv = [](const fastgltf::math::fvec2& v) -> glm::vec4 {
-	return glm::vec4(v.x(), v.y(), 0.0f, 0.0f); // UV gets z=0.0, w=0.0
-};
-auto to_glm_vec4_normal = [](const fastgltf::math::fvec3& v) -> glm::vec4 {
-	return glm::vec4(v.x(), v.y(), v.z(), 0.0f); // Normal gets w=0.0 (directional vector)
-};
-
 void Model::loadGltf(const std::string& path) {
+	auto to_glm_vec4_pos = [](const fastgltf::math::fvec3& v) -> vec4 {
+		return glm::vec4(v.x(), v.y(), v.z(), 1.0f);
+	};
+	auto to_glm_vec4_uv = [](const fastgltf::math::fvec2& v) -> vec4 {
+		return glm::vec4(v.x(), v.y(), 0.0f, 0.0f);
+	};
+	auto to_glm_vec4_normal = [](const fastgltf::math::fvec3& v) -> vec4 {
+		return glm::vec4(v.x(), v.y(), v.z(), 0.0f);
+	};
+	
 	std::filesystem::path fsPath(path);
-	if (!std::filesystem::exists(fsPath)) {
-		std::cout << "Failed to find " << path << '\n';
-		return;
-	}
+	//if (!std::filesystem::exists(fsPath)) {
+	//	std::cout << "Failed to find " << path << '\n';
+	//	return;
+	//}
 
-	std::cout << "Loading " << path << '\n';
-
-	// --- glTF Loading setup ---
 	static constexpr auto supportedExtensions =
 		fastgltf::Extensions::KHR_mesh_quantization |
 		fastgltf::Extensions::KHR_texture_transform |
@@ -45,37 +44,166 @@ void Model::loadGltf(const std::string& path) {
 	fastgltf::Parser parser(supportedExtensions);
 
 	constexpr auto gltfOptions =
-		fastgltf::Options::DontRequireValidAssetMember |
-		fastgltf::Options::LoadExternalBuffers |
-		fastgltf::Options::LoadExternalImages |
-		fastgltf::Options::GenerateMeshIndices;
+		fastgltf::Options::DontRequireValidAssetMember
+		| fastgltf::Options::LoadExternalBuffers
+		//| fastgltf::Options::LoadExternalImages //TODO I am using stb instead (GLTexture)
+		| fastgltf::Options::GenerateMeshIndices;
 
-	auto gltfFile = fastgltf::MappedGltfFile::FromPath(fsPath);
+	fastgltf::Expected<fastgltf::MappedGltfFile> gltfFile = fastgltf::MappedGltfFile::FromPath(fsPath);
 	if (!bool(gltfFile)) {
 		std::cerr << "Failed to open glTF file: " << fastgltf::getErrorMessage(gltfFile.error()) << '\n';
 		return;
 	}
-
-	// 'asset' is an Expected<Asset>, which is not a pointer.
-	auto asset = parser.loadGltf(gltfFile.get(), fsPath.parent_path(), gltfOptions);
+	
+	fastgltf::Expected<fastgltf::Asset> asset = parser.loadGltf(gltfFile.get(), fsPath.parent_path(), gltfOptions);
 	if (asset.error() != fastgltf::Error::None) {
 		std::cerr << "Failed to load glTF: " << fastgltf::getErrorMessage(asset.error()) << '\n';
 		return;
 	}
 	
-	// --- FIX: Extract the Asset object from the Expected wrapper ---
-	// Move the loaded Asset object out of the Expected wrapper.
 	fastgltf::Asset loadedAsset = std::move(asset.get());
 
-	// --- Mesh Population ---
-	
-	// Iterate over all meshes in the loaded glTF asset
-	for (const auto& gltfMesh : loadedAsset.meshes) {
-		Mesh currentMesh;
+	m_materials.reserve(loadedAsset.materials.size());
 
-		// Iterate over all primitives in the current glTF mesh
-		for (const auto& gltfPrimitive : gltfMesh.primitives) {
+	for (const auto& gltfMaterial : loadedAsset.materials) {
+		Model::Material material;
+		
+		const auto& pbr = gltfMaterial.pbrData;
 			
+		material.baseColorFactor = glm::make_vec4(pbr.baseColorFactor.data());
+		material.metallicFactor = pbr.metallicFactor;
+		material.roughnessFactor = pbr.roughnessFactor;
+		
+		if (pbr.baseColorTexture.has_value()) {
+			material.baseColorTextureIndex = static_cast<int>(pbr.baseColorTexture.value().textureIndex);
+		}
+		
+		if (pbr.metallicRoughnessTexture.has_value()) {
+			material.metallicRoughnessTextureIndex = static_cast<int>(pbr.metallicRoughnessTexture.value().textureIndex);
+		}
+		
+		if (gltfMaterial.normalTexture.has_value()) {
+			material.normalTextureIndex = static_cast<int>(gltfMaterial.normalTexture.value().textureIndex);
+		}
+		
+		if (gltfMaterial.occlusionTexture.has_value()) {
+			material.occlusionTextureIndex = static_cast<int>(gltfMaterial.occlusionTexture.value().textureIndex);
+		}
+
+		if (gltfMaterial.emissiveTexture.has_value()) {
+			material.emissiveTextureIndex = static_cast<int>(gltfMaterial.emissiveTexture.value().textureIndex);
+		}
+		material.emissiveFactor = glm::make_vec3(gltfMaterial.emissiveFactor.data());
+
+		material.isDoubleSided = gltfMaterial.doubleSided;
+		material.alphaCutoff = gltfMaterial.alphaCutoff;
+		
+		switch (gltfMaterial.alphaMode) {
+			case fastgltf::AlphaMode::Opaque:
+				material.alphaMode = Model::Material::AlphaMode::AM_OPAQ;
+				break;
+			case fastgltf::AlphaMode::Mask:
+				material.alphaMode = Model::Material::AlphaMode::AM_MASK;
+				break;
+			case fastgltf::AlphaMode::Blend:
+				material.alphaMode = Model::Material::AlphaMode::AM_BLEND;
+				break;
+			default:
+				material.alphaMode = Model::Material::AlphaMode::AM_OPAQ;
+				break;
+		}
+		
+		m_materials.push_back(std::move(material));
+	}
+
+	//TODO remove
+	//m_textureFilePaths.reserve(loadedAsset.images.size());
+
+	m_textureInfos.clear();
+	m_textureInfos.reserve(loadedAsset.textures.size());
+
+	for (const auto& gltfTexture : loadedAsset.textures) {
+		TextureInfo info;
+
+		// 1. Get the Path via the Image index
+		if (gltfTexture.imageIndex.has_value()) {
+			const auto& image = loadedAsset.images[gltfTexture.imageIndex.value()];
+			
+			if (auto* uriSource = std::get_if<fastgltf::sources::URI>(&image.data)) {
+				 // Resolve relative path based on the .gltf location
+				 auto fullPath = fsPath.parent_path() / uriSource->uri.path();
+				 info.path = fullPath.string();
+			}
+		}
+
+		// 2. Map Sampler Settings
+		if (gltfTexture.samplerIndex.has_value()) {
+			const auto& sampler = loadedAsset.samplers[gltfTexture.samplerIndex.value()];
+
+			// Map Filters (Handling min/mag separately as you requested)
+			if (sampler.magFilter.has_value()) {
+				info.magFilter = (sampler.magFilter.value() == fastgltf::Filter::Nearest) 
+					? TextureInfo::Filter::Nearest : TextureInfo::Filter::Linear;
+			}
+
+			if (sampler.minFilter.has_value()) {
+				auto gltfMin = sampler.minFilter.value();
+				// glTF has 4 mipmap variants for minFilter; we simplify to your Linear/Nearest
+				bool isNearest = (gltfMin == fastgltf::Filter::Nearest || 
+								  gltfMin == fastgltf::Filter::NearestMipMapNearest || 
+								  gltfMin == fastgltf::Filter::NearestMipMapLinear);
+				
+				info.minFilter = isNearest ? TextureInfo::Filter::Nearest : TextureInfo::Filter::Linear;
+			}
+
+			// Map Wrap Modes
+			auto mapWrap = [](fastgltf::Wrap mode) {
+				switch (mode) {
+					case fastgltf::Wrap::ClampToEdge:    return TextureInfo::WrapMode::ClampToEdge;
+					case fastgltf::Wrap::MirroredRepeat: return TextureInfo::WrapMode::MirroredRepeat;
+					case fastgltf::Wrap::Repeat:         return TextureInfo::WrapMode::Repeat;
+					default:                             return TextureInfo::WrapMode::Repeat;
+				}
+			};
+
+			info.wrapS = mapWrap(sampler.wrapS);
+			info.wrapT = mapWrap(sampler.wrapT);
+		}
+
+		m_textureInfos.push_back(std::move(info));
+
+		//std::visit(fastgltf::visitor {
+		//	[](const std::monostate&) {
+		//		std::cout << "[Error] Image data is EMPTY (monostate). The parser couldn't find the file or skipped it.\n";
+		//	},
+		//	[](const fastgltf::sources::URI& uriSource) {
+		//		std::cout << "URI/Path: " << uriSource.uri.path() << "\n";
+		//	},
+		//	[](const fastgltf::sources::Vector& vectorSource) {
+		//		std::cout << "Data in Vector. Size: " << vectorSource.bytes.size() << "\n";
+		//	},
+		//	[](const fastgltf::sources::Array& arraySource) {
+		//		// THIS is likely where Sponza is hiding if you used LoadExternalImages
+		//		std::cout << "Data in Array. Size: " << arraySource.bytes.size() << "\n";
+		//	},
+		//	[](const fastgltf::sources::BufferView& view) {
+		//		std::cout << "Data in BufferView (GLB style).\n";
+		//	},
+		//	[](const auto& other) {
+		//		// This will print the internal index of the variant type to help us identify it
+		//		// 0 = monostate, 2 = URI, 4 = Vector, etc.
+		//		// Look at fastgltf/types.hpp to match the index if this triggers.
+		//		// std::variant::index() is very useful here.
+		//		// Note: we can't easily print 'other' directly, but we know it's one of the types.
+		//		std::cout << "Hit unhandled variant type.\n";
+		//	}
+		//}, gltfImage.data);
+	}
+	
+	for (const auto& gltfMesh : loadedAsset.meshes) {
+		for (const auto& gltfPrimitive : gltfMesh.primitives) {
+			Mesh mesh;
+
 			// A primitive must have positions to be valid, so we use it to determine vertexCount.
 			const auto* positionIt = gltfPrimitive.findAttribute("POSITION");
 			if (positionIt == gltfPrimitive.attributes.end()) {
@@ -88,21 +216,23 @@ void Model::loadGltf(const std::string& path) {
 			if (!positionAccessor.bufferViewIndex.has_value()) continue;
 			
 			std::size_t vertexCount = positionAccessor.count;
-			std::size_t baseIndex = currentMesh.m_vertices.size();
+			std::size_t baseIndex = m_vertexData.positions.size();
+			assert(baseIndex==m_vertexData.normals.size());
+			assert(baseIndex==m_vertexData.texUVs.size());
 
 			// Reserve/Resize for all attributes (positions, normals, UVs)
-			currentMesh.m_vertices.reserve(currentMesh.m_vertices.size() + vertexCount);
-			currentMesh.m_normals.reserve(currentMesh.m_normals.size() + vertexCount); 
-			currentMesh.m_texUVs.reserve(currentMesh.m_texUVs.size() + vertexCount);
-			
-			currentMesh.m_vertices.resize(baseIndex + vertexCount);
-			currentMesh.m_normals.resize(baseIndex + vertexCount);
-			currentMesh.m_texUVs.resize(baseIndex + vertexCount);
+			auto& positions=m_vertexData.positions;
+			auto& normals=m_vertexData.normals;
+			auto& texUVs=m_vertexData.texUVs;
+
+			positions.resize(baseIndex + vertexCount);
+			normals.resize(baseIndex + vertexCount);
+			texUVs.resize(baseIndex + vertexCount);
 
 			// 1. **Positions (m_vertices)**
 			fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(loadedAsset, positionAccessor, 
 				[&](fastgltf::math::fvec3 pos, std::size_t idx) {
-					currentMesh.m_vertices[baseIndex + idx] = to_glm_vec4_pos(pos);
+					positions[baseIndex + idx] = to_glm_vec4_pos(pos);
 				});
 
 			// 2. **Normals (m_normals)**
@@ -113,7 +243,7 @@ void Model::loadGltf(const std::string& path) {
 					// Populate m_normals
 					fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(loadedAsset, normalAccessor, 
 						[&](fastgltf::math::fvec3 normal, std::size_t idx) {
-							currentMesh.m_normals[baseIndex + idx] = to_glm_vec4_normal(normal);
+							normals[baseIndex + idx] = to_glm_vec4_normal(normal);
 						});
 				}
 			}
@@ -129,7 +259,7 @@ void Model::loadGltf(const std::string& path) {
 					// Populate m_texUVs
 					fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec2>(loadedAsset, texCoordAccessor, 
 						[&](fastgltf::math::fvec2 uv, std::size_t idx) {
-							currentMesh.m_texUVs[baseIndex + idx] = to_glm_vec4_uv(uv);
+							texUVs[baseIndex + idx] = to_glm_vec4_uv(uv);
 						});
 				}
 			}
@@ -145,7 +275,7 @@ void Model::loadGltf(const std::string& path) {
 				 std::cerr << "Warning: Index count is not a multiple of 3 (non-triangle mesh?)\n";
 			}
 			std::size_t faceCount = indexAccessor.count / 3;
-			currentMesh.m_faces.reserve(currentMesh.m_faces.size() + faceCount);
+			mesh.m_faces.reserve(mesh.m_faces.size() + faceCount);
 
 			std::vector<std::uint32_t> indices(indexAccessor.count);
 			
@@ -166,36 +296,42 @@ void Model::loadGltf(const std::string& path) {
 			
 			// Populate m_faces
 			for (std::size_t i = 0; i < faceCount; ++i) {
-				Mesh::Face face;
+				ehj::Face f;
 				// Vertices are relative to the start of the entire Mesh's vertex array
-				face.vertsI.x = static_cast<int>(baseIndex + indices[i * 3 + 0]);
-				face.vertsI.y = static_cast<int>(baseIndex + indices[i * 3 + 1]);
-				face.vertsI.z = static_cast<int>(baseIndex + indices[i * 3 + 2]);
-				face.vertsI.w = -1;
+				f.possI.x = static_cast<int>(baseIndex + indices[i * 3 + 0]);
+				f.possI.y = static_cast<int>(baseIndex + indices[i * 3 + 1]);
+				f.possI.z = static_cast<int>(baseIndex + indices[i * 3 + 2]);
+				f.possI.w = -1;
 
 				// Populate normal indices (same as position)
-				face.normalI.x = face.vertsI.x;
-				face.normalI.y = face.vertsI.y;
-				face.normalI.z = face.vertsI.z;
-				face.normalI.w = -1;
+				f.normalI.x = f.possI.x;
+				f.normalI.y = f.possI.y;
+				f.normalI.z = f.possI.z;
+				f.normalI.w = -1;
 				
 				// Populate UV indices (same as position)
-				face.texUVI.x = face.vertsI.x;
-				face.texUVI.y = face.vertsI.y;
-				face.texUVI.z = face.vertsI.z;
-				face.texUVI.w = -1;
+				f.texUVI.x = f.possI.x;
+				f.texUVI.y = f.possI.y;
+				f.texUVI.z = f.possI.z;
+				f.texUVI.w = -1;
 
-				currentMesh.m_faces.push_back(face);
+				mesh.m_faces.push_back(f);
 			}
-		} // end gltfPrimitive loop
+			if (gltfPrimitive.materialIndex.has_value())
+				m_meshesMaterialIDs.push_back(gltfPrimitive.materialIndex.value());
+			else
+				m_meshesMaterialIDs.push_back(-1);
+			m_meshes.emplace_back(std::move(mesh));
+		} // for primitives
 
-		currentMesh.m_MP |= Mesh::MP_UV;
-		currentMesh.m_MP |= Mesh::MP_NORMAL;
-		m_meshes.emplace_back(std::move(currentMesh));
-	} // end gltfMesh loop
+		m_vertexData.m_VP |= VertexData::VP_UV;
+		m_vertexData.m_VP |= VertexData::VP_NORMAL;
+	} // for meshes
 }
 
 void Model::loadOBJ(std::string path) {
+	throw std::runtime_error("not yet implemented");
+
 	rapidobj::Result result = rapidobj::ParseFile(path);
 	if (result.error) {
 		return;
@@ -224,7 +360,7 @@ void Model::loadOBJ(std::string path) {
 		normals.emplace_back(n[i + 0], n[i + 1], n[i + 2], 1.);
 	}
 	if (!attrib.normals.empty()) {
-		mp |= Mesh::MP_NORMAL;
+		mp |= VertexData::VP_NORMAL;
 	}
 
 	texUVs.reserve(attrib.texcoords.size() / 2);
@@ -233,7 +369,7 @@ void Model::loadOBJ(std::string path) {
 		texUVs.emplace_back(t[i + 0], t[i + 1], 0., 0.);
 	}
 	if (!attrib.texcoords.empty()) {
-		mp |= Mesh::MP_UV;
+		mp |= VertexData::VP_UV;
 	}
 	
 	
@@ -241,19 +377,22 @@ void Model::loadOBJ(std::string path) {
 		ehj::Mesh mesh;
 		size_t index_offset = 0;
 
-		mesh.m_vertices=vertices;
-		mesh.m_normals=normals;
-		mesh.m_colors=colors;
-		mesh.m_texUVs=texUVs;
-		mesh.m_MP=mp;
+		//TODO
+		//mesh.m_vertices=vertices;
+		//mesh.m_normals=normals;
+		//mesh.m_colors=colors;
+		//mesh.m_texUVs=texUVs;
+		//mesh.m_MP=mp;
+
 		for (size_t fv_count : shape.mesh.num_face_vertices) {
-			Mesh::Face newFace;
+			ehj::Face newFace;
 			for (size_t v = 0; v < fv_count; v++) {
 				const rapidobj::Index idx = shape.mesh.indices[index_offset + v];
 				if (v < 4) {
-					newFace.vertsI[v] = idx.position_index;
-					newFace.normalI[v] = idx.normal_index;
-					newFace.texUVI[v] = idx.texcoord_index;
+					//TODO
+					//newFace.possI[v] = idx.position_index;
+					//newFace.normalI[v] = idx.normal_index;
+					//newFace.texUVI[v] = idx.texcoord_index;
 				}
 			}
 			mesh.m_faces.push_back(newFace);

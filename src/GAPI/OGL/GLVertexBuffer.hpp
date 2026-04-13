@@ -15,6 +15,7 @@ public:
 	int32_t getAttribNrm() const;
 	int32_t getAttribCol() const;
 	int32_t getAttribUV()  const;
+	int32_t getAttribTan() const;
 private:
 	uint32_t m_VAO; // vertex array object
 	uint32_t m_VBO; // vertex buffer object
@@ -26,7 +27,8 @@ private:
 	GLuint m_attribPos = 0;
 	GLuint m_attribNrm = 1;
 	GLuint m_attribCol = 2;
-	GLuint m_attribUV = 3;
+	GLuint m_attribUV  = 3;
+	GLuint m_attribTan = 4;
 
 	GLuint m_vaoBindingPoint = 0; //TODO manage
 };

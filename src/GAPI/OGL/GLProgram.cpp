@@ -77,10 +77,11 @@ bool GLProgram::addSourceFromString(std::string shaderSource, GLenum shaderType,
 
 std::string GLProgram::loadFileContents(std::string path) {
 	std::stringstream buffer;
-	if (!std::filesystem::exists(path))
-		throw std::runtime_error("file: "+path+" does not exist");
+	std::filesystem::path p(path);
+	if (!std::filesystem::exists(p))
+		throw std::runtime_error("file: "+p.string()+" does not exist");
 
-	std::ifstream t(path);
+	std::ifstream t(p.string());
 	buffer << t.rdbuf();
 	std::string contents = buffer.str();
 	return contents;

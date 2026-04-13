@@ -13,9 +13,6 @@ uniform vec2 u_resolution;
 uniform int u_mbd;
 uniform vec2 u_mouse;
 
-uniform float u_pencilSize;
-uniform vec4 u_pencilColor;
-
 uniform int u_rayCount;
 uniform int u_raySteps;
 uniform float u_rayNoise;

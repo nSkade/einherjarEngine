@@ -7,9 +7,6 @@
 #include <Input/GLFW/GLFWKeyboardCache.hpp>
 #include <Input/GLFW/GLFWMouseCache.hpp>
 
-#include <stdlib.h>
-#include <stdio.h>
-
 #include "JFA.hpp"
 
 using namespace ehj;
@@ -72,6 +69,7 @@ int run(void)
 
 	glfwMakeContextCurrent(window);
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+		ehj_gl_err_callback();
 	glfwSwapInterval(1);
 	glEnable(GL_DEPTH_TEST);
  
@@ -80,20 +78,15 @@ int run(void)
 	GLMesh glMesh(mesh, GL_DYNAMIC_DRAW);
 	glMesh.bind(0);
 
-	ehj_gl_err();
 	glBindVertexArray(glMesh.getVAO());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh.getEBO());
 
+	//TODOf add pencil and dynamic objects abstraction that vanilla RC uses
+
 	auto createPass = [&](GLProgram& glp, std::string vs, std::string fs) {
 		glp.addSourceFromFile(vs); //TODO make abstraction to make reloading easier
-		ehj_gl_err();
 		glp.addSourceFromFile(fs);
-		ehj_gl_err();
 		glp.createProgram();
-		glBindAttribLocation(glp.getID(),glMesh.getAttribPos(),"vPos");
-		if (glMesh.getAttribNrm()!=-1)
-			glBindAttribLocation(glp.getID(),glMesh.getAttribNrm(),"vNrm");
-		ehj_gl_err();
 	};
 	GLProgram glpPencil;
 	createPass(glpPencil,
@@ -198,10 +191,6 @@ int run(void)
 				auto reloadPass = [&](GLProgram& glp, std::string fs) {
 					suc &= glp.addSourceFromFile(fs);
 					glp.createProgram();
-					glBindAttribLocation(glp.getID(),glMesh.getAttribPos(),"vPos");
-					if (glMesh.getAttribNrm()!=-1)
-						glBindAttribLocation(glp.getID(),glMesh.getAttribNrm(),"vNrm");
-					ehj_gl_err_continue();
 				};
 
 				reloadPass(glpPencil,"scenes/RC2D/pencil.fs");
@@ -231,7 +220,7 @@ int run(void)
 				glUniform1i(glp.getUnfLoc("u_mbd"), (int) GLFWMouseCache::keyPressed(IBCodes::MB_BUTTON_LEFT));
 			glUniform2fv(glp.getUnfLoc("u_mouse"), 1, &mouse[0]);
 			glUniform2fv(glp.getUnfLoc("u_mousePrev"), 1, &mousePrev[0]);
-			//ehj_gl_err();
+			////TODO remove,,, ehj_gl_err();
 			glUniformMatrix4fv(glp.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
 			glUniform1f(glp.getUnfLoc("u_pencilSize"),pencilSize);
 			glUniform4fv(glp.getUnfLoc("u_pencilColor"),1,&pencilColor[0]);
@@ -319,11 +308,11 @@ int run(void)
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		}
 
-		ehj_gl_err();
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 		processInput(window); // TODO check esc close window
-		ehj_gl_err();
+
 		
 		time += deltaTime;
 		frame++;

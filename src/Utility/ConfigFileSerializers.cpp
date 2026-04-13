@@ -1,7 +1,6 @@
 #include <json/json.h>
 #include <string>
 
-#include <glm/glm.hpp>
 
 namespace ehj {
 

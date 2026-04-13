@@ -223,11 +223,15 @@ void Model::loadGltf(const std::string& path) {
 			// Reserve/Resize for all attributes (positions, normals, UVs)
 			auto& positions=m_vertexData.positions;
 			auto& normals=m_vertexData.normals;
+			//auto& colors=m_vertexData.colors;
 			auto& texUVs=m_vertexData.texUVs;
+			auto& tangents=m_vertexData.tangents;
 
 			positions.resize(baseIndex + vertexCount);
 			normals.resize(baseIndex + vertexCount);
+			//colors.resize(baseIndex + vertexCount);
 			texUVs.resize(baseIndex + vertexCount);
+			tangents.resize(baseIndex + vertexCount);
 
 			// 1. **Positions (m_vertices)**
 			fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>(loadedAsset, positionAccessor, 
@@ -246,6 +250,7 @@ void Model::loadGltf(const std::string& path) {
 							normals[baseIndex + idx] = to_glm_vec4_normal(normal);
 						});
 				}
+				m_vertexData.m_VP |= VertexData::VP_UV;
 			}
 
 			// 3. **UV Coordinates (m_texUVs)**
@@ -262,6 +267,19 @@ void Model::loadGltf(const std::string& path) {
 							texUVs[baseIndex + idx] = to_glm_vec4_uv(uv);
 						});
 				}
+				m_vertexData.m_VP |= VertexData::VP_NRM;
+			}
+
+			const auto* tangentIt = gltfPrimitive.findAttribute("TANGENT");
+			if (tangentIt != gltfPrimitive.attributes.end()) {
+				auto& tangentAccessor = loadedAsset.accessors[tangentIt->accessorIndex];
+				if (tangentAccessor.bufferViewIndex.has_value()) {
+					fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec4>(loadedAsset, tangentAccessor, 
+						[&](fastgltf::math::fvec4 t, std::size_t idx) {
+							tangents[baseIndex + idx] = vec4(t[0],t[1],t[2],t[3]);
+						});
+				}
+				m_vertexData.m_VP |= VertexData::VP_TAN;
 			}
 			
 			// 4. **Indices (m_faces)**
@@ -310,10 +328,15 @@ void Model::loadGltf(const std::string& path) {
 				f.normalI.w = -1;
 				
 				// Populate UV indices (same as position)
-				f.texUVI.x = f.possI.x;
-				f.texUVI.y = f.possI.y;
-				f.texUVI.z = f.possI.z;
-				f.texUVI.w = -1;
+				f.texuvI.x = f.possI.x;
+				f.texuvI.y = f.possI.y;
+				f.texuvI.z = f.possI.z;
+				f.texuvI.w = -1;
+
+				f.tangI.x = f.possI.x;
+				f.tangI.y = f.possI.y;
+				f.tangI.z = f.possI.z;
+				f.tangI.w = -1;
 
 				mesh.m_faces.push_back(f);
 			}
@@ -323,9 +346,6 @@ void Model::loadGltf(const std::string& path) {
 				m_meshesMaterialIDs.push_back(-1);
 			m_meshes.emplace_back(std::move(mesh));
 		} // for primitives
-
-		m_vertexData.m_VP |= VertexData::VP_UV;
-		m_vertexData.m_VP |= VertexData::VP_NORMAL;
 	} // for meshes
 }
 
@@ -360,7 +380,7 @@ void Model::loadOBJ(std::string path) {
 		normals.emplace_back(n[i + 0], n[i + 1], n[i + 2], 1.);
 	}
 	if (!attrib.normals.empty()) {
-		mp |= VertexData::VP_NORMAL;
+		mp |= VertexData::VP_NRM;
 	}
 
 	texUVs.reserve(attrib.texcoords.size() / 2);
@@ -392,7 +412,7 @@ void Model::loadOBJ(std::string path) {
 					//TODO
 					//newFace.possI[v] = idx.position_index;
 					//newFace.normalI[v] = idx.normal_index;
-					//newFace.texUVI[v] = idx.texcoord_index;
+					//newFace.texuvI[v] = idx.texcoord_index;
 				}
 			}
 			mesh.m_faces.push_back(newFace);

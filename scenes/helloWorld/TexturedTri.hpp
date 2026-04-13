@@ -1,7 +1,5 @@
 #include <suOGL.hpp>
 
-#include <stdlib.h>
-#include <stdio.h>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
@@ -161,7 +159,6 @@ int run(void)
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D,texture);
-	//TODO remove,,, ehj_gl_err();
 #endif
 	glp.bind();
 

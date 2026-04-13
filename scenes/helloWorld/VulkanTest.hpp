@@ -5,7 +5,6 @@
 
 #include "../src/suVULK.hpp"
 
-#include <iostream>
 #include <vector>
 
 const std::vector<const char*> validationLayers = {

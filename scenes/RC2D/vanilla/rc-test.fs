@@ -13,7 +13,7 @@ uniform vec2 u_resolution;
 uniform int u_mbd;
 uniform vec2 u_mouse;
 
-uniform int u_rayCount;
+uniform int u_baseRayCount;
 uniform int u_raySteps;
 uniform float u_rayNoise;
 uniform float u_rayDist;
@@ -42,13 +42,6 @@ vec4 raymarch(vec2 uv) {
 	if (u_viewCascade != 0)
 		if (u_cascade != u_viewCascade-1)
 			return texture(u_texPrev,uv);
-
-	//TODO break early if we sample from light
-	//else {
-	//	vec4 light = texture(u_tex, uv);
-	//	if (light.a > 0.)
-	//		return light;
-	//}
 	
 	//bool lastLayer = u_cascade == u_cascadeCount;
 	float ratio = u_resolution.x/u_resolution.y;
@@ -58,12 +51,12 @@ vec4 raymarch(vec2 uv) {
 
 	//uv = floor(uv*u_resolution/pow(2.,u_cascade))*pow(2.,u_cascade)/u_resolution;
 
-	//float startD = float(pow(u_rayCount,u_cascade))  *u_rayDist;
-	//float endD   = float(pow(u_rayCount,u_cascade+1))*u_rayDist;
+	//float startD = float(pow(u_baseRayCount,u_cascade))  *u_rayDist;
+	//float endD   = float(pow(u_baseRayCount,u_cascade+1))*u_rayDist;
 	
 	float maxLen = length(vec2(1.,1.));
 	//float maxLen = length(vec2(ratio,1.)); //TODO
-	int base = u_rayCount; //TODO
+	int base = u_baseRayCount; //TODO
 	
 	//float startD = float(pow(base,u_cascade  )-1.)/(pow(base,u_cascadeCount)-1.) *maxLen*u_rayDist;
 	//float endD   = float(pow(base,u_cascade+1)-1.)/(pow(base,u_cascadeCount)-1.) *maxLen*u_rayDist;
@@ -77,24 +70,25 @@ vec4 raymarch(vec2 uv) {
 		startD -= u_overlap;
 		endD += u_overlap;
 	}
+	//startD=0.; // for unloading lower level cascades we march from the center of the probe
 
 	//if (!lastLayer) endD = length(vec2(ratio,1.)); // maximum dist possible on screenspace
 
-	//float rayCount = u_rayCount;
-	float rayCount = pow(u_rayCount,u_cascade+1);
+	//float rayCount = u_baseRayCount;
+	float rayCount = pow(u_baseRayCount,u_cascade+1);
 	
 	//TODOff abstract to use arbitrary ray Count not just pow(4,x)
 	//float nearestQuad = pow(4,ceil(log2(rayCount) / 2.0));
-	//float nearestQuadBase = pow(4,ceil(log2(u_rayCount) / 2.0));
+	//float nearestQuadBase = pow(4,ceil(log2(u_baseRayCount) / 2.0));
 	
-	float probeSqrtBase = sqrt(float(u_rayCount));
-	//float probeSpacing = rayCount == u_rayCount ? 1.0 : probeSqrtBase;
-	float probeSpacing = sqrt(float(rayCount/u_rayCount));
+	float probeSqrtBase = sqrt(float(u_baseRayCount));
+	//float probeSpacing = rayCount == u_baseRayCount ? 1.0 : probeSqrtBase;
+	float probeSpacing = sqrt(float(rayCount/u_baseRayCount));
 	vec2  probeSize = floor(u_resolution / probeSpacing);
 	vec2  probeRelativePosition = mod(coord, probeSize);
 
 	vec2  rayPos = floor(coord/ probeSize);
-	float baseIndex = float(u_rayCount) * (rayPos.x + (probeSpacing * rayPos.y));
+	float baseIndex = float(u_baseRayCount) * (rayPos.x + (probeSpacing * rayPos.y));
 	
 	vec2  probeCenter = (probeRelativePosition + 0.5) * probeSpacing;
 	vec2  probeCenterNormalized = probeCenter / u_resolution;
@@ -108,7 +102,7 @@ vec4 raymarch(vec2 uv) {
 	// Distinct random value for every pixel, note proper RC doesnt use noise
 	//float noise = rand(uv + vec2(u_time))*u_rayNoise;
 
-	for(int i = 0; i < u_rayCount; i++) { // note only shoot base ray count, baseIndex ofsets in texture
+	for(int i = 0; i < u_baseRayCount; i++) { // note only shoot base ray count, baseIndex ofsets in texture
 		vec4 e = vec4(0.); // emission
 		float index = baseIndex + float(i);
 		float angleStep = index + .5;
@@ -144,6 +138,7 @@ vec4 raymarch(vec2 uv) {
 			}
 		}
 
+		// merge step with previous cascade from texture (recursively)
 		bool nonOpaque = e.a == 0.0;
 		if (nonOpaque) {
 			float upperSpacing = pow(probeSqrtBase, u_cascade + 1);
@@ -162,10 +157,10 @@ vec4 raymarch(vec2 uv) {
 		radiance += e;
 	}
 
-	// merge previous texture
 	//if (u_cascade==0)
-		radiance.rgb /= u_rayCount;
+		radiance.rgb /= u_baseRayCount; // radiance falloff
 
+	//TODO test change ray brightness with noise uniform for now
 	//if (u_cascade==0)
 		radiance.rgb *= 1.+9.*(1.-u_rayNoise);
 	return radiance;
@@ -182,13 +177,15 @@ void main() {
 
 	if (u_viewCascade == 0 && u_cascade == 0) {
 		vec4 light = texture(u_tex, uv);
-		if (light.a > 0.1) {
+		if (light.a > 0.1)
 			color = light;
-		} else
+		else
 			color = raymarch(uv);
 		// srgb
 		//TODO srgb introduces heavy banding on dark areas, they get too bright too quickly, find fix, GL_RGBA32F doesnt fix this
-		color.rgb = pow(color.rgb,vec3(1.0/2.2));
+		//color.rgb = pow(color.rgb,vec3(1.0/2.2));
+		color.rgb = pow(color.rgb,vec3(1.0/1.6));
+		//color.rgb = pow(color.rgb,vec3(.25+.75*1.0/2.2));
 	} else
 		color = raymarch(uv);
 };

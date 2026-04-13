@@ -11,8 +11,11 @@
 //#pragma clang diagnostic ignored "-Wnontrivial-memaccess"
 //#endif
 
-#include <imgui_impl_glfw.h>
+#include <imgui_impl_glfw.h> //TODOff make this header glfw agnostic
 #include <imgui_impl_opengl3.h>
+
+#include <Input/GLFW/OGL/GLFWWindowGL.hpp>
+#include <Input/GLFW/OGL/GLFWImGuiGL.hpp>
 
 //TODO remove
 //#if defined(__clang__)

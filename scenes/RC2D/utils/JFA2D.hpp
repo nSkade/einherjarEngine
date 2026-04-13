@@ -1,5 +1,6 @@
 #pragma once
 
+#include "suCMN.hpp"
 #include <suOGL.hpp>
 
 namespace ehj {
@@ -9,7 +10,7 @@ using namespace glm;
 /**
  * @brief Jump Flood Algorithm 2d
  */
-struct JFA {
+struct JFA2D {
 private:
 	int m_jfPassCountOrig;
 public:
@@ -22,26 +23,15 @@ public:
 	int getMaxJfPassCount() { return m_jfPassCountOrig; }
 
 	/**
-	 * @param ssm screen space mesh
+	 * @param ssvb vertex buffer of screen space mesh
 	 */
-	JFA(ivec2 res, const GLMesh& ssm) :
+	JFA2D(ivec2 res, const GLVertexBuffer& ssvb) :
 		m_fb1(res),
 		m_fb2(res)
 	{
-		auto createPass = [&](GLProgram& glp, std::string vs, std::string fs) {
-			glp.addSourceFromFile(vs); //TODO make abstraction to make reloading easier
-			ehj_gl_err();
-			glp.addSourceFromFile(fs);
-			ehj_gl_err();
-			glp.createProgram();
-			glBindAttribLocation(glp.getID(),ssm.getAttribPos(),"vPos");
-			if (ssm.getAttribNrm()!=-1)
-				glBindAttribLocation(glp.getID(),ssm.getAttribNrm(),"vNrm");
-			ehj_gl_err();
-		};
-		createPass(m_glp,
-			"scenes/RC2D/ssq.vs",
-			"scenes/RC2D/jumpflood.fs"
+		m_glp.createPass(
+			EHJ_THIS_FOLDER()+"ssq.vs",
+			EHJ_THIS_FOLDER()+"jumpflood.fs"
 		);
 		
 		updateBufferSize(res);
@@ -68,8 +58,16 @@ public:
 			//glViewport(0, 0, width, height);
 			glViewport(0, 0, m_res.x, m_res.y);
 			glBindFramebuffer(GL_FRAMEBUFFER,m_fb2.getFBO());
+			glBindTexture(GL_TEXTURE_2D, m_fb2.getTexCol());
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glBindFramebuffer(GL_FRAMEBUFFER,m_fb1.getFBO());
+			
+			glBindTexture(GL_TEXTURE_2D, m_fb1.getTexCol());
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			m_glp.bind();
 

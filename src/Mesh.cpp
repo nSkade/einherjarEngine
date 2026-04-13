@@ -74,6 +74,8 @@ void VertexData::clear() {
 	positions.clear();
 	normals.clear();
 	colors.clear();
+	texUVs.clear();
+	merged.clear();
 }
 
 //TODOff implement with rapidobj
@@ -141,7 +143,7 @@ void Mesh::loadOBJ(std::string path) {
 		normals.emplace_back(n[i + 0], n[i + 1], n[i + 2], 1.);
 	}
 	if (!attrib.normals.empty()) {
-		m_vertexData.m_VP |= VertexData::VP_NORMAL;
+		m_vertexData.m_VP |= VertexData::VP_NRM;
 	}
 
 	texUVs.reserve(attrib.texcoords.size() / 2);
@@ -162,7 +164,7 @@ void Mesh::loadOBJ(std::string path) {
 				if (v < 4) {
 					newFace.possI[v] = idx.position_index;
 					newFace.normalI[v] = idx.normal_index;
-					newFace.texUVI[v] = idx.texcoord_index;
+					newFace.texuvI[v] = idx.texcoord_index;
 				}
 			}
 			m_faces.push_back(newFace);
@@ -220,7 +222,7 @@ void Mesh::loadOBJ(std::string path) {
 				if (v < 4) {
 					newFace.possI[v] = idx.vertex_index;
 					newFace.normalI[v] = idx.normal_index;
-					newFace.texUVI[v] = idx.texcoord_index;
+					newFace.texuvI[v] = idx.texcoord_index;
 				}
 			}
 			
@@ -244,7 +246,7 @@ void Mesh::loadOBJcust(std::string path) {
 		while (getline(file,line)) {
 			if (line[0]=='#') continue; // comment
 			else if (line.substr(0,2).compare("vn")==0) { // face normal?
-				m_vertexData.m_VP |= VertexData::VP_NORMAL;
+				m_vertexData.m_VP |= VertexData::VP_NRM;
 				std::istringstream iss(line);
 				std::string n;
 				float v1,v2,v3,v4 = 0.0f;
@@ -279,7 +281,7 @@ void Mesh::loadOBJcust(std::string path) {
 				//	iss;
 				//}
 
-				if (m_vertexData.m_VP & VertexData::VP_NORMAL)
+				if (m_vertexData.m_VP & VertexData::VP_NRM)
 					iss >> x >> v[0] >> x >> x >> n[0] >> v[1] >> x >> x >> n[1] >> v[2] >> x >> x >> n[2];
 				else
 					iss >> x >> v[0] >> v[1] >> v[2];
@@ -295,7 +297,7 @@ void Mesh::loadOBJcust(std::string path) {
 				Face f;
 				for (uint32_t i=0;i<4;++i) {
 					f.possI[i] = v[i]-1;
-					if (m_vertexData.m_VP & VertexData::VP_NORMAL)
+					if (m_vertexData.m_VP & VertexData::VP_NRM)
 						f.normalI[i] = n[i]-1;
 				}
 				m_faces.push_back(f);
@@ -321,8 +323,10 @@ void VertexData::assembleVertexBuffer(std::vector<Mesh*> ms) {
 
 	// reserve size
 	int resSize = m_Dim;
-	resSize += m_VP & VP_NORMAL ? m_Dim : 0;
-	resSize += m_VP & VP_UV ? 2 : 0;
+	resSize += m_VP & VP_NRM ? m_Dim : 0;
+	resSize += m_VP & VP_COL ? 3 : 0;
+	resSize += m_VP & VP_UV  ? 2 : 0;
+	resSize += m_VP & VP_TAN ? 4: 0;
 	res.reserve(positions.size() * resSize);
 
 	int vertId=0;
@@ -331,20 +335,28 @@ void VertexData::assembleVertexBuffer(std::vector<Mesh*> ms) {
 		for (Face& f : m->m_faces) {
 			for (int i=0;i<4;++i) {
 				//total++;
-				glm::ivec4 key(f.possI[i], f.normalI[i], f.texUVI[i], f.colorI[i]);
+				glm::ivec4 key(f.possI[i], f.normalI[i], f.texuvI[i], f.colorI[i]);
 				//if (vertex_to_index.find(key) == vertex_to_index.end()) { // new unique vertex
 					f.mergedI[i] = vertId;
 					
 					for (uint32_t j = 0; j < m_Dim; ++j) {
 						res.emplace_back(positions[key.x][j]);
 					}
-					if (m_VP & VP_NORMAL) {
+					if (m_VP & VP_NRM) {
 						for (uint32_t j = 0; j < m_Dim; ++j)
 							res.emplace_back(normals[key.y][j]);
+					}
+					if (m_VP & VP_COL) {
+						for (uint32_t j = 0; j < m_Dim; ++j)
+							res.emplace_back(colors[key.w][j]);
 					}
 					if (m_VP & VP_UV) {
 						for (uint32_t j = 0; j < 2; ++j) //TODO could be 3
 							res.emplace_back(texUVs[key.z][j]);
+					}
+					if (m_VP & VP_TAN) {
+						for (uint32_t j = 0; j < 4; ++j)
+							res.emplace_back(tangents[f.tangI[i]][j]);
 					}
 					//vertex_to_index[key]=vertId;
 					vertId++;
@@ -390,8 +402,8 @@ void Mesh::toTriangles() {
 		t1.colorI = {fq.colorI[0],fq.colorI[1],fq.colorI[2],-1};
 		t2.colorI = {fq.colorI[2],fq.colorI[3],fq.colorI[0],-1};
 
-		t1.texUVI = {fq.texUVI[0],fq.texUVI[1],fq.texUVI[2],-1};
-		t2.texUVI = {fq.texUVI[2],fq.texUVI[3],fq.texUVI[0],-1};
+		t1.texuvI = {fq.texuvI[0],fq.texuvI[1],fq.texuvI[2],-1};
+		t2.texuvI = {fq.texuvI[2],fq.texuvI[3],fq.texuvI[0],-1};
 
 		this->m_faces.push_back(t1);
 		this->m_faces.push_back(t2);
@@ -400,7 +412,8 @@ void Mesh::toTriangles() {
 }
 
 SSMesh::SSMesh(bool triangles) {
-	m_vertexData.m_VP |= VertexData::VP_NORMAL;
+	m_vertexData.m_VP |= VertexData::VP_NRM;
+	m_vertexData.m_VP |= VertexData::VP_UV;
 	m_hasVertexData=true;
 	if (triangles) {
 		static const struct
@@ -430,7 +443,7 @@ SSMesh::SSMesh(bool triangles) {
 		}
 		for (uint32_t i=0;i<2;++i) {
 			Face f;
-			f.possI = f.texUVI = f.normalI = {indices[i*3],indices[i*3+1],indices[i*3+2],0};
+			f.possI = f.texuvI = f.normalI = {indices[i*3],indices[i*3+1],indices[i*3+2],0};
 			m_faces.push_back(f);
 		}
 
@@ -455,7 +468,7 @@ SSMesh::SSMesh(bool triangles) {
 			m_vertexData.texUVs.push_back(glm::vec4(vertices[i].u,vertices[i].v,0.0,1.0));
 		}
 		Face f;
-		f.possI = f.texUVI = f.normalI = {0,1,2,3};
+		f.possI = f.texuvI = f.normalI = {0,1,2,3};
 		m_faces.push_back(f);
 	}
 }

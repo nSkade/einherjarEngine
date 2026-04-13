@@ -5,8 +5,6 @@
 #include <Input/GLFW/GLFWMouse.hpp>
 #include <Input/GLFW/GLFWKeyboardCache.hpp>
 
-#include <stdlib.h>
-#include <stdio.h>
 
 using namespace ehj;
 using namespace glm;
@@ -75,18 +73,14 @@ int run(void)
 
 	GLProgram glProg;
 	glProg.addSourceFromFile("shaders/PathTracing/ssq.vs");
-	//TODO remove,,, ehj_gl_err();
 	glProg.addSourceFromFile("shaders/PathTracing/pt.fs");
-	//TODO remove,,, ehj_gl_err();
 
 	glProg.createProgram();
 	glProg.bind();
 
 	GLProgram glpPP;
 	glpPP.addSourceFromFile("shaders/PathTracing/ssq.vs");
-	//TODO remove,,, ehj_gl_err();
 	glpPP.addSourceFromFile("shaders/PathTracing/pp.fs");
-	//TODO remove,,, ehj_gl_err();
 
 	glpPP.createProgram();
 	glpPP.bind();
@@ -94,25 +88,18 @@ int run(void)
  
 	ehj::SSMesh mesh;
 	mesh.toTriangles();
-	OGLMesh oglMesh(mesh, GL_DYNAMIC_DRAW);
-	oglMesh.bind(0);
-
-	//TODO remove,,, ehj_gl_err();
-	glBindVertexArray(oglMesh.getVAO());
-	//TODO remove,,, ehj_gl_err();
+	
+	mesh.assembleVertexBuffer();
+	GLVertexBuffer glVb(mesh.m_vertexData);
+	glVb.bind(0);
+	
+	GLMesh glMesh(mesh, GL_DYNAMIC_DRAW);
+	glMesh.bind();
  
 	glProg.bind();
-	glBindAttribLocation(glProg.getID(),oglMesh.getAttribPos(),"vPos");
-	if (oglMesh.getAttribNrm()!=-1)
-		glBindAttribLocation(glProg.getID(),oglMesh.getAttribNrm(),"vNrm");
 	glpPP.bind();
-	glBindAttribLocation(glpPP.getID(),oglMesh.getAttribPos(),"vPos");
-	if (oglMesh.getAttribNrm()!=-1)
-		glBindAttribLocation(glpPP.getID(),oglMesh.getAttribNrm(),"vNrm");
 
 	glProg.bind();
-	glBindVertexArray(oglMesh.getVAO());
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oglMesh.getEBO());
 	glm::mat4 pvm = glm::ortho(-1.f,1.f,-1.f,1.f);
 
 	m_cam.setTiltable(false);
@@ -144,20 +131,10 @@ int run(void)
 				glUseProgram(0);
 				//suc = glProg.addSourceFromFileRecursive("myScenes/shader/"+fragShader,GL_FRAGMENT_SHADER);
 				suc = glProg.addSourceFromFile("shaders/PathTracing/pt.fs");
-
 				glProg.createProgram();
-			
-				glBindAttribLocation(glProg.getID(),oglMesh.getAttribPos(),"vPos");
-				if (oglMesh.getAttribNrm()!=-1)
-					glBindAttribLocation(glProg.getID(),oglMesh.getAttribNrm(),"vNrm");
-				ehj_gl_err_continue();
-				
+
 				suc &= glpPP.addSourceFromFile("shaders/PathTracing/pp.fs");
 				glpPP.createProgram();
-				glBindAttribLocation(glpPP.getID(),oglMesh.getAttribPos(),"vPos");
-				if (oglMesh.getAttribNrm()!=-1)
-					glBindAttribLocation(glpPP.getID(),oglMesh.getAttribNrm(),"vNrm");
-				ehj_gl_err_continue();
 				frame = 0;
 			}
 			if (!suc) {
@@ -216,7 +193,7 @@ int run(void)
 		glm::mat4 camPV = glm::scale(glm::mat4(1.f),glm::vec3(float(width)/height,1.,1.))*m_cam.getPV();
 		glUniformMatrix4fv(glProg.getUnfLoc("u_m"),1,GL_TRUE,&camPV[0][0]);
 
-		glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+		glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
  
 		glfwGetFramebufferSize(window, &width, &height);
 		float ratio;
@@ -254,7 +231,7 @@ int run(void)
 			glBindTexture(GL_TEXTURE_2D,fbr1.getTexCol());
 		}
 
-		glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+		glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 
 		gpuTimer.end();
 

@@ -18,6 +18,15 @@ public:
 	GLuint getShaderID(GLenum shaderType);
 	
 	/**
+	 * @brief directly loads vert + frag shader and compiles
+	 */
+	void createPass(std::string vs, std::string fs) {
+		addSourceFromFile(vs);
+		addSourceFromFile(fs);
+		createProgram();
+	}
+
+	/**
 	 * @return true on compile success.
 	*/
 	bool addSourceFromString(std::string shaderSource, GLenum shaderType, const std::string& filePath = std::string());
@@ -46,9 +55,10 @@ public:
 	*/
 	GLint getUnfLoc(std::string name);
 	GLint getAttribLoc(std::string name);
-	void clearUniformLocations();
 
 private:
+	void clearUniformLocations();
+	
 	GLint m_programID = -1;
 	struct biMap {
 		std::map<GLuint,GLenum> toEnum;

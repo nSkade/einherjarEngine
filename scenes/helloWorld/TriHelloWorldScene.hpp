@@ -1,7 +1,5 @@
 #include "../src/suOGL.hpp"
 
-#include <stdlib.h>
-#include <stdio.h>
 
 #define SCENETYPE TriangleHWScene
 class TriangleHWScene : IScene {

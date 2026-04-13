@@ -8,6 +8,7 @@ namespace ehj {
 
 /**
  * @brief CPU based wait until target Time is reached
+ * see GLFWfpsLimiter for fetching automatic refreshrate
 */
 class FPSLimiter {
 public:

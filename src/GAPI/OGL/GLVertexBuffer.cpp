@@ -36,12 +36,14 @@ void GLVertexBuffer::bind(uint32_t bindingIndex) {
 	//	++MPC;
 	
 	uint32_t MPC = 3;
-	if (m_VP & VertexData::VP_NORMAL)
+	if (m_VP & VertexData::VP_NRM)
 		MPC += 3;
-	if (m_VP & VertexData::VP_COLOR)
+	if (m_VP & VertexData::VP_COL)
 		MPC += 3;
 	if (m_VP & VertexData::VP_UV)
 		MPC += 2;
+	if (m_VP & VertexData::VP_TAN)
+		MPC += 4;
 
 	glVertexArrayVertexBuffer(m_VAO,m_vaoBindingPoint,m_VBO,0,sizeof(float)*MPC);
 	//glVertexArrayVertexBuffer(m_VAO,m_vaoBindingPoint,m_VBO,0,sizeof(float)*Dim*MPC);
@@ -54,7 +56,7 @@ void GLVertexBuffer::bind(uint32_t bindingIndex) {
 
 	int offset = 3 * sizeof(float);
 
-	if (m_VP & VertexData::VP_NORMAL) {
+	if (m_VP & VertexData::VP_NRM) {
 		glEnableVertexArrayAttrib(m_VAO, m_attribNrm);
 		glVertexArrayAttribFormat(m_VAO, m_attribNrm, 3, GL_FLOAT, GL_FALSE, offset);
 		glVertexArrayAttribBinding(m_VAO, m_attribNrm, m_vaoBindingPoint);
@@ -64,7 +66,7 @@ void GLVertexBuffer::bind(uint32_t bindingIndex) {
 		//m_attribNrm=-1; //TODO do this?
 	}
 
-	if (m_VP & VertexData::VP_COLOR) {
+	if (m_VP & VertexData::VP_COL) {
 		glEnableVertexArrayAttrib(m_VAO, m_attribCol);
 		glVertexArrayAttribFormat(m_VAO, m_attribCol, 3, GL_FLOAT, GL_FALSE, offset);
 		glVertexArrayAttribBinding(m_VAO, m_attribCol, m_vaoBindingPoint);
@@ -72,14 +74,25 @@ void GLVertexBuffer::bind(uint32_t bindingIndex) {
 	} else {
 		glDisableVertexArrayAttrib(m_VAO, m_attribCol);
 		//m_attribCol=-1; //TODO do this?, see glBindAttribLocation(glp.getID(),glMesh.getAttribCol(),"vCol");
+		//TODO just use layout(location... instead
 	}
 
 	if (m_VP & VertexData::VP_UV) {
 		glEnableVertexArrayAttrib(m_VAO, m_attribUV);
 		glVertexArrayAttribFormat(m_VAO, m_attribUV, 2, GL_FLOAT, GL_FALSE, offset);
 		glVertexArrayAttribBinding(m_VAO, m_attribUV, m_vaoBindingPoint);
+		offset += 2 * sizeof(float);
 	} else {
 		glDisableVertexArrayAttrib(m_VAO, m_attribUV);
+		//m_attribUV=-1; //TODO do this?,
+	}
+
+	if (m_VP & VertexData::VP_TAN) {
+		glEnableVertexArrayAttrib(m_VAO, m_attribTan);
+		glVertexArrayAttribFormat(m_VAO, m_attribTan, 4, GL_FLOAT, GL_FALSE, offset);
+		glVertexArrayAttribBinding(m_VAO, m_attribTan, m_vaoBindingPoint);
+	} else {
+		glDisableVertexArrayAttrib(m_VAO, m_attribTan);
 		//m_attribUV=-1; //TODO do this?,
 	}
 
@@ -102,4 +115,7 @@ int32_t GLVertexBuffer::getAttribCol() const {
 }
 int32_t GLVertexBuffer::getAttribUV() const {
 	return m_attribUV;
+}
+int32_t GLVertexBuffer::getAttribTan() const {
+	return m_attribTan;
 }

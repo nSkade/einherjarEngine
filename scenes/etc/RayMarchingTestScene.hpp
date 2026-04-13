@@ -1,15 +1,17 @@
 #include "../src/suOGL.hpp"
 #include "../src/Input/GLFW/GLFWKeyboard.hpp"
 #include "../src/Input/GLFW/GLFWMouse.hpp"
-//#include "../src/Input/GLFW/GLFWCallbackTest.hpp"
+#include "../src/Input/GLFW/GLFWCallbackTest.hpp"
 #include "../src/Input/GLFW/GLFWKeyboardCache.hpp"
+
+#include <ffx-fsr/ffx_a.h>
 
 using namespace ehj;
 
 #define FULLSCREEN false
 
-#define SCENETYPE Plot2DScene
-class Plot2DScene : IScene {
+#define SCENETYPE RayMarchingTestScene
+class RayMarchingTestScene : IScene {
 public:
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 		glViewport(0, 0, width, height);
@@ -19,7 +21,8 @@ public:
 			glfwSetWindowShouldClose(window, true);
 	}
 
-	~Plot2DScene() {
+	~RayMarchingTestScene() {
+		//__debugbreak();
 	}
 	void setup() {
 		if (!glfwInit())
@@ -36,7 +39,7 @@ public:
 		m_windowRes.y = 1080;
 	#endif
 
-		m_pWindow = glfwCreateWindow(m_windowRes.x,m_windowRes.y, "ehjE Plot 2D", NULL, NULL);
+		m_pWindow = glfwCreateWindow(m_windowRes.x,m_windowRes.y, "ehjE EnvirScene", NULL, NULL);
 		ehjSetGLFWicon(m_pWindow);
 	
 		if (!m_pWindow)
@@ -61,7 +64,6 @@ public:
 		gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 		ehj_gl_err_callback();
 		glViewport(0, 0, m_windowRes.x, m_windowRes.y);
-		glfwSwapInterval(0);
 	}
 
 	int run() {
@@ -76,24 +78,28 @@ public:
 		}
 	#endif
 		
-		GLProgram glpMain;
+		GLProgram mainGLP;
 		
 		ehj::SSMesh mesh;
 		mesh.toTriangles();
 		OGLMesh oglMesh(mesh, GL_DYNAMIC_DRAW);
 		oglMesh.bind(0);
 
+
 		glBindVertexArray(oglMesh.getVAO());
+
 		
-		//glpMain.loadProgramFromFolder("shaders");
-		glpMain.addSourceFromFile("shaders/basic_v.vert");
-		glpMain.addSourceFromFileRecursive(std::string("scenes/plotGlsl2D/")+"grid.frag");
 
-		glpMain.createProgram();
+		
+		mainGLP.loadProgramFromFolder("shaders");
+		std::string fragShader = "tellu.frag";
+		mainGLP.addSourceFromFile("shaders/"+fragShader);
 
-		glpMain.bind();
+		mainGLP.createProgram();
 
-		//GPUTimer fragSTimer;
+		mainGLP.bind();
+
+		GPUTimer fragSTimer;
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -101,82 +107,80 @@ public:
 		ImGui_ImplGlfw_InitForOpenGL(m_pWindow,true);
 		ImGui_ImplOpenGL3_Init("#version 460");
 
+		int guiTess = 1;
 		float time = 0.0f;
-
-		glBindVertexArray(oglMesh.getVAO());
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oglMesh.getEBO());
-
-		//Timer frameTimer;
+		bool fps30 = false;
 		GLFWfpsLimiter fpsLimiter;
-		bool fps30 = true;
-		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		
 		while (!glfwWindowShouldClose(m_pWindow))
 		{
 			if (GLFWKeyboardCache::keyPressed(IBCodes::KK_KEY_R)) {
 				glUseProgram(0);
-				glpMain.addSourceFromFile("shaders/basic_v.vert");
-				glpMain.addSourceFromFileRecursive(std::string("scenes/plotGlsl2D/")+"grid.frag");
+				mainGLP.loadProgramFromFolder("shaders");
+				mainGLP.addSourceFromFile("shaders/"+fragShader);
 
-				glpMain.createProgram();
+				mainGLP.createProgram();
+		
+				mainGLP.bind();
 			}
 			if (GLFWKeyboardCache::keyPressed(IBCodes::KK_KEY_F)) {
 				fps30 = !fps30;
-				uint32_t n = fps30 ? 15 : fpsLimiter.getRefreshRate();
+				uint32_t n = fps30 ? 30 : fpsLimiter.getRefreshRate();
 				fpsLimiter.setLimit(n);
 			}
 
-			glpMain.bind();
+			fpsLimiter.wait();
 
 			float deltaTime = m_clock.update();
 			time += deltaTime;
 			
-			//m_cam.update(deltaTime);
+			m_cam.update(deltaTime);
 
 			int width, height;
 			glfwGetFramebufferSize(m_pWindow, &width, &height);
 			m_windowRes = glm::ivec2(width,height);
-	
+			
+			glClear(GL_COLOR_BUFFER_BIT);
 
-			//m_cam.setProj(glm::perspective(glm::radians(90.0f), (float)renderRes.x/(float)renderRes.y,0.01f,100.0f));
+			glBindVertexArray(oglMesh.getVAO());
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oglMesh.getEBO());
+
+			m_cam.setProj(glm::perspective(glm::radians(90.0f), (float)m_windowRes.x/(float)m_windowRes.y,0.01f,100.0f));
 			glm::mat4 pvm = m_cam.getPV();
 			pvm = glm::ortho(-1.f,1.f,-1.f,1.f);
-			glUniformMatrix4fv(glpMain.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
+		
+			glUniformMatrix4fv(mainGLP.getUnfLoc("u_pvm"), 1, GL_FALSE, &pvm[0][0]);
 
-			glUniform1f(glpMain.getUnfLoc("u_time"), time);
-			glUniform2iv(glpMain.getUnfLoc("u_resolution"), 1, &m_windowRes.x);
+			glUniform1f(mainGLP.getUnfLoc("u_time"), time);
+			glUniform2f(mainGLP.getUnfLoc("u_resolution"), width, height);
+			glUniform1i(mainGLP.getUnfLoc("u_tess"), (GLint) guiTess);
+			glm::vec3 cPos = m_cam.getPos();
+			glUniform3f(mainGLP.getUnfLoc("u_cPos"), cPos.x,cPos.y,cPos.z);
+			glm::vec3 cDir = m_cam.getDir();
+			glUniform3f(mainGLP.getUnfLoc("u_cDir"), cDir.x,cDir.y,cDir.z);
+			glm::vec3 cUp = m_cam.getUp();
+			glUniform3f(mainGLP.getUnfLoc("u_cUp"), cUp.x,cUp.y,cUp.z);
+			glm::vec3 cRgt = m_cam.getRight();
+			glUniform3f(mainGLP.getUnfLoc("u_cRgt"), cRgt.x,cRgt.y,cRgt.z);
+			float cFoc = m_cam.getFocus();
+			glUniform1f(mainGLP.getUnfLoc("u_cFoc"), cFoc);
 
-			//TODOff just use matrix
-			//glm::vec3 cPos = m_cam.getPos();
-			//glUniform3f(glpMain.getUnfLoc("u_cPos"), cPos.x,cPos.y,cPos.z);
-			//glm::vec3 cDir = m_cam.getDir();
-			//glUniform3f(glpMain.getUnfLoc("u_cDir"), cDir.x,cDir.y,cDir.z);
-			//glm::vec3 cUp = m_cam.getUp();
-			//glUniform3f(glpMain.getUnfLoc("u_cUp"), cUp.x,cUp.y,cUp.z);
-			//glm::vec3 cRgt = m_cam.getRight();
-			//glUniform3f(glpMain.getUnfLoc("u_cRgt"), cRgt.x,cRgt.y,cRgt.z);
-			//float cFoc = m_cam.getFocus();
-			//glUniform1f(glpMain.getUnfLoc("u_cFoc"), cFoc);
-
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			//glDepthMask(GL_TRUE);
-			//fragSTimer.start();
+	
+			glDepthMask(GL_TRUE);
+			fragSTimer.start();
 				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
-			//fragSTimer.end();
+			fragSTimer.end();
 
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
 			{
-				ImGui::Begin("Render Info");
-				//std::string fps = "fps: " + std::to_string(1.0/(fragSTimer.getMS()/1000.0));
-				////std::string fps = "fps: " + std::to_string(1.0/(frameTimer.endTimer()*0.001));
-				//// need to take samples over larger timespan
-				////frameTimer.startTimer();
-				//std::string frameTime = "ms: " + std::to_string(fragSTimer.getMS());
-				//ImGui::TextUnformatted(fps.c_str());
-				//ImGui::TextUnformatted(frameTime.c_str());
-				//std::string fsrTime = "ms frag: " + std::to_string(fsrTimer.getMS());
+				ImGui::Begin("Render Info");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+				//ImGui::Text("Hello from another window!");
+				std::string fps = "fps: " + std::to_string(1.0/(fragSTimer.getMS()/1000.0));
+				std::string frameTime = "ms: " + std::to_string(fragSTimer.getMS());
+				ImGui::TextUnformatted(fps.c_str());
+				ImGui::TextUnformatted(frameTime.c_str());
 				ImGui::End();
 			}
 			ImGui::Render();
@@ -187,8 +191,6 @@ public:
 			glfwSwapBuffers(m_pWindow);
 			glfwPollEvents();
 			processInput(m_pWindow); // TODO check esc close window
-
-			fpsLimiter.wait();
 		}
 		return 0;
 	}
@@ -211,4 +213,3 @@ private:
 	FreeFlyCamera m_cam;
 	Clock m_clock;
 };
-

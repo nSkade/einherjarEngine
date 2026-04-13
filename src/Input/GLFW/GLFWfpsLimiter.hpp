@@ -1,9 +1,8 @@
-#include "FPSLimiter.hpp"
-//TODO pch, remove, #include <GLFW/glfw3.h>
+#pragma once
+#include <Utility/FPSLimiter.hpp>
 
 namespace ehj {
 
-//TODOf rework combine with FPSLimiter + abstract getting refresh Rate
 /**
  * @brief Automatically limits Framerate to Primary Monitor.
 */

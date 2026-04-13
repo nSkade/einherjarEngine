@@ -54,6 +54,9 @@ file(GLOB_RECURSE einherjarEngine_SRC
 	"src/*.cpp"
 )
 
+file(GLOB_RECURSE scene_SRC "scenes/*.cpp")
+file(GLOB_RECURSE myScene_SRC "myScenes/*.cpp")
+
 foreach(source_file ${einherjarEngine_SRC})
 	if(source_file MATCHES "libImpl.cpp$")
 		set_source_files_properties("${source_file}" PROPERTIES 
@@ -75,10 +78,12 @@ list(APPEND ehjSourceFiles
 add_executable (ehjEngine
 	${ehjSourceFiles}
 	"scenes/main.cpp"
+	${scene_SRC}
 )
 add_executable (ehjEngineMY
 	${ehjSourceFiles}
 	"myScenes/main.cpp"
+	${myScene_SRC}
 )
 
 set_property(TARGET ehjEngine PROPERTY OUTPUT_NAME einherjarEngine)

@@ -1,9 +1,6 @@
 #include "../src/suOGL.hpp"
 #include "glm/gtx/quaternion.hpp"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <iostream>
 #include <chrono>
 //#include <fstream>
 //#include <sstream>
@@ -206,11 +203,9 @@ int run() {
 	mesh.toTriangles();
 	GLMesh glMesh(mesh);
 	glMesh.bind(0);
-	//TODO remove,,, ehj_gl_err();
 	
 	glBindVertexArray(glMesh.getVAO());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh.getEBO());
-	//TODO remove,,, ehj_gl_err();
 	
 	//GLuint attribPos = 0;
 	//GLuint attribCol = 1;
@@ -219,8 +214,8 @@ int run() {
 	//std::vector<float> VAO = mesh.getVertexBuffer();
 	//std::vector<int> EBO = mesh.getIndexBuffer();
 	//
-	//uint32_t BP = mesh.getMP();
-	//uint32_t Dim = mesh.getDim();
+	//uint32_t BP = mesh.m_MP;
+	//uint32_t Dim = mesh.m_Dim;
 	//uint32_t BPC = 1;
 	//if (BP & ehj::Mesh::MP_NORMAL)
 	//	BPC++;
@@ -252,7 +247,6 @@ int run() {
 
 	//glBindVertexArray(quadVAO);
 	//std::cout << "check0\n";
-	//TODO remove,,, ehj_gl_err();
 	
 	// tesselation maximum supported vertices
 	//GLint MaxPatchVertices = 0;
@@ -263,14 +257,11 @@ int run() {
 	//glPatchParameteri(GL_PATCH_VERTICES, 4);
 
 	//glp.loadProgramFromFolder("shaders/tessQ");
-	//TODO remove,,, ehj_gl_err();
 	glp.addSourceFromFile("shaders/basic_v.vert");
 	//glp.addSourceFromFile("shaders/tessQ/basic_v.vert", GL_VERTEX_SHADER);
-	//TODO remove,,, ehj_gl_err();
 	//glp.addSourceFromFile("shaders/tellu.frag",GL_FRAGMENT_SHADER);
 	glp.addSourceFromFile("shaders/basic_f.frag");
 	//glp.addSourceFromFile("shaders/tessQ/basic_f.frag",GL_FRAGMENT_SHADER);
-	//TODO remove,,, ehj_gl_err();
 	//glp.addSourceFromFile("shaders/tessQ/basic_tcsQ.glsl", GL_TESS_CONTROL_SHADER);
 	////TODO remove,,, ehj_gl_err();
 	//glp.addSourceFromFile("shaders/tessQ/basic_tesQ.glsl", GL_TESS_EVALUATION_SHADER);
@@ -279,16 +270,8 @@ int run() {
 
 	glp.createProgram();
 	glp.bind();
-	glBindAttribLocation(glp.getID(),glMesh.getAttribPos(),"vPos");
-	//if (glMesh.getAttribNrm()!=-1)
-	glBindAttribLocation(glp.getID(),glMesh.getAttribNrm(),"vNrm");
-	//if (glMesh.getAttribCol()!=-1)
-	glBindAttribLocation(glp.getID(),glMesh.getAttribCol(),"vCol");
-	//if (glMesh.getAttribUV()!=-1)
-	glBindAttribLocation(glp.getID(),glMesh.getAttribUV(),"vUV");
 	
 	std::cout << "check1\n";
-	//TODO remove,,, ehj_gl_err();
 	//GLuint vpos_location = 0;//glGetAttribLocation(program, "vPos");
 	//GLuint vcol_location = 1;//glGetAttribLocation(program, "vCol");
 
@@ -300,7 +283,6 @@ int run() {
 	//					sizeof(vertices[0]), (void*) (sizeof(float) * 3));
 	
 	std::cout << "check2\n";
-	//TODO remove,,, ehj_gl_err();
 	GPUTimer fragSTimer;
 	
 	//glLineWidth(1.0f);
@@ -394,7 +376,7 @@ int run() {
 		view = glm::mat4(glm::rotation(vec3(0.,1.,0.),vec3(0.,0.,1.)));
 		glUniformMatrix4fv(glp.getUnfLoc("u_pvm"),1,GL_FALSE,glm::value_ptr(view));
 		
-		//TODO remove,,, ehj_gl_err();
+
 		
 		fragSTimer.start();
 		//glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -408,7 +390,7 @@ int run() {
 		fragSTimer.end();
 		//fragSTimer.print();
 
-		//TODO remove,,, ehj_gl_err();
+
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();

@@ -5,7 +5,7 @@
 namespace ehj {
 
 struct Model {
-	Model();
+	Model() {};
 	Model(std::string path);
 
 	std::vector<ehj::Mesh> m_meshes;

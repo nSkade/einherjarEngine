@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+#include <stdexcept>
 #include <string>
 
 
@@ -197,12 +198,22 @@ void GLProgram::clearUniformLocations() {
 }
 
 bool GLProgram::addSourceFromFileRecursive(std::string shaderPath, GLenum shaderType) {
-	std::filesystem::path sp(shaderPath);
 	std::string shaderString = loadFileContents(shaderPath);
+	std::string outString;
 
-	resolveInclude(shaderPath,&shaderString,0);
+	int fileID=0;
+	std::vector<std::string> fileNames;
+	resolveInclude(shaderPath,0,&fileID,&outString,&fileNames);
+	if (!addSourceFromString(outString,shaderType,shaderPath)) {
+		int i=0;
+		for (auto& f : fileNames) {
+			std::cout << "fileID: " << i << " - " << f << "\n";
+			i++;
+		}
+		return false;
+	}
 
-	return addSourceFromString(shaderString,shaderType,shaderPath);
+	return true;
 }
 
 bool GLProgram::addSourceFromFileRecursive(std::string shaderPath) {
@@ -212,60 +223,78 @@ bool GLProgram::addSourceFromFileRecursive(std::string shaderPath) {
 }
 
 //TODO add check to avoid include loop or double includes which could casue conflicts
-void GLProgram::resolveInclude(const std::string shaderPath, std::string* shaderSource, uint32_t curDepth) {
-	if (curDepth >= m_maxIncludeDepth) {
+void GLProgram::resolveInclude(const std::string shaderPath, int curDepth, int* fileID, std::string* outSource, std::vector<std::string>* fileNames) {
+	if (curDepth >= m_maxIncludeDepth)
 		std::cerr << "GLProgram::resolveInclude error: max include depth reached!" << std::endl;
-		return;
-	}
-	for (uint32_t i=0;i<shaderSource->size();++i) {
-		// skip comments
-		if (shaderSource->at(i) == '/') {
-			i++;
-			if (shaderSource->at(i) == '/') {
-				// skip until new line
-				i++; char c = shaderSource->at(i);
-				while (c != '\n') {
-					i++; c = shaderSource->at(i);
-				}
-			} else if (shaderSource->at(i) == '*') {
-				i++;
-				while (shaderSource->compare(i,2,"*/")!=0)
-					i++;
-			}
-		} else if (shaderSource->at(i) == '#') {
-			uint32_t beginIdx = i;
-			i+=1;
-			if (shaderSource->compare((i),8,"include ") == 0) {
-				std::string newPath = "";
-				i+=8;
-				if (shaderSource->at(i)!='\"')
-					continue;
-				i++;
-				char c = shaderSource->at(i);
-				while (c!='\"') {
-					newPath += c;
-					c = shaderSource->at(++i);
-				}
-				std::filesystem::path sp(shaderPath);
-				std::string includeCode = "";
-				//check relative path
-				std::string relativeGlobal = sp.parent_path().string()+"/"+newPath;
-				if (std::filesystem::exists(relativeGlobal)) {
-					includeCode = loadFileContents(relativeGlobal);
-					resolveInclude(relativeGlobal,&includeCode,curDepth+1);
-				} else if (std::filesystem::exists(newPath)) {
+
+	std::string shaderSource = loadFileContents(shaderPath);
+
+	int currLineNum=0;
+	int sourceProgIdx=0;
+	int currFileID=*fileID;
+	std::string fileName=std::filesystem::path(shaderPath).filename().string();
+	fileNames->push_back(fileName);
+	(*fileID)++;
+
+	for (int i=0;i<shaderSource.size()-1;++i) {
+		if (i==0 && shaderSource.compare(0,8,"#include") == 0)
+			std::cerr << "GLProgram::resolveInclude warning: " + fileName
+				+ " cannot put #include as first line yet" << std::endl;
+		if (shaderSource.at(i) == '\n') {
+			currLineNum++;
+			if (shaderSource.at(i+1) == '#') {
+				if (shaderSource.compare((i+2),8,"include ") == 0) { // +2 to skip \n#
+
+					outSource->insert(outSource->end(),shaderSource.begin()+sourceProgIdx,shaderSource.begin()+i);
+					{ // prepend #line directive for debugging: #line [line] [source-string-number]
+						std::string directive = "\n#line 1 " + std::to_string(*fileID) + "\n"; // glsl spec sadly only accepts int here not file name
+						outSource->insert(outSource->end(),directive.begin(),directive.end());
+					}
+
+					i+=10; // skip "\n#include "
+
+					std::string newPath = "";
+					{// skip include marker
+						if (shaderSource.at(i)!='\"')
+							continue;
+						i++;
+						char c = shaderSource.at(i);
+						while (c!='\"') {
+							newPath += c;
+							c = shaderSource.at(++i);
+						}
+						i++; // skip last "
+					}
+					std::filesystem::path sp(shaderPath);
+					std::string includeCode = "";
+					
+					//check relative path
+					std::string relativeGlobal = sp.parent_path().string()+"/"+newPath;
+					if (std::filesystem::exists(relativeGlobal)) {
+						includeCode = loadFileContents(relativeGlobal);
+						resolveInclude(relativeGlobal,curDepth+1,fileID, outSource,fileNames);
+					} else if (std::filesystem::exists(newPath)) {
 						// check global path
 						includeCode = loadFileContents(newPath);
-						resolveInclude(newPath,&includeCode,curDepth+1);
-				} else {
-					std::cerr << "GLProgram::resolveInclude warning: " + newPath + " could not be resolved" << std::endl;
-					continue;
-				}
-
-				//replace beginIdx to i with shader
-				shaderSource->replace(beginIdx,i-beginIdx+1,includeCode);
-				i = 0;
-			}
-		}
+						resolveInclude(newPath,curDepth+1,fileID, outSource,fileNames);
+					} else {
+						std::cerr << "GLProgram::resolveInclude warning: " + newPath + " could not be resolved" << std::endl;
+						continue;
+					}
+					
+					{ // end line marker
+						std::string reset = "\n#line " + std::to_string(currLineNum-1) + " " + std::to_string(currFileID) + "\n";
+						outSource->insert(outSource->end(),reset.begin(),reset.end());
+					}
+					sourceProgIdx=i;
+					i--; // avoid skip if 2 includes are only seperated by \n
+				}// if include
+			}// if #
+		}// \n
 	}
+	outSource->insert(outSource->end(),shaderSource.begin()+sourceProgIdx,shaderSource.end());
+	//if (currFileID==0) {
+	//	std::system("clear");
+	//	std::cout << *outSource << "\n";
+	//}
 };

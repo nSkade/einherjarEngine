@@ -27,7 +27,7 @@ public:
 		construct();
 	}
 
-	GLTexture(Opt opt) :
+	GLTexture(const Opt& opt) :
 		m_opt(opt)
 		{
 		construct();

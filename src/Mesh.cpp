@@ -12,7 +12,9 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
-#include <unordered_map>
+
+//#include <unordered_map>
+#include <numeric> // for reduce
 
 namespace ehj {
 
@@ -322,13 +324,61 @@ void VertexData::assembleVertexBuffer(std::vector<Mesh*> ms) {
 	// std::unordered_map<glm::ivec4, uint32_t> vertex_to_index;
 
 	// reserve size
-	int resSize = m_Dim;
-	resSize += m_VP & VP_NRM ? m_Dim : 0;
-	resSize += m_VP & VP_COL ? 3 : 0;
-	resSize += m_VP & VP_UV  ? 2 : 0;
-	resSize += m_VP & VP_TAN ? 4: 0;
-	res.reserve(positions.size() * resSize);
+	int attribSize = m_Dim;
+	attribSize += m_VP & VP_NRM ? m_Dim : 0;
+	attribSize += m_VP & VP_COL ? 3 : 0;
+	attribSize += m_VP & VP_UV  ? 2 : 0;
+	attribSize += m_VP & VP_TAN ? 4: 0;
+	//res.reserve(positions.size() * resSize);
 
+	std::vector<int> meshTriCount;
+	meshTriCount.resize(ms.size());
+	for (int i=0;i<ms.size();++i)
+		meshTriCount[i]=ms[i]->m_faces.size();
+
+	res.resize(std::reduce(meshTriCount.begin(),meshTriCount.end()) * 3 * attribSize);
+
+	std::vector<int> meshTriCountPrefixSum(meshTriCount.size());
+	std::partial_sum(meshTriCount.begin(), meshTriCount.end(), meshTriCountPrefixSum.begin());
+	meshTriCountPrefixSum.insert(meshTriCountPrefixSum.begin(),0);
+
+#if 1 //parallelized
+	for (int mI=0;mI<ms.size(); ++mI) { // for each mesh
+		int sI = meshTriCountPrefixSum[mI]*3 * attribSize; // start index
+		for (int fI=0;fI<ms[mI]->m_faces.size();++fI) { // for each face
+			Face& f = ms[mI]->m_faces[fI];
+			for (int vI=0;vI<3;++vI) { // for each face vertex //TODOff could be 4?
+				f.mergedI[vI] = meshTriCountPrefixSum[mI]*3 + fI*3 + vI;
+				int attribIdx=sI+fI*3*attribSize+vI*attribSize;
+				
+				int offset=0; // offset inside attrib
+				for (int j = 0; j < m_Dim; ++j)
+					res[attribIdx+j]=(positions[f.possI[vI]][j]);
+				offset+=m_Dim;
+				if (m_VP & VP_NRM) {
+					for (int j = 0; j < m_Dim; ++j)
+						res[attribIdx+offset+j]=(normals[f.normalI[vI]][j]);
+					offset+=m_Dim;
+				}
+				if (m_VP & VP_COL) {
+					for (int j = 0; j < 3; ++j)
+						res[attribIdx+offset+j]=(colors[f.colorI[vI]][j]);
+					offset+=3;
+				}
+				if (m_VP & VP_UV) {
+					for (int j = 0; j < 2; ++j) //TODOff could be 3?
+						res[attribIdx+offset+j]=(texUVs[f.texuvI[vI]][j]);
+					offset+=2;
+				}
+				if (m_VP & VP_TAN) {
+					for (int j = 0; j < 4; ++j)
+						res[attribIdx+offset+j]=(tangents[f.tangI[vI]][j]);
+				}
+			} // vertices
+		} // faces
+	}// mesh
+#endif
+#if 0
 	int vertId=0;
 	//int total=0;
 	for (Mesh* m : ms) {
@@ -366,6 +416,7 @@ void VertexData::assembleVertexBuffer(std::vector<Mesh*> ms) {
 			} // vertices
 		} // faces
 	}// mesh
+#endif
 	//std::cout << "new vert count: " << vertId+1 << std::endl;
 	//std::cout << "old vert count: " << total+1 << std::endl;
 	//std::cout << "%  " << float(vertId+1)/(total+1)*100. << std::endl;

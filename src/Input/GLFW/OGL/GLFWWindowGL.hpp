@@ -22,7 +22,7 @@ struct GLFWWindowGL {
 		fprintf(stderr, "Error: %s\n", description);
 	}
 
-	void setup(ConfigFile* configFile, void(*framebuffer_size_callback)(GLFWwindow*, int, int)) {
+	void setup(ConfigFile* configFile, std::string windowTitle, void(*framebuffer_size_callback)(GLFWwindow*, int, int)) {
 		if (!glfwInit())
 			exit(EXIT_FAILURE);
 		
@@ -46,7 +46,7 @@ struct GLFWWindowGL {
 		//if (m_winMaximized)
 		//	glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
-		m_pWindow = glfwCreateWindow(m_winRes.x,m_winRes.y, "ehjE EnvirTexScene", NULL, NULL);
+		m_pWindow = glfwCreateWindow(m_winRes.x,m_winRes.y, windowTitle.c_str(), NULL, NULL);
 		glfwSetWindowPos(m_pWindow,m_winPos.x,m_winPos.y);
 		ehjSetGLFWicon(m_pWindow);
 
@@ -71,12 +71,13 @@ struct GLFWWindowGL {
 		gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 		ehj_gl_err_callback();
 		glViewport(0,0, m_winRes.x, m_winRes.y);
+		//TODO glfwSwapInterval(1);
 	}
 	
 	static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 		glViewport(0, 0, width, height);
 	}
-	void setup(ConfigFile* configFile) { setup(configFile,framebuffer_size_callback); };
+	void setup(ConfigFile* configFile, std::string windowTitle) { setup(configFile,windowTitle,framebuffer_size_callback); };
 
 	bool stillOpen() { return !glfwWindowShouldClose(m_pWindow); }
 	void swapBuffers() { glfwSwapBuffers(m_pWindow); }

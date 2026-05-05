@@ -9,7 +9,10 @@
 			"program": "${workspaceFolder}\\bin\\einherjarEngineDbg.exe",
 			"args": [],
 			"cwd": "${workspaceFolder}",
-			"console": "integratedTerminal",
+
+			//"terminal": "external",
+			//"console": "externalTerminal",
+			//"internalConsoleOptions": "neverOpen"
 		},
 		{
 			"name": "cl MYENVIR",
@@ -18,7 +21,10 @@
 			"program": "${workspaceFolder}\\bin\\einherjarEngineMYDbg.exe",
 			"args": [],
 			"cwd": "${workspaceFolder}",
-			"console": "integratedTerminal",
+
+			//"terminal": "external",
+			//"console": "externalTerminal",
+			//"internalConsoleOptions": "neverOpen"
 		},
 		{
 			"name": "cl debug REL",
@@ -27,7 +33,10 @@
 			"program": "${workspaceFolder}\\bin\\einherjarEngine.exe",
 			"args": [],
 			"cwd": "${workspaceFolder}",
-			"console": "integratedTerminal",
+
+			//"terminal": "external",
+			//"console": "externalTerminal",
+			//"internalConsoleOptions": "neverOpen"
 		},
 		{
 			"name": "cl MYENVIR REL",
@@ -36,7 +45,10 @@
 			"program": "${workspaceFolder}\\bin\\einherjarEngineMY.exe",
 			"args": [],
 			"cwd": "${workspaceFolder}",
-			"console": "integratedTerminal",
+
+			//"terminal": "external",
+			//"console": "externalTerminal",
+			//"internalConsoleOptions": "neverOpen"
 		}
 	]
 }

@@ -37,8 +37,10 @@ public:
 
 	/**
 	 * @brief resolves '#include "othershader"' in shaderSource recursively
+	 * @param [out] outSource resolved shader source
+	 * @param [out] filenames corresponding to included file in order (for error output)
 	*/
-	void resolveInclude(const std::string shaderPath, std::string* shaderSource, uint32_t curDepth);
+	void resolveInclude(const std::string shaderPath, int curDepth, int* fileID, std::string* outSource, std::vector<std::string>* fileNames);
 	/**
 	 * @brief loads shaderFile from given Path and resolves '#include' directives
 	*/

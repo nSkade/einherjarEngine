@@ -1,8 +1,6 @@
 #include "GLTexture.hpp"
 #include <Utility/Timer.hpp>
 
-#include <Utility/ConfigFile.hpp>
-
 void GLTexture::construct() {
 constexpr bool profile=false;
 
@@ -50,8 +48,10 @@ ehj::Timer t1;
 		glTexImage2D(GL_TEXTURE_2D, 0, m_opt.internalformat, m_res.x, m_res.y,
 					0, channels, GL_UNSIGNED_BYTE, data);
 		if (profile) {
-			time2+=t1.endTimer();
-			std::cout << "total gpu upload time: " << time2 << "ms\n"; t1.startTimer();
+			time2=t1.endTimer();
+			std::cout << "gpu upload time: " << time2 << "ms\n"; t1.startTimer();
+			//time2+=t1.endTimer();
+			//std::cout << "total gpu upload time: " << time2 << "ms\n"; t1.startTimer();
 		}
 	} else if (m_opt.width > 0 && m_opt.height > 0) {
 		//TODO GL_RGB and GL_FLOAT

@@ -118,11 +118,19 @@ GLenum GLProgram::detectShaderType(std::string fileName) {
 	    name.find("_f.") != name.npos)
 		shaderType = GL_FRAGMENT_SHADER;
 
-	if (name.find("tcs") != name.npos)
+	if (name.find("tcs") != name.npos |
+		name.find(".tesc") != name.npos)
 		shaderType = GL_TESS_CONTROL_SHADER;
 
-	if (name.find("tes") != name.npos)
+	if (name.find("tes") != name.npos |
+		name.find(".tese") != name.npos)
 		shaderType = GL_TESS_EVALUATION_SHADER;
+	
+	if (name.find(".comp") != name.npos)
+		shaderType = GL_COMPUTE_SHADER;
+	
+	if (name.find(".geom") != name.npos)
+		shaderType = GL_GEOMETRY_SHADER;
 	return shaderType;
 }
 

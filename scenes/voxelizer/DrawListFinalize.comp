@@ -1,0 +1,22 @@
+#version 460
+layout(local_size_x = 1) in;
+
+#include "DrawCommandIndirect.glsl"
+
+layout(binding=2) buffer Counter {
+	uint count;
+};
+
+layout(binding=3) buffer Indirect {
+	EHJSD_DrawElementsIndirectCommand cmd;
+};
+
+uniform uint cubeIndexCount;
+
+void main() {
+	cmd.count = cubeIndexCount;
+	cmd.instanceCount = count;
+	cmd.firstIndex = 0;
+	cmd.baseVertex = 0;
+	cmd.baseInstance = 0;
+}

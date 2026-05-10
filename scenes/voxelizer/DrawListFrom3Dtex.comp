@@ -1,0 +1,36 @@
+#version 460
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
+
+#include "DrawCommandIndirect.glsl"
+
+// voxel volume as 3D texture
+layout(binding=0) uniform sampler3D u_tex;
+
+layout(std430, binding=1) buffer InstanceBuffer {
+	EHJSD_Instance instances[];
+};
+
+layout(binding=2) buffer Counter {
+	uint count;
+};
+
+layout(binding=3) buffer Indirect {
+	EHJSD_DrawElementsIndirectCommand cmd;
+};
+
+uniform ivec3 u_volumeDim;
+uniform float u_densityThreshold;
+
+void main() {
+	ivec3 gid = ivec3(gl_GlobalInvocationID);
+	if(any(greaterThanEqual(gid, ivec3(u_volumeDim)))) return;
+
+	vec3 uv = (vec3(gid) + 0.5) / vec3(u_volumeDim);
+	float d = texture(u_tex, uv).r;
+
+	if(d > u_densityThreshold) {
+		uint idx = atomicAdd(count, 1u);
+		instances[idx].pos = vec4(uv, 1.);
+		instances[idx].col = vec4(d, d, d, 1.0);
+	}
+}

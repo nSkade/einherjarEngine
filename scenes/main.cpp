@@ -10,8 +10,10 @@
 //#include "TessTestScene.hpp"
 //#include "computeShaderExample/ComputeShaderTestScene.hpp"
 //#include "ADFtestScene.hpp"
-//#include "EnvirScene.hpp"
+//#include "helloWorld/EnvirScene.hpp"
 //#include "EnvirTexScene/EnvirTexScene.hpp"
+#include "EnvirTexScene/ShadowMapTestScene.hpp"
+//#include "voxelizer/VoxelTestScene.hpp"
 //#include "RayMarchingTestScene.hpp"
 //#include "FSRTestScene.hpp"
 //#include "VulkanTest.hpp"
@@ -19,9 +21,9 @@
 //#include "TexturedTri.hpp"
 
 // lighting
-//#include "PathTracing.hpp"
-//#include "RC2D/RCnaive.hpp"
-#include "RC2D/vanilla/RC.hpp"
+//#include "PathTracing/PathTracing.hpp"
+//#include "RC2D/naive/RCnaive.hpp"
+//#include "RC2D/vanilla/RC.hpp"
 
 // tools
 //#include "plotGlsl2D/plotGlsl2D.hpp"

@@ -60,10 +60,11 @@ void main() {
 
 	if (false) {
 		vec3 lightDir = normalize(l.p-posV);
-		float i =dot(mat.n,lightDir);//*.5+.5;
+		vec3 n =normalV;
+		float i =dot(n,lightDir);//*.5+.5;
 		color = vec4(vec3(i),1.0);
-		color = vec4(uvV,0.,1.);
-		color = texture(u_albedo,uvV) * i;
+		//color = vec4(uvV,0.,1.);
+		//color = texture(u_albedo,uvV) * i;
 	}
 
 	if (false) { // blinn phong
@@ -79,7 +80,7 @@ void main() {
 		color.rgb += BRDFcookTorrence(posV,camPos,l,mat);
 	}
 
-	{
+	if (false) {
 		// l2
 		
 		Light l2; {

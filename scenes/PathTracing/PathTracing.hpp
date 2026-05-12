@@ -1,4 +1,5 @@
 #include "GAPI/OGL/GPUTimer.hpp"
+#include "suCMN.hpp"
 #include <suOGL.hpp>
 
 #include <Input/GLFW/GLFWKeyboard.hpp>
@@ -72,15 +73,15 @@ int run(void)
 
 
 	GLProgram glProg;
-	glProg.addSourceFromFile("shaders/PathTracing/ssq.vs");
-	glProg.addSourceFromFile("shaders/PathTracing/pt.fs");
+	glProg.addSourceFromFile("shaders/ssq.vs");
+	glProg.addSourceFromFile(EHJ_THIS_FOLDER()+"pt.fs");
 
 	glProg.createProgram();
 	glProg.bind();
 
 	GLProgram glpPP;
-	glpPP.addSourceFromFile("shaders/PathTracing/ssq.vs");
-	glpPP.addSourceFromFile("shaders/PathTracing/pp.fs");
+	glpPP.addSourceFromFile("shaders/ssq.vs");
+	glpPP.addSourceFromFile(EHJ_THIS_FOLDER()+"pp.fs");
 
 	glpPP.createProgram();
 	glpPP.bind();
@@ -130,10 +131,10 @@ int run(void)
 				m_kkTap[IBCodes::KK_KEY_R] = false;
 				glUseProgram(0);
 				//suc = glProg.addSourceFromFileRecursive("myScenes/shader/"+fragShader,GL_FRAGMENT_SHADER);
-				suc = glProg.addSourceFromFile("shaders/PathTracing/pt.fs");
+				suc = glProg.addSourceFromFile(EHJ_THIS_FOLDER()+"pt.fs");
 				glProg.createProgram();
 
-				suc &= glpPP.addSourceFromFile("shaders/PathTracing/pp.fs");
+				suc &= glProg.addSourceFromFile(EHJ_THIS_FOLDER()+"pp.fs");
 				glpPP.createProgram();
 				frame = 0;
 			}

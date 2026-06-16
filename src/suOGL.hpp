@@ -24,7 +24,7 @@
 
 #include <glad/glad.h>
 
-#include "GAPI/OGL/GPUTimer.hpp"
+#include "GAPI/OGL/GLGPUTimer.hpp"
 #include "GAPI/OGL/GLProgram.hpp"
 #include "GAPI/OGL/GLFrameBuffer.hpp"
 #include "GAPI/OGL/GLUtils.hpp"

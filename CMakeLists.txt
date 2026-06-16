@@ -49,6 +49,16 @@ LINK_DIRECTORIES(/)
 
 SET(CMAKE_COLOR_MAKEFILE OFF)
 
+option(ENABLE_ASAN "Enable AddressSanitizer for leak tracking" ON)
+
+if(ENABLE_ASAN)
+	target_compile_options(ehjEngine PRIVATE -fsanitize=address -g)
+	target_link_options(ehjEngine PRIVATE -fsanitize=address)
+	target_compile_options(ehjEngineMY PRIVATE -fsanitize=address -g)
+	target_link_options(ehjEngineMY PRIVATE -fsanitize=address)
+endif()
+
+
 # src files
 file(GLOB_RECURSE einherjarEngine_SRC
 	"src/*.cpp"
@@ -56,6 +66,7 @@ file(GLOB_RECURSE einherjarEngine_SRC
 
 file(GLOB_RECURSE scene_SRC "scenes/*.cpp")
 file(GLOB_RECURSE myScene_SRC "myScenes/*.cpp")
+list(FILTER myScene_SRC EXCLUDE REGEX "/no-build/")
 
 foreach(source_file ${einherjarEngine_SRC})
 	if(source_file MATCHES "libImpl.cpp$")
@@ -116,6 +127,12 @@ set(linkedLibraries
 
 	JsonCpp::JsonCpp
 )
+
+if(WIN32)
+	list(APPEND linkedLibraries
+		winmm # for timeBeginPeriod
+	)
+endif()
 
 target_link_libraries(ehjEngine ${linkedLibraries})
 target_link_libraries(ehjEngineMY ${linkedLibraries})

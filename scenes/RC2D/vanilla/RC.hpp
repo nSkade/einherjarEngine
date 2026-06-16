@@ -26,7 +26,7 @@ public:
 
 void setup(void) {
 	m_configFile.baseLoad();
-	m_window.setup(&m_configFile);
+	m_window.setup(&m_configFile,"ehjE RC 2D");
 };
 
 int run(void) {
@@ -96,11 +96,11 @@ int run(void) {
 	};
 
 	vec2 mouse = vec2(0.,0.);
-	GPUTimer gpuTimer;
+	GLGPUTimer gpuTimer;
 
 	while (m_window.stillOpen()) {
 		
-		gpuTimer.start();
+		//gpuTimer.start();
 
 		bool hoveredImgui = ImGui::IsAnyItemHovered() || ImGui::IsAnyItemActive() || ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow);
 		glfwGetFramebufferSize(m_window.m_pWindow, &width, &height);
@@ -132,8 +132,8 @@ int run(void) {
 			}
 			if (!suc) {
 				m_window.swapBuffers();
-				m_window.pollInput();
 				fpsLimiter.wait();
+				m_window.pollInput();
 				continue;
 			}
 		}
@@ -165,21 +165,28 @@ int run(void) {
 		if (widthPrev != width || height != heightPrev)
 			frame = 0;
 
+		gpuTimer.start();
 		//TODO DrawScene
 		if (widthPrev != width || height != heightPrev)
 			drawBoard.updateBufferSize(ivec2(width,height));
 		drawBoard.drawPencil(glMesh,{width,height},deltaTime,setCMNuniforms);
-		
+		gpuTimer.end();
+		double gt_drawScene = gpuTimer.getMS();
+	
+		gpuTimer.start();
 		if (widthPrev != width || height != heightPrev) {
 			ivec2 size=ivec2(width,height)/4;
 			size=glm::max(size,ivec2(1,1));
 			jfa.updateBufferSize(size);
 		}
 		jfa.passJFA(glMesh,drawBoard.m_fb2,pvm);
+		gpuTimer.end();
+		double gt_jfa = gpuTimer.getMS();
+		std::vector<double> gt_rc;
 
 		{ // RC 2D pass, TODO test upscale with FSR2
 			if (widthPrev != width || height != heightPrev || linearFilter != linearFilterPrev) {
-#define RCHR 0 // rc halfres
+#define RCHR 1 // rc halfres
 #if RCHR
 				GLFrameBuffer::Opt fbOpt {ivec2(width,height)/2,GL_RGBA8};
 #else
@@ -238,7 +245,9 @@ int run(void) {
 			// render uv
 			//glUniform1f(glpRC.getUnfLoc("u_jfOffset"),0.);
 			
+			gt_rc.clear();
 			for (int i=cascadeCount-1;i>=0;--i) {
+				gpuTimer.start();
 				//if (frame%(i*1+1)==0)
 				//if (frame%(max(0,i-1)+1)==0)
 				{
@@ -267,6 +276,9 @@ int run(void) {
 				glUniform1i(glGetUniformLocation(glpRC.getID(), "u_texPrev"), 2);           // texture unit 0
 
 				glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+				
+				gpuTimer.end();
+				gt_rc.push_back(gpuTimer.getMS());
 				}
 			}
 	
@@ -279,6 +291,8 @@ int run(void) {
 #else
 #endif
 	
+			//TODO combine drawboard with 
+
 			{ // blit rc result into buf 0 
 				glBindFramebuffer(GL_FRAMEBUFFER,0);
 				glViewport(0, 0, width, height);
@@ -299,7 +313,7 @@ int run(void) {
 			}
 		}
 
-		gpuTimer.end();
+		//gpuTimer.end();
 		
 		{ // imgui
 			linearFilterPrev = linearFilter;
@@ -307,13 +321,13 @@ int run(void) {
 			GLFWImGuiGL::newFrame();
 			{
 				ImGui::Begin("RC 2D");
-				float ms1 = gpuTimer.getMS();
-				static float ms = 1.;
-				ms = ms*.99 + ms1*.01;
-				std::string strMS = "MS: " + std::to_string(ms);
-				ImGui::Text("%s", strMS.c_str());
-				std::string strFPS = "FPS: " + std::to_string(1000./ms);
-				ImGui::Text("%s", strFPS.c_str());
+				//float ms1 = gpuTimer.getMS();
+				//static float ms = 1.;
+				//ms = ms*.5 + ms1*.5;
+				//std::string strMS = "MS: " + std::to_string(ms);
+				//ImGui::Text("%s", strMS.c_str());
+				//std::string strFPS = "FPS: " + std::to_string(1000./ms);
+				//ImGui::Text("%s", strFPS.c_str());
 
 				drawBoard.imgui();
 
@@ -332,6 +346,25 @@ int run(void) {
 				ImGui::Checkbox("linear texture filter",&linearFilter);
 
 				ImGui::DragFloat("rayOverlap",&rayOverlap,0.001);
+				
+				{
+					auto printGT = [](double v, std::string n, double& s) {
+						s = s*.5 + v*.5;
+						std::string strMS = n + ": " + std::to_string(s);
+						ImGui::Text("%s", strMS.c_str());
+					};
+					static double gt_dss= 1.;
+					printGT(gt_drawScene,"gt_ds",gt_dss);
+					static double gt_jfas = 1.;
+					printGT(gt_jfa,"gt_jfa",gt_jfas);
+					static std::vector<double> gt_rcs;
+					while (gt_rcs.size() < gt_rc.size())
+						gt_rcs.push_back(1.);
+					{
+						for (int i=0;i<gt_rc.size();++i)
+							printGT(gt_rc[i],"gt_rc"+std::to_string(i),gt_rcs[i]);
+					}
+				}
 				ImGui::End();
 			}
 

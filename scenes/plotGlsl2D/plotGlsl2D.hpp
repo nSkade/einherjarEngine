@@ -93,7 +93,7 @@ public:
 
 		glpMain.bind();
 
-		//GPUTimer fragSTimer;
+		//GLGPUTimer fragSTimer;
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();

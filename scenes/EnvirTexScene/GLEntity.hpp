@@ -1,4 +1,5 @@
 
+#include "GAPI/OGL/GLMesh.hpp"
 #include <suOGL.hpp>
 
 using namespace ehj;
@@ -9,8 +10,19 @@ struct GLEntity {
 	std::unique_ptr<GLVertexBuffer> glVb;
 	std::vector<std::unique_ptr<GLTexture>> glTextures;
 
+	struct Opt {
+		std::string path;
+		GLint textureAlbedoInternalFormat=GL_RGBA8;
+	};
+
 	void load(std::string path) {
-		model = Model(path);
+		Opt o;
+		o.path = path;
+		load(o);
+	}
+
+	void load(Opt opt) {
+		model = Model(opt.path);
 		model.assembleVertexBuffer();
 		
 		glMeshes.reserve(model.m_meshes.size());
@@ -21,14 +33,25 @@ struct GLEntity {
 		glVb->bind(0);
 
 		std::vector<GLTexture::Opt> textureLoadOpts(model.m_textureInfos.size());
+
+		// collect info which textures are albedo using materials
+		std::vector<bool> textureIsAlbedo(model.m_textureInfos.size(),false);
+		for (int i=0;i<model.m_materials.size();++i)
+			if (model.m_materials[i].baseColorTextureIndex != -1)
+				textureIsAlbedo[model.m_materials[i].baseColorTextureIndex]=true;
+		
 		{ // load textures
 			std::vector<std::thread> loadThreads;
 			for (int i=0;i<model.m_textureInfos.size();++i) {
 				GLTexture::Opt& o = textureLoadOpts[i];
-				loadThreads.emplace_back([this,&o, i](){
+				loadThreads.emplace_back([this,&o, i,&opt,&textureIsAlbedo](){
 					o.texturefilter=GL_LINEAR;
-					//o.internalformat=GL_COMPRESSED_RGBA; // takes significantly longer to load
-					o.internalformat=GL_RGBA;
+					if (textureIsAlbedo[i])
+						o.internalformat=opt.textureAlbedoInternalFormat;
+					else {
+						o.internalformat=GL_RGBA8;
+						//o.internalformat=GL_COMPRESSED_RGBA; // takes significantly longer to load
+					}
 					auto& p = model.m_textureInfos[i];
 					auto wm = [](Model::TextureInfo::WrapMode wm) {
 						switch (wm) {

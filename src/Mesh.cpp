@@ -323,12 +323,22 @@ void VertexData::assembleVertexBuffer(std::vector<Mesh*> ms) {
 	// can use index to compress vertex buffer, most of the time probably not worth it
 	// std::unordered_map<glm::ivec4, uint32_t> vertex_to_index;
 
+	//TODO make Opt struct to align or not align
 	// reserve size
+#if 0// unaligned
 	int attribSize = m_Dim;
 	attribSize += m_VP & VP_NRM ? m_Dim : 0;
 	attribSize += m_VP & VP_COL ? 3 : 0;
 	attribSize += m_VP & VP_UV  ? 2 : 0;
 	attribSize += m_VP & VP_TAN ? 4: 0;
+#endif
+#if 1 //aligned
+	int attribSize = 4;
+	attribSize += m_VP & VP_NRM ? 4 : 0;
+	attribSize += m_VP & VP_COL ? 4 : 0;
+	attribSize += m_VP & VP_UV  ? 4 : 0;
+	attribSize += m_VP & VP_TAN ? 4: 0;
+#endif
 	//res.reserve(positions.size() * resSize);
 
 	std::vector<int> meshTriCount;
@@ -342,7 +352,49 @@ void VertexData::assembleVertexBuffer(std::vector<Mesh*> ms) {
 	std::partial_sum(meshTriCount.begin(), meshTriCount.end(), meshTriCountPrefixSum.begin());
 	meshTriCountPrefixSum.insert(meshTriCountPrefixSum.begin(),0);
 
-#if 1 //parallelized
+#if 1 // aligned
+	for (int mI=0;mI<ms.size(); ++mI) { // for each mesh
+		int sI = meshTriCountPrefixSum[mI]*3 * attribSize; // start index
+		for (int fI=0;fI<ms[mI]->m_faces.size();++fI) { // for each face
+			Face& f = ms[mI]->m_faces[fI];
+			for (int vI=0;vI<3;++vI) { // for each face vertex //TODOff could be 4?
+				f.mergedI[vI] = meshTriCountPrefixSum[mI]*3 + fI*3 + vI;
+				int attribIdx=sI+fI*3*attribSize+vI*attribSize;
+				
+				int offset=0; // offset inside attrib
+				for (int j = 0; j < 3; ++j)
+					res[attribIdx+j]=(positions[f.possI[vI]][j]);
+				res[attribIdx+3]=0;
+				offset+=4;
+				if (m_VP & VP_NRM) {
+					for (int j = 0; j < 3; ++j)
+						res[attribIdx+offset+j]=(normals[f.normalI[vI]][j]);
+					res[attribIdx+offset+3]=0;
+					offset+=4;
+				}
+				if (m_VP & VP_COL) {
+					for (int j = 0; j < 3; ++j)
+						res[attribIdx+offset+j]=(colors[f.colorI[vI]][j]);
+					res[attribIdx+offset+3]=0;
+					offset+=4;
+				}
+				if (m_VP & VP_UV) {
+					for (int j = 0; j < 2; ++j) //TODOff could be 3?
+						res[attribIdx+offset+j]=(texUVs[f.texuvI[vI]][j]);
+					for (int j = 2; j < 4; ++j) //TODOff could be 3?
+						res[attribIdx+offset+j]=0.;
+					offset+=4;
+				}
+				if (m_VP & VP_TAN) {
+					for (int j = 0; j < 4; ++j)
+						res[attribIdx+offset+j]=(tangents[f.tangI[vI]][j]);
+				}
+			} // vertices
+		} // faces
+	}// mesh
+#endif
+
+#if 0 // already improved performance //TODOff maybe parallelize
 	for (int mI=0;mI<ms.size(); ++mI) { // for each mesh
 		int sI = meshTriCountPrefixSum[mI]*3 * attribSize; // start index
 		for (int fI=0;fI<ms[mI]->m_faces.size();++fI) { // for each face

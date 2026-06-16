@@ -1,7 +1,7 @@
-#include "GPUTimer.hpp"
+#include "GLGPUTimer.hpp"
 
 
-void GPUTimer::start() {
+void GLGPUTimer::start() {
 	if (m_query_read) {
 		glGenQueries(1, &m_queryID);
 		glBeginQuery(GL_TIME_ELAPSED, m_queryID);
@@ -9,11 +9,13 @@ void GPUTimer::start() {
 }
 
 // TODO do messaging system for printing
-void GPUTimer::end() {
+void GLGPUTimer::end() {
 	if (m_query_read)
 		glEndQuery(GL_TIME_ELAPSED);
 	GLint queryState;
 	glGetQueryObjectiv(m_queryID, GL_QUERY_RESULT_AVAILABLE, &queryState);
+	while(!queryState)
+		glGetQueryObjectiv(m_queryID, GL_QUERY_RESULT_AVAILABLE, &queryState);
 	if (queryState) {
 		GLuint64 time;
 		glGetQueryObjectui64v(m_queryID, GL_QUERY_RESULT, &time);
@@ -27,10 +29,10 @@ void GPUTimer::end() {
 	}
 }
 
-void GPUTimer::print() {
+void GLGPUTimer::print() {
 	std::cout << "fps: " << 1.0/(m_ms/1000.0) << " time for render took: " << m_ms << " id: " << m_queryID << "\n";
 }
 
-double GPUTimer::getMS() {
+double GLGPUTimer::getMS() {
 	return m_ms;
 }

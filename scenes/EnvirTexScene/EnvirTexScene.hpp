@@ -141,8 +141,8 @@ public:
 					suc = sucTmp;
 				}
 				if (!suc) {
-					m_glWindow.pollInput(); // TODO check esc close window
 					m_fpsLimiter.wait();
+					m_glWindow.pollInput(); // TODO check esc close window
 					continue;
 				}
 			}
@@ -211,8 +211,8 @@ public:
 
 			m_glWindow.swapBuffers();
 
-			m_glWindow.pollInput(); //TODO polling should happen during wait?
 			m_fpsLimiter.wait();
+			m_glWindow.pollInput(); //TODO polling should happen during wait?
 		}
 		
 		return 0;

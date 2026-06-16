@@ -11,6 +11,7 @@ public:
 	void bind(uint32_t bindingIndex);
 	
 	uint32_t getVAO();
+	uint32_t getVBO();
 	int32_t getAttribPos() const;
 	int32_t getAttribNrm() const;
 	int32_t getAttribCol() const;

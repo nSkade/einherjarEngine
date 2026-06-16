@@ -1,0 +1,214 @@
+#version 460
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+#include "../bvh/bvhTraverse.glsl"
+
+layout (std430, binding = 0) readonly buffer I0 { BVHNode node[]; } nodeData;
+layout (std430, binding = 1) readonly buffer I1 { uint idx[]; } idxData;
+layout (std430, binding = 2) readonly buffer I2 { vec4 tri[]; } triData;
+DEFINE_TRAVERSE_FUNCTION(traverse_ailalaine,nodeData.node,idxData.idx,triData.tri,.xyz)
+
+layout(rgba32f, binding = 0) writeonly uniform image2D u_outImg;
+
+uniform vec2 u_resolution;
+uniform mat4 u_m;
+uniform mat4 u_invVP;
+uniform vec3 u_cPos;
+uniform float u_time;
+
+uniform float u_frame;
+uniform float u_camChange;
+layout(binding=0) uniform sampler2D u_p;
+
+layout(binding=2) uniform sampler2D u_sky;
+
+uniform mat4 u_camInvProj;
+uniform mat4 u_camInvView;
+
+vec2 sampleEquirectangular(vec3 v) {
+	const vec2 invAtan = vec2(0.1591, 0.3183);
+	return (vec2(atan(v.z, v.x), asin(v.y)) * invAtan) + 0.5;
+}
+
+#include "../rand.glsl"
+
+vec3 getNormal(float hitTriIdx) {
+	uint triIdx = floatBitsToUint(hitTriIdx);
+	uint v0 = triIdx * 3;
+	vec3 edge1 = triData.tri[v0 + 1].xyz - triData.tri[v0].xyz;
+	vec3 edge2 = triData.tri[v0 + 2].xyz - triData.tri[v0].xyz;
+
+	return normalize(cross(edge1.xyz, edge2.xyz));
+}
+
+struct Ray {
+	vec3 o;
+	vec3 d;
+};
+
+float hash3(vec3 p) {
+    p = fract(p * vec3(443.8975, 441.4230, 437.1951));
+    p += dot(p, p.yzx + 19.19);
+    return fract((p.x + p.y) * p.z);
+}
+
+vec3 random_in_unit_sphere(vec3 seed) {
+    float h1 = hash3(seed);
+    float h2 = hash3(seed + 1.0);
+    float h3 = hash3(seed + 2.0);
+    vec3 p = vec3(h1, h2, h3) * 2.0 - 1.0;
+    return normalize(p);
+}
+
+bool anyHit;
+
+vec3 shade(Ray r,int iter, vec2 uv) {
+	vec3 c = vec3(1.); // color for absorption
+	vec3 e = vec3(0.); // emission
+
+	Ray rr = r;
+	int bounces = 3;
+	for (int i=0;i<bounces;++i) {
+		// (dist,u,v,triIdx)
+		vec4 hit = traverse_ailalaine( rr.o, rr.d, vec3(1.)/rr.d, 1e30f);
+
+		// shade
+		if (hit.x < 1e30f) {
+			anyHit=true;
+			vec3 pos = rr.o + hit.x * rr.d;
+			vec3 n = getNormal(hit.w);
+
+			float w = 1.; // roughness
+			vec3 nd; // new direction
+			{ // random reflected vec
+				vec3 seed = pos + n * 1.4142 + vec3(uv, i) * 2.7182 + vec3(iter, u_time, -iter);
+				//vec3 rv = normalize(rand3Gauss(seed) * 2.0 - 1.0);
+				vec3 rv = random_in_unit_sphere(seed);
+				nd = normalize(n + rv); // diff // already includes lambert cosine law
+			}
+			vec3 ns = reflect(rr.d,n); // spec
+			vec3 nn = nd*(w) + (1.-w)*ns; // weight random and reflect vec
+
+			vec3 mc = vec3(1.); // material color
+			vec3 me = vec3(0.0); // material emission
+
+			e += c*(mc*me); // TODO split into emission color and color
+			c *= mc; // absorb other wavelengths
+
+			rr = Ray(pos + n*0.1,nn);
+		} else {
+			//float sunDirD = dot(normalize(vec3(1.,1.,1.)),r.d);
+			//sunDirD = max(0.,pow(sunDirD,100.));
+			//vec3 sunC = vec3(1.);
+			//float sunE = 1.;
+			//e += sunC*sunE*sunDirD; //TODO split into emission color and color
+
+			//vec4 v_dir;
+			//{
+			//	vec4 ndc = vec4(uv*2.-1.,0.,1.);
+			//	vec4 v = u_camInvProj * ndc;
+			//	v = v/v.w;
+			//	v = u_camInvView * v;
+			//	v_dir = v;
+			//	v_dir.xyz -= u_camInvView[3].xyz;
+			//	v_dir.xyz = -normalize(v_dir.xyz);
+			//}
+			vec2 skyUv = sampleEquirectangular(-rr.d);
+			//color.xyz = vec3(skyUv,0.);
+			e += texture(u_sky,skyUv).xyz;
+			//e += vec3(3.);
+			break;
+		}
+	}
+
+	return e;
+}
+
+void main() {
+	anyHit=false;
+	vec2 uv = (vec2(gl_GlobalInvocationID.xy)+.5)/u_resolution.xy;
+	ivec2 texelCoord=ivec2(gl_GlobalInvocationID.xy);
+
+	ivec2 imgSize = imageSize(u_outImg);
+	if (texelCoord.x >= imgSize.x || texelCoord.y >= imgSize.y) {
+		return;
+	}
+	vec2 ndc = uv * 2.0 - vec2(1.0);
+	mat4 invModel = inverse(u_m);
+
+	// campos
+	vec3 campos; {
+		campos = u_cPos;
+		campos = (invModel * vec4(u_cPos, 1.0)).xyz;
+	}
+
+	// camdir
+	vec3 camdir; {
+		vec4 targetWorld = u_invVP * vec4(ndc.x, ndc.y, -1.0, 1.0);
+		targetWorld /= targetWorld.w; // Perspective divide
+		camdir = normalize(targetWorld.xyz - u_cPos);
+		camdir = normalize((invModel * vec4(camdir, 0.0)).xyz);
+	}
+
+	vec4 color = vec4(vec3(0.),1.);
+
+#if 0 // direct test
+	{	// (dist, u, v, triIdx)
+		vec4 hit = traverse_ailalaine( campos, camdir, vec3(1.)/camdir, 1e30f );
+		
+		//vec4 color = vec4(float(floatBitsToUint(hit.w))*0.00001,0.,0.,1.);
+		color = vec4(hit.y,hit.z,0.,1.);
+
+		vec3 n = getNormal(hit.w);
+		color = vec4(n,1.);
+	}
+	// single shadow bounce
+	//if (hit.x < 1e30f) {  // bounce
+	//	vec3 hitPos = hit.x * camdir + campos + n *0.1;
+	//	vec3 sunPos = vec3(0.,10.+sin(u_time)*9.,0.)*100.;
+	//	vec3 sunDir = normalize(sunPos-hitPos);
+
+	//	color = vec4(vec3(dot(n,sunDir)),1.);
+
+	//	vec4 hit2 = traverse_ailalaine( hitPos, sunDir, vec3(1.)/sunDir, 1e30f );
+	//	if (hit2.x < length(sunPos-hitPos))
+	//		color.xyz *= 0.;
+	//}
+#endif
+
+#if 0 // single
+	{
+		Ray r;
+		r.o=campos;
+		r.d=camdir;
+		color = vec4(shade(r,1,uv),1.);
+	}
+#endif
+#if 1 // accumulate
+	int samples = 1;
+	vec3 c = vec3(0.);
+	Ray r;
+	r.o=campos;
+	r.d=camdir;
+	for (int i=0;i<samples;++i)
+		c += shade(r,i,uv);
+	c /= samples;
+	//color.rgb = c;
+
+	if (u_frame==0)
+		color = vec4(c,1.);
+	else {
+		if (u_camChange == 0.) {
+
+			float w = 1./(1.+u_frame);
+			color = vec4(c,1.)*w + (1.-w)*texture(u_p,uv);
+
+			color.a = 1.;
+		}
+		else 
+			color = vec4(c,1.)*.5+.5*texture(u_p,uv);
+	}
+#endif
+	color.a = anyHit ? 1. : 0.;
+	imageStore(u_outImg,texelCoord,color);
+}

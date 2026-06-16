@@ -6,7 +6,7 @@ layout(location = 3) in vec2 vUV;
 
 #include "DrawCommandIndirect.glsl"
 
-layout(binding = 1) buffer InstanceBuffer {
+layout(std430, binding = 1) buffer InstanceBuffer {
 	EHJSD_Instance instances[];
 };
 

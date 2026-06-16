@@ -182,6 +182,7 @@ public:
 		glGenBuffers(1, &ssbo);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
 		glBufferData(GL_SHADER_STORAGE_BUFFER, values.size() * sizeof(float), values.data(), GL_STATIC_DRAW);
+		//TODO glBufferData deprecated, use glNamedBufferStorage instead for fixed size data
 		
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo); // binding point 0
 

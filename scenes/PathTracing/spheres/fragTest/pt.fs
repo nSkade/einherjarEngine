@@ -283,8 +283,14 @@ vec3 shade(Ray r,int iter) {
 			vec3 nd;
 			//vec2 uv = gl_FragCoord.xy/u_resolution.xy;
 			//if (uv.x<.5) {
-				vec3 rv = normalize(rand3(pos+n+vec3(UV,i)+vec3(iter+u_time)));
+
+				// problem with these is simple addition
+				//vec3 rv = normalize(rand3(pos+n+vec3(UV,i)+vec3(iter+u_time)));
 				//vec3 rv = normalize(rand3(pos+n+vec3(UV,i)+vec3(iter)));
+				
+				// this random seed fixes bias on x and y close to 0
+				vec3 seed = pos + n * 1.4142 + vec3(UV, i) * 2.7182 + vec3(iter, u_time, -iter);
+				vec3 rv = normalize(rand3(seed) * 2.0 - 1.0);
 				nd = normalize(n + rv); // diff // already includes lambert cosine law
 			//}
 			//else {

@@ -85,6 +85,7 @@ int run(void)
 	glGenBuffers(1, &vertex_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	//TODO glBufferData deprecated, use glNamedBufferStorage instead for fixed size data
 
 	GLProgram shadProg;
 	shadProg.addSourceFromString(std::string(vertex_shader_text),GL_VERTEX_SHADER);

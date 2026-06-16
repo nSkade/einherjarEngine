@@ -95,6 +95,7 @@ int run(void)
 	glGenBuffers(1, &vertex_buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	//TODO glBufferData deprecated, use glNamedBufferStorage instead for fixed size data
 
 	// current info state on vertex data
 	GLuint vao;

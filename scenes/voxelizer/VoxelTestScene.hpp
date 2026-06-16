@@ -94,15 +94,18 @@ public:
 		{ // ssbo
 			glGenBuffers(1,&ssboInstances); glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboInstances);
 			glBufferData(GL_SHADER_STORAGE_BUFFER, maxInstances * sizeof(EHJSD_Instance), nullptr, GL_DYNAMIC_DRAW);
+			//TODO glBufferData deprecated, use glNamedBufferStorage instead for fixed size data
 
 			glGenBuffers(1,&ssboCounter); glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboCounter);
 			glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint), nullptr, GL_DYNAMIC_DRAW);
 			GLuint zero = 0; glBufferSubData(GL_SHADER_STORAGE_BUFFER,0,sizeof(GLuint), &zero);
+			//TODO glBufferData deprecated, use glNamedBufferStorage instead for fixed size data
 
 			unsigned int cubeIndexCount=unitCube.getIndexBuffer().size(); //TODO
 			glGenBuffers(1,&indirectBuf); glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuf);
 			EHJSD_DrawElementsIndirectCommand cmd = { cubeIndexCount, 0, 0, 0, 0 };
 			glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(cmd), &cmd, GL_DYNAMIC_DRAW);
+			//TODO glBufferData deprecated, use glNamedBufferStorage instead for fixed size data
 		}
 		
 		while (m_glWindow.stillOpen()) {
@@ -165,8 +168,8 @@ public:
 					suc = sucTmp;
 				}
 				if (!suc) {
-					m_glWindow.pollInput(); // TODO check esc close window
 					m_fpsLimiter.wait();
+					m_glWindow.pollInput(); // TODO check esc close window
 					continue;
 				}
 			}

@@ -26,8 +26,10 @@ layout(binding = 3) uniform sampler2D u_shadowMap;
 uniform mat4 u_shadowMat;
 
 float getShadow(vec3 pos) {
-	vec4 fragPosLightSpace = u_shadowMat * vec4(pos, 1.0);
+	vec4 fragPosLightSpace = u_shadowMat * vec4(pos, 1.0); // can move this to vertex shader
 	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+	if(abs(projCoords.z) > 1. || abs(projCoords.x) > 1. || abs(projCoords.y) > 1.)
+		return 1.; // how shadow is handled outside frustum
 	projCoords = projCoords.xyz*.5+.5;
 
 	float bias = 0.000003;

@@ -283,7 +283,7 @@ int run() {
 	//					sizeof(vertices[0]), (void*) (sizeof(float) * 3));
 	
 	std::cout << "check2\n";
-	GPUTimer fragSTimer;
+	GLGPUTimer fragSTimer;
 	
 	//glLineWidth(1.0f);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

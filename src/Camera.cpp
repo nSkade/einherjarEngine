@@ -39,7 +39,7 @@ void Camera::update(float deltaTime) {
 }
 
 void Camera::makePerpendicular() {
-	if (!m_isPerp) {
+	if (!m_isPerp) { //TODOf bug, cam has delay on making perpedicular
 		m_dir = glm::normalize(m_dir);
 		m_right = glm::cross(glm::normalize(m_up),m_dir);
 		if (m_noTilt) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Input/GLFW/OGL/GLFWWindowGL.hpp"
 #include "suCMN.hpp"
 #include <suOGL.hpp>
 
@@ -40,7 +41,7 @@ public:
 
 	void updateBufferSize(ivec2 res) {
 		m_res=res;
-		GLFrameBuffer::Opt opt = {m_res,GL_RGBA32F,GL_LINEAR};
+		GLFrameBuffer::Opt opt = {m_res,GL_RG16_SNORM,GL_LINEAR};
 		m_fb1 = GLFrameBuffer(opt);
 		m_fb2 = GLFrameBuffer(opt);
 		m_jfPassCountOrig = ceil(glm::log2((float) fmax(res.x,res.y)))+1;
@@ -99,7 +100,7 @@ public:
 				glDrawElements(GL_TRIANGLES,glMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 			}
 
-			if (m_jfPassCount %2==0) {
+			if (m_jfPassCount %2==1) {
 				// blit into fbJFto
 				glBlitNamedFramebuffer(m_fb2.getFBO(),m_fb1.getFBO(),
 					0,0,m_res.x,m_res.y,0,0,m_res.x,m_res.y,

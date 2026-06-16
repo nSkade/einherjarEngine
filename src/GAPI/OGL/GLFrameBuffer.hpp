@@ -46,6 +46,16 @@ public:
 		destruct();
 	}
 
+	void resize(ivec2 res) {
+		res=max(ivec2(1),res);
+		glBindTexture(GL_TEXTURE_2D, m_tCol);
+		glTexImage2D(GL_TEXTURE_2D, 0, m_internalformat, res.x, res.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glBindTexture(GL_TEXTURE_2D, m_tDep);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, res.x, res.y, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+		glBindTexture(GL_TEXTURE_2D,0);
+		m_res=res;
+	};
+
 	GLuint getFBO() { return m_fbo; };
 	GLuint getTexCol() { return m_tCol; };
 	GLuint getTexDep() { return m_tDep; };
@@ -88,6 +98,7 @@ private:
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_res.x, m_res.y, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_tDep, 0);
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
+		glBindTexture(GL_TEXTURE_2D,0);
 	}
 	void destruct() {
 		glDeleteTextures(1,&m_tCol);

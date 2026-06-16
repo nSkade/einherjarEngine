@@ -25,12 +25,17 @@ ehj::Timer t1;
 	static float time2 = 0.;
 	if (m_opt.path.length()>0 || m_opt.data) {
 		unsigned char* data = nullptr;
+		float* dataf = nullptr;
 		if (m_opt.data) {
 			data = m_opt.data;
 			width = m_opt.width; height=m_opt.height; nrChannels=m_opt.nrChannels;
 		}
-		else
-			data = stbi_load(m_opt.path.c_str(), &width, &height, &nrChannels, 0); //TODO free mem
+		else {
+			if(stbi_is_hdr(m_opt.path.c_str()))
+				dataf = stbi_loadf(m_opt.path.c_str(),&width,&height,&nrChannels,0);
+			else
+				data = stbi_load(m_opt.path.c_str(), &width, &height, &nrChannels, 0); //TODO free mem
+		}
 		if (profile) {
 			//std::cout << "stbi load in in: " << t1.endTimer() << "ms\n"; t1.startTimer();
 			time+=t1.endTimer();
@@ -45,14 +50,24 @@ ehj::Timer t1;
 		if (nrChannels==3)
 			channels = GL_RGB;
 
-		glTexImage2D(GL_TEXTURE_2D, 0, m_opt.internalformat, m_res.x, m_res.y,
-					0, channels, GL_UNSIGNED_BYTE, data);
+		if (data)
+			glTexImage2D(GL_TEXTURE_2D, 0, m_opt.internalformat, m_res.x, m_res.y,
+						0, channels, GL_UNSIGNED_BYTE, data);
+		else if (dataf)
+			glTexImage2D(GL_TEXTURE_2D, 0, m_opt.internalformat, m_res.x, m_res.y,
+						0, channels, GL_FLOAT, dataf);
+		else
+			throw "GLTexture Image not loaded";
 		if (profile) {
 			time2=t1.endTimer();
 			std::cout << "gpu upload time: " << time2 << "ms\n"; t1.startTimer();
 			//time2+=t1.endTimer();
 			//std::cout << "total gpu upload time: " << time2 << "ms\n"; t1.startTimer();
 		}
+		if (data)
+			delete[] data;
+		if (dataf)
+			delete[] dataf;
 	} else if (m_opt.width > 0 && m_opt.height > 0) {
 		//TODO GL_RGB and GL_FLOAT
 		glTexImage2D(GL_TEXTURE_2D, 0, m_opt.internalformat, m_opt.width, m_opt.height,

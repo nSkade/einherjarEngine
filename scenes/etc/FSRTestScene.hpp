@@ -114,8 +114,8 @@ public:
 
 		//glpEASU.bind();
 
-		GPUTimer fragSTimer;
-		GPUTimer fsrTimer;
+		GLGPUTimer fragSTimer;
+		GLGPUTimer fsrTimer;
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();

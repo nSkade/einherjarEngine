@@ -34,7 +34,8 @@ void GLVertexBuffer::bind(uint32_t bindingIndex) {
 	//	++MPC;
 	//if (m_MP & ehj::Mesh::MP_UV)
 	//	++MPC;
-	
+
+#if 0
 	uint32_t MPC = 3;
 	if (m_VP & VertexData::VP_NRM)
 		MPC += 3;
@@ -98,10 +99,80 @@ void GLVertexBuffer::bind(uint32_t bindingIndex) {
 
 	//
 	glBindVertexArray(m_VAO);
+#endif
+#if 1 // aligned always vec4
+	uint32_t MPC = 4;
+	if (m_VP & VertexData::VP_NRM)
+		MPC += 4;
+	if (m_VP & VertexData::VP_COL)
+		MPC += 4;
+	if (m_VP & VertexData::VP_UV)
+		MPC += 4;
+	if (m_VP & VertexData::VP_TAN)
+		MPC += 4;
+
+	glVertexArrayVertexBuffer(m_VAO,m_vaoBindingPoint,m_VBO,0,sizeof(float)*MPC);
+	//glVertexArrayVertexBuffer(m_VAO,m_vaoBindingPoint,m_VBO,0,sizeof(float)*Dim*MPC);
+
+
+	// position
+	glEnableVertexArrayAttrib(m_VAO, m_attribPos);
+	glVertexArrayAttribFormat(m_VAO, m_attribPos, 4, GL_FLOAT, GL_FALSE, 0);
+	glVertexArrayAttribBinding(m_VAO, m_attribPos, m_vaoBindingPoint);
+
+	int offset = 4 * sizeof(float);
+
+	if (m_VP & VertexData::VP_NRM) {
+		glEnableVertexArrayAttrib(m_VAO, m_attribNrm);
+		glVertexArrayAttribFormat(m_VAO, m_attribNrm, 4, GL_FLOAT, GL_FALSE, offset);
+		glVertexArrayAttribBinding(m_VAO, m_attribNrm, m_vaoBindingPoint);
+		offset += 4 * sizeof(float);
+	} else {
+		glDisableVertexArrayAttrib(m_VAO, m_attribNrm);
+		//m_attribNrm=-1; //TODO do this?
+	}
+
+	if (m_VP & VertexData::VP_COL) {
+		glEnableVertexArrayAttrib(m_VAO, m_attribCol);
+		glVertexArrayAttribFormat(m_VAO, m_attribCol, 4, GL_FLOAT, GL_FALSE, offset);
+		glVertexArrayAttribBinding(m_VAO, m_attribCol, m_vaoBindingPoint);
+		offset += 4 * sizeof(float);
+	} else {
+		glDisableVertexArrayAttrib(m_VAO, m_attribCol);
+		//m_attribCol=-1; //TODO do this?, see glBindAttribLocation(glp.getID(),glMesh.getAttribCol(),"vCol");
+		//TODO just use layout(location... instead
+	}
+
+	if (m_VP & VertexData::VP_UV) {
+		glEnableVertexArrayAttrib(m_VAO, m_attribUV);
+		glVertexArrayAttribFormat(m_VAO, m_attribUV, 4, GL_FLOAT, GL_FALSE, offset);
+		glVertexArrayAttribBinding(m_VAO, m_attribUV, m_vaoBindingPoint);
+		offset += 4 * sizeof(float);
+	} else {
+		glDisableVertexArrayAttrib(m_VAO, m_attribUV);
+		//m_attribUV=-1; //TODO do this?,
+	}
+
+	if (m_VP & VertexData::VP_TAN) {
+		glEnableVertexArrayAttrib(m_VAO, m_attribTan);
+		glVertexArrayAttribFormat(m_VAO, m_attribTan, 4, GL_FLOAT, GL_FALSE, offset);
+		glVertexArrayAttribBinding(m_VAO, m_attribTan, m_vaoBindingPoint);
+	} else {
+		glDisableVertexArrayAttrib(m_VAO, m_attribTan);
+		//m_attribUV=-1; //TODO do this?,
+	}
+
+	//
+	glBindVertexArray(m_VAO);
+#endif
 }
 
 uint32_t GLVertexBuffer::getVAO() {
 	return m_VAO;
+}
+
+uint32_t GLVertexBuffer::getVBO() {
+	return m_VBO;
 }
 
 int32_t GLVertexBuffer::getAttribPos() const {

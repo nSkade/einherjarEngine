@@ -1,3 +1,7 @@
 [submodule "lib/FidelityFX-FSR2-OpenGL"]
 	path = lib/FidelityFX-FSR2-OpenGL
 	url = https://github.com/JuanDiegoMontoya/FidelityFX-FSR2-OpenGL
+[submodule "lib/tinybvh"]
+	path = lib/tinybvh
+	url = https://github.com/nSkade/tinybvh
+	branch = dev

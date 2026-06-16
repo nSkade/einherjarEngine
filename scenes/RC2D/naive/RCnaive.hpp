@@ -7,7 +7,7 @@
 #include <Input/GLFW/GLFWKeyboardCache.hpp>
 #include <Input/GLFW/GLFWMouseCache.hpp>
 
-#include "JFA.hpp"
+#include "../utils/JFA2D.hpp"
 
 using namespace ehj;
 using namespace glm;
@@ -75,11 +75,12 @@ int run(void)
  
 	ehj::SSMesh mesh;
 	mesh.toTriangles();
-	GLMesh glMesh(mesh, GL_DYNAMIC_DRAW);
-	glMesh.bind(0);
+	mesh.assembleVertexBuffer();
 
-	glBindVertexArray(glMesh.getVAO());
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh.getEBO());
+	GLVertexBuffer glVb(mesh.m_vertexData);
+	GLMesh glMesh(mesh, GL_DYNAMIC_DRAW);
+	glVb.bind(0);
+	glMesh.bind();
 
 	//TODOf add pencil and dynamic objects abstraction that vanilla RC uses
 
@@ -90,20 +91,20 @@ int run(void)
 	};
 	GLProgram glpPencil;
 	createPass(glpPencil,
-		"scenes/RC2D/ssq.vs",
-		"scenes/RC2D/pencil.fs"
+		"scenes/RC2D/utils/ssq.vs",
+		"scenes/RC2D/utils/pencil.fs"
 	);
 	
 	GLProgram glpDO; // dynamic objects
 	createPass(glpDO,
-		"scenes/RC2D/ssq.vs",
-		"scenes/RC2D/dynamicObj.fs"
+		"scenes/RC2D/utils/ssq.vs",
+		"scenes/RC2D/utils/dynamicObj.fs"
 	);
 	
 	//glfwGetFramebufferSize(window, &width, &height);
 	ivec2 prevRes = {width,height};
 	
-	JFA jfa(prevRes,glMesh);
+	JFA2D jfa(prevRes,glVb);
 	//GLProgram glpJumpFlood;
 	//createPass(glpJumpFlood,
 	//	"scenes/RC2D/ssq.vs",
@@ -112,8 +113,8 @@ int run(void)
 
 	GLProgram glpRCnaive;
 	createPass(glpRCnaive,
-		"scenes/RC2D/ssq.vs",
-		"scenes/RC2D/naive.fs"
+		"scenes/RC2D/utils/ssq.vs",
+		"scenes/RC2D/naive/naive.fs"
 	);
 
 	glm::mat4 pvm = glm::ortho(-1.f,1.f,-1.f,1.f);

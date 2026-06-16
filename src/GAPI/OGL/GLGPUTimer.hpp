@@ -2,7 +2,7 @@
 
 #include <glad/glad.h>
 
-class GPUTimer {
+class GLGPUTimer {
 	
 public:
 	void start();

@@ -1,4 +1,4 @@
-#include "GAPI/OGL/GPUTimer.hpp"
+#include "GAPI/OGL/GLGPUTimer.hpp"
 #include "suCMN.hpp"
 #include <suOGL.hpp>
 
@@ -6,12 +6,11 @@
 #include <Input/GLFW/GLFWMouse.hpp>
 #include <Input/GLFW/GLFWKeyboardCache.hpp>
 
-
 using namespace ehj;
 using namespace glm;
 
-#define SCENETYPE PathTracingScene
-class PathTracingScene : IScene {
+#define SCENETYPE PTspheresFragScene
+class PTspheresFragScene : IScene {
 public:
 	FreeFlyCamera m_cam;
 	Clock m_clock;
@@ -81,7 +80,7 @@ int run(void)
 
 	GLProgram glpPP;
 	glpPP.addSourceFromFile("shaders/ssq.vs");
-	glpPP.addSourceFromFile(EHJ_THIS_FOLDER()+"pp.fs");
+	glpPP.addSourceFromFile(EHJ_THIS_FOLDER()+"../../"+"pp.fs");
 
 	glpPP.createProgram();
 	glpPP.bind();
@@ -117,7 +116,7 @@ int run(void)
 	GLFrameBuffer fbr2(prevRes);
 	bool ping = true;
 
-	GPUTimer gpuTimer;
+	GLGPUTimer gpuTimer;
 
 	float time = 0.;
 	int frame = 0;
@@ -134,7 +133,7 @@ int run(void)
 				suc = glProg.addSourceFromFile(EHJ_THIS_FOLDER()+"pt.fs");
 				glProg.createProgram();
 
-				suc &= glProg.addSourceFromFile(EHJ_THIS_FOLDER()+"pp.fs");
+				suc &= glProg.addSourceFromFile(EHJ_THIS_FOLDER()+"../"+"pp.fs");
 				glpPP.createProgram();
 				frame = 0;
 			}
@@ -203,19 +202,6 @@ int run(void)
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
 		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// accumulate
-//		if (ping) {
-//			glBlitNamedFramebuffer(fbr2.getFBO(),0,
-//				0,0,prevRes.x,prevRes.y,
-//				0,0,width,height,
-//				 GL_COLOR_BUFFER_BIT,GL_LINEAR);
-//		} else {
-//			glBlitNamedFramebuffer(fbr1.getFBO(),0,
-//				0,0,prevRes.x,prevRes.y,
-//				0,0,width,height,
-//				 GL_COLOR_BUFFER_BIT,GL_LINEAR);
-//		}
 
 		glpPP.bind();
 		//PP

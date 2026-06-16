@@ -14,7 +14,7 @@ layout(binding=2) buffer Counter {
 	uint count;
 };
 
-layout(binding=3) buffer Indirect {
+layout(std430, binding=3) buffer Indirect {
 	EHJSD_DrawElementsIndirectCommand cmd;
 };
 

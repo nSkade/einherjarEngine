@@ -43,7 +43,7 @@ public:
 		glFBshadowOpt.res = ivec2(1024*4,1024*4);
 		GLFrameBuffer glFBshadow(glFBshadowOpt);
 
-		GPUTimer fragSTimer;
+		GLGPUTimer fragSTimer;
 
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
@@ -58,6 +58,7 @@ public:
 
 		m_cam.setPos({0.,0.,0.});
 
+		glfwSwapInterval(0);
 		GLFWfpsLimiter m_fpsLimiter;
 		
 		while (m_glWindow.stillOpen()) {
@@ -77,14 +78,17 @@ public:
 					suc = sucTmp;
 				}
 				if (!suc) {
-					m_glWindow.pollInput(); // TODO check esc close window
 					m_fpsLimiter.wait();
+					m_glWindow.pollInput(); // TODO check esc close window
 					continue;
 				}
 			}
 
 			float deltaTime = m_clock.update();
 			time += deltaTime;
+			
+			m_fpsLimiter.wait();
+			m_glWindow.pollInput(); //TODO polling should happen during wait?
 			
 			m_cam.update(deltaTime);
 
@@ -166,9 +170,6 @@ public:
 			//fragSTimer.print();
 
 			m_glWindow.swapBuffers();
-
-			m_glWindow.pollInput(); //TODO polling should happen during wait?
-			m_fpsLimiter.wait();
 		}
 		
 		return 0;

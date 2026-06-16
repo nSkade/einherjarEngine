@@ -78,7 +78,8 @@ public:
 		}
 	#endif
 		
-		ehj::Mesh mesh("models/monkey.obj");
+		//ehj::Mesh mesh("models/monkey.obj");
+		ehj::Mesh mesh("models/unitCube.obj");
 		//ehj::Mesh mesh("myModels/cornellBoxObj.obj");
 		//ehj::Mesh mesh("myModels/sponza/obj/Sponza.obj");
 
@@ -100,7 +101,7 @@ public:
 		glp.createProgram();
 		glp.bind();
 
-		GPUTimer fragSTimer;
+		GLGPUTimer fragSTimer;
 
 		//glLineWidth(1.0f);
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

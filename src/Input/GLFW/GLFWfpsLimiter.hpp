@@ -12,7 +12,8 @@ public:
 	GLFWfpsLimiter(uint32_t fps) : FPSLimiter(fps) {};
 	static uint32_t getRefreshRate() {
 		GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-		uint32_t refreshRate = glfwGetVideoMode(monitor)->refreshRate;
+		// add 2 digit prime to avoid drifting into blanc interval which results in half fps on windowed
+		uint32_t refreshRate = glfwGetVideoMode(monitor)->refreshRate + 13;
 		return refreshRate;
 	}
 private:

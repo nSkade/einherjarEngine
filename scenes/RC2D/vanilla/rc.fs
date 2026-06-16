@@ -94,8 +94,7 @@ vec4 raymarch(vec2 uv) {
 	vec2  probeCenter = (probeRelativePosition + 0.5) * probeSpacing;
 	vec2  probeCenterNormalized = probeCenter / u_resolution;
 	
-	float oneOverRayCount = 1.0 / float(rayCount);
-	float tauOverRayCount = 3.141592 * 2. * oneOverRayCount;
+	float tauOverRayCount = 3.141592 * 2. * 1.0 / float(rayCount);
 	float angleStepSize = tauOverRayCount; //TODO
 	
 	vec4 radiance = vec4(0.0);
@@ -134,7 +133,13 @@ vec4 raymarch(vec2 uv) {
 			
 			if (dist <= 0.0001) { //TODO improve using pixel dist
 				vec4 s = texture(u_tex, sampleUv);
+#define HEAT_MAP 0
+#if HEAT_MAP
+				e.a += vec4(vec4(s.rgb * u_lightStr,s.a) / (1.+distTotal)).a;
+				e.r += float(j)/float(u_raySteps);
+#else
 				e += vec4(s.rgb * u_lightStr,s.a) / (1.+distTotal);
+#endif
 				break;
 			}
 		}
@@ -152,7 +157,12 @@ vec4 raymarch(vec2 uv) {
 
 			vec4 upperSample = texture(u_texPrev,(upperPos + offset) / u_resolution);
 
+#if HEAT_MAP
+			e.a += vec4(upperSample.rgb, upperSample.a).a;
+			e.g += float(1.)/10.;
+#else
 			e += vec4(upperSample.rgb, upperSample.a);
+#endif
 		}
 
 		radiance += e;
@@ -165,11 +175,10 @@ vec4 raymarch(vec2 uv) {
 	//if (u_cascade==0)
 		radiance.rgb *= 1.+9.*(1.-u_rayNoise);
 	return radiance;
-	//return vec4(radiance * oneOverRayCount,1.);
 }
 
 void main() {
-	vec2 uv = gl_FragCoord.xy/u_resolution.xy; //texVp/u_resolution;
+	vec2 uv = gl_FragCoord.xy/u_resolution.xy;
 	
 	if (u_viewPass==1) {
 		color = texture(u_texJumpFlood,uv);
@@ -182,9 +191,6 @@ void main() {
 			color = light;
 		else
 			color = raymarch(uv);
-		// srgb
-		//TODO srgb introduces heavy banding on dark areas, they get too bright too quickly, find fix, GL_RGBA32F doesnt fix this
-		//color.rgb = pow(color.rgb,vec3(1.0/2.2));
 		color.rgb = pow(color.rgb,vec3(1.0/1.6));
 	} else
 		color = raymarch(uv);

@@ -212,6 +212,11 @@ bool GLProgram::addSourceFromFileRecursive(std::string shaderPath, GLenum shader
 	int fileID=0;
 	std::vector<std::string> fileNames;
 	resolveInclude(shaderPath,0,&fileID,&outString,&fileNames);
+
+	//std::cout << "GLProgram::addSourceFromFileRecursive resolved start" << std::endl;
+	//std::cout << outString << std::endl;
+	//std::cout << "GLProgram::addSourceFromFileRecursive resolved end" << std::endl;
+
 	if (!addSourceFromString(outString,shaderType,shaderPath)) {
 		int i=0;
 		for (auto& f : fileNames) {

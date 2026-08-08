@@ -9,9 +9,37 @@ const float PI = 3.14159265359;
 const float inf=1./0.;
 float gridT=0.03;
 float scale = 3.;
+vec2 pos = vec2(1.);
 //OPTIONS
 
 float bounce(float t), tri(float t), bell(float t), pop(float t), tap(float t), pulse(float t), spike(float t), instant(float t), linear(float t), inQuad(float t), outQuad(float t), inOutQuad(float t), outInQuad(float t), inCubic(float t), outCubic(float t), inOutCubic(float t), outInCubic(float t), inQuart(float t), outQuart(float t), inOutQuart(float t), outInQuart(float t), inQuint(float t), outQuint(float t), inOutQuint(float t), outInQuint(float t), inExpo(float t), outExpo(float t), inOutExpo(float t), outInExpo(float t), inCirc(float t), outCirc(float t), inOutCirc(float t), outInCirc(float t), outBounce(float t), inBounce(float t), inOutBounce(float t), outInBounce(float t), inSine(float t), outSine(float t), inOutSine(float t), outInSine(float t), outElastic(float t), inElastic(float t), inOutElastic(float t), outInElastic(float t), inBack(float t), outBack(float t), inOutBack(float t), outInBack(float t), popElastic(float t), tapElastic(float t), pulseElastic(float t), impulse(float t,float damp);
+
+//TODO move out
+
+float smax(float x, float y) {
+	return (x+y+abs(x-y))/2.;
+}
+
+float smax(float x, float y,float l) {
+	return (x+y+sqrt(pow(x-y,2.)+l))/2.;
+}
+
+// inverted interpolation
+float smax2(float x, float y,float l) {
+	return (x+y+sqrt(x*x+y*y - l*x*y))/2.;
+}
+
+// subtractive
+float smax3(float x, float y,float l) {
+	return (x+y-1)/2. + 0.5 * log(pow(2,x-y)+pow(2,y-x) + sqrt(pow(4,x-y) + pow(4,y-x)-l));
+}
+
+// less height most recommended one
+float smax4(float x, float y,float l) {
+	return max(x,y)+pow(max(l-abs(x-y),0.),2.)/(4*l);
+}
+
+// more smooth max funcs variations at https://www.youtube.com/watch?v=6Qb6QtC6QMs&t=454s
 
 vec3 func(vec2 uv) { float x=uv.x,y=uv.y,f=inf,f2=inf,f3=inf;
 	// FUNC HERE
@@ -23,7 +51,13 @@ vec3 func(vec2 uv) { float x=uv.x,y=uv.y,f=inf,f2=inf,f3=inf;
 	//f=sign(sin(b*4.*PI))*impulse(b2,1.);
 
 	f = pow(x,1./2.2);
-	f = sin(x*10.*(1.+sin(u_time)*.5));
+	f2 = sin(x*10.);
+	//f2 = sin(x*10.*(1.+sin(u_time)*.5));
+
+	//f3 = smax(f,f2);
+	f3 = smax(f,f2,abs(sin(u_time)*2.));
+	f2 = smax4(f,f2,abs(sin(u_time)*2.));
+	//f3=f2=0.;
 
 	// FUNC HERE
 	// FUNC HERE
@@ -41,7 +75,7 @@ void main () {
 	st.x *= float(u_resolution.x)/u_resolution.y;
 	vec2 uv = st;
 	vec3 c=vec3(0.);
-	uv = uv*scale-vec2(scale*.5);
+	uv = uv*scale-vec2(scale*.5) + pos;
 	float g = grid(uv);
 	c=plot(uv);
 	//if (length(c) == 0.)

@@ -3,6 +3,11 @@
 #include "../src/Input/GLFW/GLFWMouse.hpp"
 //#include "../src/Input/GLFW/GLFWCallbackTest.hpp"
 #include "../src/Input/GLFW/GLFWKeyboardCache.hpp"
+#include "suCMN.hpp"
+#include <efsw/efsw.hpp>
+#include <imgui.h>
+
+#include <Utility/FileWatcher.hpp>
 
 using namespace ehj;
 
@@ -78,12 +83,12 @@ public:
 		
 		GLProgram glpMain;
 		
-		ehj::SSMesh mesh;
-		mesh.toTriangles();
-		OGLMesh oglMesh(mesh, GL_DYNAMIC_DRAW);
-		oglMesh.bind(0);
-
-		glBindVertexArray(oglMesh.getVAO());
+		ehj::SSMesh ssm; {
+			ssm.toTriangles();
+			ssm.assembleVertexBuffer();
+		}
+		GLVertexBuffer ssmGlVb(ssm.m_vertexData); ssmGlVb.bind(0);
+		GLMesh ssmGl(ssm, GL_DYNAMIC_DRAW); ssmGl.bind();
 		
 		//glpMain.loadProgramFromFolder("shaders");
 		glpMain.addSourceFromFile("shaders/basic_v.vert");
@@ -103,22 +108,30 @@ public:
 
 		float time = 0.0f;
 
-		glBindVertexArray(oglMesh.getVAO());
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oglMesh.getEBO());
-
 		//Timer frameTimer;
 		GLFWfpsLimiter fpsLimiter;
 		bool fps30 = true;
 		glBindFramebuffer(GL_FRAMEBUFFER,0);
-		
-		while (!glfwWindowShouldClose(m_pWindow))
-		{
-			if (GLFWKeyboardCache::keyPressed(IBCodes::KK_KEY_R)) {
-				glUseProgram(0);
-				glpMain.addSourceFromFile("shaders/basic_v.vert");
-				glpMain.addSourceFromFileRecursive(std::string("scenes/plotGlsl2D/")+"grid.frag");
 
-				glpMain.createProgram();
+		ehj::FileWatcher glpMainFW(EHJ_THIS_FOLDER());
+		
+		while (!glfwWindowShouldClose(m_pWindow)) {
+			{
+				static bool recomp = false;
+				static float timeLastCheck = 0.;
+				if (glpMainFW.CheckAndReset()) {
+					timeLastCheck = time;
+					recomp = true;
+				}
+				if (recomp && time - timeLastCheck > 1.) {
+				//if (GLFWKeyboardCache::keyPressed(IBCodes::KK_KEY_R)) {
+					glUseProgram(0);
+					glpMain.addSourceFromFile("shaders/basic_v.vert");
+					glpMain.addSourceFromFileRecursive(std::string("scenes/plotGlsl2D/")+"grid.frag");
+
+					glpMain.createProgram();
+					recomp = false;
+				}
 			}
 			if (GLFWKeyboardCache::keyPressed(IBCodes::KK_KEY_F)) {
 				fps30 = !fps30;
@@ -161,7 +174,10 @@ public:
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			//glDepthMask(GL_TRUE);
 			//fragSTimer.start();
-				glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
+				ssmGlVb.bind(0);
+				ssmGl.bind();
+				ssmGl.draw();
+				//glDrawElements(GL_TRIANGLES,oglMesh.getEBOsize(),GL_UNSIGNED_INT,0);
 			//fragSTimer.end();
 
 			ImGui_ImplOpenGL3_NewFrame();
@@ -177,6 +193,10 @@ public:
 				//ImGui::TextUnformatted(fps.c_str());
 				//ImGui::TextUnformatted(frameTime.c_str());
 				//std::string fsrTime = "ms frag: " + std::to_string(fsrTimer.getMS());
+				{
+					std::string t = std::to_string(fpsLimiter.getLimit());
+					ImGui::TextUnformatted(t.c_str());
+				}
 				ImGui::End();
 			}
 			ImGui::Render();

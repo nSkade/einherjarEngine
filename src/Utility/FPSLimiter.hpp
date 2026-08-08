@@ -23,6 +23,7 @@ public:
 		m_tp = std::chrono::high_resolution_clock::now();
 	};
 	void setLimit(uint32_t fpsLimit) { m_fpsLimit = fpsLimit; calcInterval(); };
+	int getLimit() { return m_fpsLimit; };
 	
 	void wait() {
 #if 0 // active spinlock

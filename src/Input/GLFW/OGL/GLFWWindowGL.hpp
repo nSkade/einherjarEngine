@@ -25,7 +25,7 @@ struct GLFWWindowGL {
 	void setup(ConfigFile* configFile, std::string windowTitle, void(*framebuffer_size_callback)(GLFWwindow*, int, int)) {
 		if (!glfwInit())
 			exit(EXIT_FAILURE);
-		
+
 		glfwSetErrorCallback(error_callback);
 
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -47,6 +47,7 @@ struct GLFWWindowGL {
 		//	glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 
 		m_pWindow = glfwCreateWindow(m_winRes.x,m_winRes.y, windowTitle.c_str(), NULL, NULL);
+		glfwMakeContextCurrent(m_pWindow);
 		glfwSetWindowPos(m_pWindow,m_winPos.x,m_winPos.y);
 		ehjSetGLFWicon(m_pWindow);
 
@@ -67,7 +68,6 @@ struct GLFWWindowGL {
 		glfwSetMouseButtonCallback(m_pWindow, m_mouse->mouse_button_callback);
 		glfwSetKeyCallback(m_pWindow, m_kb->key_callback);
 
-		glfwMakeContextCurrent(m_pWindow);
 		gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 		ehj_gl_err_callback();
 		glViewport(0,0, m_winRes.x, m_winRes.y);

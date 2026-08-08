@@ -33,6 +33,7 @@ find_package(RapidObj CONFIG REQUIRED)
 find_package(Stb REQUIRED)
 find_package(fastgltf CONFIG REQUIRED)
 find_package(jsoncpp CONFIG REQUIRED)
+find_package(efsw CONFIG REQUIRED)
 
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -49,16 +50,6 @@ LINK_DIRECTORIES(/)
 
 SET(CMAKE_COLOR_MAKEFILE OFF)
 
-option(ENABLE_ASAN "Enable AddressSanitizer for leak tracking" ON)
-
-if(ENABLE_ASAN)
-	target_compile_options(ehjEngine PRIVATE -fsanitize=address -g)
-	target_link_options(ehjEngine PRIVATE -fsanitize=address)
-	target_compile_options(ehjEngineMY PRIVATE -fsanitize=address -g)
-	target_link_options(ehjEngineMY PRIVATE -fsanitize=address)
-endif()
-
-
 # src files
 file(GLOB_RECURSE einherjarEngine_SRC
 	"src/*.cpp"
@@ -67,6 +58,8 @@ file(GLOB_RECURSE einherjarEngine_SRC
 file(GLOB_RECURSE scene_SRC "scenes/*.cpp")
 file(GLOB_RECURSE myScene_SRC "myScenes/*.cpp")
 list(FILTER myScene_SRC EXCLUDE REGEX "/no-build/")
+list(FILTER scene_SRC EXCLUDE REGEX "scenes/main.cpp")
+list(FILTER myScene_SRC EXCLUDE REGEX "myScenes/main.cpp")
 
 foreach(source_file ${einherjarEngine_SRC})
 	if(source_file MATCHES "libImpl.cpp$")
@@ -94,8 +87,18 @@ add_executable (ehjEngine
 add_executable (ehjEngineMY
 	${ehjSourceFiles}
 	"myScenes/main.cpp"
+	${scene_SRC}
 	${myScene_SRC}
 )
+
+option(ENABLE_ASAN "Enable AddressSanitizer for leak tracking" ON)
+
+if(ENABLE_ASAN)
+	target_compile_options(ehjEngine PRIVATE -fsanitize=address -g)
+	target_link_options(ehjEngine PRIVATE -fsanitize=address)
+	target_compile_options(ehjEngineMY PRIVATE -fsanitize=address -g)
+	target_link_options(ehjEngineMY PRIVATE -fsanitize=address)
+endif()
 
 set_property(TARGET ehjEngine PROPERTY OUTPUT_NAME einherjarEngine)
 set_property(TARGET ehjEngineMY PROPERTY OUTPUT_NAME einherjarEngineMY)
@@ -126,6 +129,7 @@ set(linkedLibraries
 	fastgltf::fastgltf
 
 	JsonCpp::JsonCpp
+	efsw::efsw
 )
 
 if(WIN32)

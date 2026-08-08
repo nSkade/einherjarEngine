@@ -1,7 +1,6 @@
 #include "GAPI/OGL/GLMesh.hpp"
 
-#include "../bvh/bvh.hpp"
-//tinybvh::BVH4_GPU
+#include "../scenes/PathTracing/bvh/bvh.hpp"
 
 #include <GLFW/glfw3.h>
 #include <glad/glad.h>
@@ -10,17 +9,17 @@
 #include <Input/GLFW/GLFWKeyboardCache.hpp>
 #include <Utility/ConfigFile.hpp>
 
-#include "../../EnvirTexScene/GLEntity.hpp"
+#include "../scenes/EnvirTexScene/GLEntity.hpp"
 #include "suCMN.hpp"
 
-#include "../../voxelizer/GLTexture3D.hpp"
+#include "../scenes/voxelizer/GLTexture3D.hpp"
 
 using namespace ehj;
 
-#define SCENETYPE EnvirPThybridTexScene
-class EnvirPThybridTexScene : IScene {
+#define SCENETYPE EnvirPTcooktorranceScene
+class EnvirPTcooktorranceScene : IScene {
 public:
-	~EnvirPThybridTexScene() {}
+	~EnvirPTcooktorranceScene() {}
 	void setup() {
 		m_glWindow.setup(&m_configFile, "ehjE EnvirPTScene");
 	}
@@ -37,16 +36,14 @@ public:
 		GLProgram glpRaster;
 		auto glpRasterbuild = [&]() -> bool {
 			bool r= glpRaster.addSourceFromFileRecursive(std::string("scenes/EnvirTexScene/")+"v.vert");
-			r&= glpRaster.addSourceFromFileRecursive(EHJ_THIS_FOLDER()+"f.frag");
+			r&= glpRaster.addSourceFromFileRecursive(std::string("scenes/PathTracing/hybrid/")+"f.frag");
 			glpRaster.createProgram();
 			return r;
 		}; glpRasterbuild();
 
 		GLProgram glpRT;
 		auto glpRTbuild = [&]() -> bool {
-			//bool r= glpRT.addSourceFromFileRecursive(EHJ_THIS_FOLDER()+"bvhTest.comp");
-			//bool r= glpRT.addSourceFromFileRecursive(EHJ_THIS_FOLDER()+"../envir/"+"bvhPTimp.comp");
-			bool r= glpRT.addSourceFromFileRecursive(EHJ_THIS_FOLDER()+"bvhPTimpTex.comp");
+			bool r= glpRT.addSourceFromFileRecursive(EHJ_THIS_FOLDER()+"EnvirPTcooktorrance.comp");
 			glpRT.createProgram();
 			return r;
 		}; glpRTbuild();
@@ -54,7 +51,7 @@ public:
 		GLProgram glpPP;
 		auto glpPPbuild = [&]() -> bool {
 			bool r= glpPP.addSourceFromFile("shaders/ssq.vs");
-			r &= glpPP.addSourceFromFile(EHJ_THIS_FOLDER()+"ppHybrid.fs");
+			r &= glpPP.addSourceFromFile(std::string("scenes/PathTracing/hybrid/")+"ppHybrid.fs");
 			glpPP.createProgram();
 			return r;
 		}; glpPPbuild();
@@ -75,8 +72,22 @@ public:
 			glDepthFunc(GL_LESS);
 		}
 
-		m_cam.setPos({-6.7,.8,-.15});
-		m_cam.setDir({0.99,0.005,0.03});
+		//m_cam.setPos({-6.7,.8,-.15-.5});
+		//m_cam.setDir({0.99,0.005,0.03});
+		
+		//{
+		//	m_cam.setPos({-6.7,.8-.1,-.15-.6});
+		//	vec3 camdir = {0.99,0.15,0.03};
+		//	camdir = glm::normalize(camdir);
+		//	m_cam.setDir(camdir);
+		//}
+		
+		{
+			m_cam.setPos({-6.5091238,0.847330689,-0.813682377});
+			vec3 camdir = {0.996635854,0.00174527289,0.0819382817};
+			camdir = glm::normalize(camdir);
+			m_cam.setDir(camdir);
+		}
 
 		GLFrameBuffer::Opt fbRTopt;
 		fbRTopt.texturefilter=GL_NEAREST;

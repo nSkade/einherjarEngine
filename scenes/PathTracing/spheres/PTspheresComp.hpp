@@ -145,7 +145,7 @@ int run(void) {
 			glm::mat4 camPV = glm::scale(glm::mat4(1.f),glm::vec3(float(width)/height,1.,1.))*m_cam.getPV();
 			glUniformMatrix4fv(glpPT.getUnfLoc("u_m"),1,GL_TRUE,&camPV[0][0]);
 
-			//glDrawElements(GL_TRIANGLES,ssmGl.getEBOsize(),GL_UNSIGNED_INT,0);
+			//ssmGl.draw();
 
 			{ // dispatch compute thread for each pixel
 				ivec3 ls; // local work group size
@@ -175,7 +175,7 @@ int run(void) {
 				glBindTexture(GL_TEXTURE_2D,fbr1.getTexCol());
 			}
 
-			glDrawElements(GL_TRIANGLES,ssmGl.getEBOsize(),GL_UNSIGNED_INT,0);
+			ssmGl.draw();
 		}
 
 		gpuTimer.end();

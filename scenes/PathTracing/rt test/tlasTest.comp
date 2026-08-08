@@ -1,0 +1,145 @@
+#version 460
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+#include "../bvh/bvhTraverse.glsl"
+
+#include "tlasTraverse.glsl"
+
+// --- TLAS Buffers ---
+layout (std430, binding = 0) readonly buffer TLASNodes { BVHNode nodes[]; } tlasNodeData;
+layout (std430, binding = 1) readonly buffer TLASIndices { uint idx[]; } tlasIdxData;
+
+struct Instance {
+	mat4 transform;
+	mat4 invTransform;
+	vec4 aabbMin;
+	vec4 aabbMax;
+	uint dummy[8]; // Padding to 64 bytes
+	// dummy[0]  // objectType (0 = mesh, 1 = sphere)
+};
+
+layout (std430, binding = 2) readonly buffer InstanceBuffer { Instance inst[]; } instanceData;
+
+struct RRRT_vertex {
+	vec4 p;
+	vec4 n;
+	vec4 uv;
+	vec4 tan;
+};
+
+// --- BLAS Buffers ---
+layout (std430, binding = 3) readonly buffer I3 { BVHNode node[]; } blasNodeData;
+layout (std430, binding = 4) readonly buffer I4 { uint idx[]; } blasIdxData;
+layout (std430, binding = 5) readonly buffer I5 { RRRT_vertex tri[]; } blasTriData;
+
+// Instantiate the BLAS traversal function using Jacco's macro
+DEFINE_TRAVERSE_FUNCTION(traverse_ailalaine, blasNodeData.node, blasIdxData.idx, blasTriData.tri, .p.xyz)
+
+vec3 TransformPoint(vec3 p, mat4 invTransform) {
+	return (invTransform * vec4(p, 1.0)).xyz;
+}
+vec3 TransformVector(vec3 v, mat4 invTransform) {
+	return (invTransform * vec4(v, 0.0)).xyz;
+}
+
+// doesnt support non normalized rd
+vec2 sphIntersect0( in vec3 ro, in vec3 rd, float ra ) {
+	float b	= dot( ro, rd );
+	float c	= dot( ro, ro )	- ra*ra;
+	float h	= b*b -	c;
+	if(	h<0.0 )	return vec2(-1.0); // no intersection
+	h =	sqrt( h	);
+	return vec2( -b-h, -b+h	);
+}
+
+vec2 sphIntersect( in vec3 ro, in vec3 rd, float ra ) {
+	float a = dot( rd, rd );
+	float b = dot( ro, rd );
+	float c = dot( ro, ro ) - ra*ra;
+	float h = b*b - a*c;
+	if( h < 0.0 ) return vec2(-1.0); // no intersection
+	h = sqrt( h );
+	return vec2( -b - h, -b + h ) / a;
+}
+
+vec4 intersectInstance(const uint instIdx, const vec3 O, const vec3 D, const vec3 rD, float currentTMax)
+{
+	const Instance inst = instanceData.inst[instIdx];
+	const vec3 Oblas = TransformPoint(O, inst.invTransform);
+	const vec3 Dblas = TransformVector(D, inst.invTransform);
+	const uint objectType = uint(inst.dummy[0]);
+
+	vec4 hit = vec4(currentTMax, 0.0, 0.0, 0.0);
+
+	if (objectType == 0)
+	{
+		// 0 = Triangle Mesh BLAS
+		const vec3 rDblas = vec3(1.0 / Dblas.x, 1.0 / Dblas.y, 1.0 / Dblas.z);
+		vec4 blasHit = traverse_ailalaine(Oblas, Dblas, rDblas, currentTMax);
+		if (blasHit.x < currentTMax)
+		{
+			hit = blasHit;
+			uint primID = floatBitsToUint(hit.w) & 0xffffff;
+			hit.w = uintBitsToFloat(primID | (instIdx << 24));
+		}
+	}
+	else if (objectType == 1)
+	{
+		vec2 s = sphIntersect(Oblas,Dblas,1.);
+		
+		if (s.y > 0. && s.y < currentTMax) {
+			hit.x = s.y;
+			hit.y = 0.0;
+			hit.z = 0.0;
+			hit.w = uintBitsToFloat(0 | (instIdx << 24)); // primID = 0
+		}
+		if (s.x > 0. && s.x < currentTMax) {
+			hit.x = s.x;
+			hit.y = 0.0;
+			hit.z = 0.0;
+			hit.w = uintBitsToFloat(0 | (instIdx << 24)); // primID = 0
+		}
+	}
+	return hit;
+}
+
+DEFINE_TLAS_TRAVERSE_FUNCTION(traverse_tlas, tlasNodeData.nodes, tlasIdxData.idx, intersectInstance)
+
+layout(rgba32f, binding = 0) writeonly uniform image2D u_outImg;
+
+uniform vec2 u_resolution;
+uniform mat4 u_m;
+uniform mat4 u_invVP;
+uniform vec3 u_cPos;
+uniform float u_time;
+
+// ref https://github.com/jbikker/tinybvh/blob/0e4584287823252cf83f0e9cd072848bec5f79c5/kernels/raytracer.cl#L70
+void main() {
+	ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
+	ivec2 imgSize = imageSize(u_outImg);
+	if (texelCoord.x >= imgSize.x || texelCoord.y >= imgSize.y) return;
+
+	vec2 uv = (vec2(texelCoord) + 0.5) / u_resolution.xy;
+	vec2 ndc = uv * 2.0 - vec2(1.0);
+
+	mat4 invModel = inverse(u_m);
+	vec4 targetWorld = u_invVP * vec4(ndc.x, ndc.y, -1.0, 1.0);
+	targetWorld /= targetWorld.w;
+	
+	vec3 campos = (invModel * vec4(u_cPos, 1.0)).xyz;
+	vec3 camdir = normalize(targetWorld.xyz - u_cPos);
+	camdir = normalize((invModel * vec4(camdir, 0.0)).xyz);
+	vec3 rD = vec3(1.0) / camdir;
+
+	vec4 hit = traverse_tlas(campos, camdir, rD, 1e30f);
+
+	// Extract unpacked instance and primitive payload for subsequent shading steps
+	uint packedHit = floatBitsToUint(hit.w);
+	uint instIdx = packedHit >> 24;
+	uint primID = packedHit & 0xffffff;
+
+	vec4 color = vec4(hit.y, hit.z, 0.0, 1.0);
+	color = vec4(campos+camdir*hit.x,1.);
+	color = fract(color/100.);
+	imageStore(u_outImg, texelCoord, color);
+}

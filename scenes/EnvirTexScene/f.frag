@@ -19,7 +19,7 @@ in mat4 pv;
 out vec4 color;
 
 #include "brdf inl/LightDef.glsl"
-#include "brdf inl/BRDFcookTorrence.glsl"
+#include "brdf inl/BRDFcookTorrance.glsl"
 #include "brdf inl/blinnPhong.glsl"
 
 void main() {
@@ -76,8 +76,8 @@ void main() {
 		//color = vec4(blinnPhong(posV,camPos,l,mat),1.);
 	}
 
-	if (true) { // cook torrence brdf
-		color.rgb += BRDFcookTorrence(posV,camPos,l,mat);
+	if (true) { // cook torrance brdf
+		color.rgb += BRDFcookTorrance(posV,camPos,l,mat);
 	}
 
 	if (false) {
@@ -91,7 +91,7 @@ void main() {
 			//l2.d=vec3(1.,1.,0.);
 			l2.d=vec3(0.,-1.,0.);
 		}
-		color.rgb += BRDFcookTorrence(posV,camPos,l2,mat);
+		color.rgb += BRDFcookTorrance(posV,camPos,l2,mat);
 	}
 
 	{

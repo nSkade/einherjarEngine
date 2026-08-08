@@ -330,7 +330,7 @@ public:
 
 				ssmGlVb.bind(0);
 				ssmGl.bind();
-				glDrawElements(GL_TRIANGLES,ssmGl.getEBOsize(),GL_UNSIGNED_INT,0);
+				ssmGl.draw();
 			}
 			
 

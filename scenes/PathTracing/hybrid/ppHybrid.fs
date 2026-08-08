@@ -52,7 +52,8 @@ void main() {
 	if (true) { // tonemap
 		// Exposure adjustment
 		//color.rgb *= 0.1; // exposure with gamma correction leads to washed out image
-		color.rgb *= 0.5; // higher exposer is fine
+		//color.rgb *= 0.5; // higher exposer is fine
+		color.rgb *= 0.1;
 		
 		if(false) { // saturation, do rather not use
 			float saturation = 1.4;

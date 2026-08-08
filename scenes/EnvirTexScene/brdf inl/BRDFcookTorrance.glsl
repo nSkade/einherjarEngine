@@ -16,7 +16,7 @@ float distributionGGX(vec3 N, vec3 H, float roughness) {
 }
 
 float geometrySchlickGGX(vec3 N, vec3 omega, float roughness) {
-	float k = (roughness*roughness+2.0*roughness+1.0)/8.0;
+	float k = (roughness*roughness+2.0*roughness+1.0)/8.0; // from UE4, looked good for artists
 	float NW = max(dot(N,omega), 0.0);
 	float ret = NW / (NW*(1.0-k)+k);
 	return ret;
@@ -34,7 +34,7 @@ float geometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
  * @param pos world space pos of fragment
  * @param camPos 
 */
-vec3 BRDFcookTorrence(vec3 pos, vec3 camPos, Light l, Material m) {
+vec3 BRDFcookTorrance(vec3 pos, vec3 camPos, Light l, Material m) {
 	vec3 N=m.n;
 	vec3 L=normalize(l.p-pos);
 	vec3 V=camPos-pos; //vector world space pos to viewer

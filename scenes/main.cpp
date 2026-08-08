@@ -16,7 +16,9 @@
 //#include "PathTracing/envir/EnvirPathTracing.hpp"
 //#include "PathTracing/hybrid/EnvirPThybrid.hpp"
 //#include "PathTracing/hybrid/IBLtestScene.hpp"
-#include "PathTracing/hybrid/EnvirPThybridTex.hpp"
+//#include "PathTracing/hybrid/EnvirPThybridTex.hpp"
+#include "PathTracing/cookTorrance/EnvirPTcookTorrance.hpp"
+//#include "PathTracing/rt test/TlasTest.hpp"
 
 // rc
 //#include "RC2D/naive/RCnaive.hpp"
@@ -45,6 +47,7 @@
 int main(int argc, char** argv) {
 #ifdef EHJ_DBG
 	std::cout << "EHJ_DBG defined, running DEBUG mode.\n";
+	
 #endif
 	{
 	if (argv[0]) // set working directory to parent

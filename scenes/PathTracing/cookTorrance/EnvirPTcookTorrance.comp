@@ -203,7 +203,7 @@ vec3 getBlueNoise(vec2 uv, float bounce) {
 	vec3 offset = seed * vec3(
 		0.6180339887498949, // Golden Ratio
 		0.2469796037174670, // Plastic Constant / Silver Ratio variant
-		0.1591549430918953  // 1/2pi variant
+		0.1591549430918953	// 1/2pi variant
 	);
 	
 	return fract(baseNoise + offset);
@@ -227,6 +227,30 @@ struct Ray {
 	vec3 d;
 };
 
+
+vec2 sphIntersect( in vec3 ro, in vec3 rd, float ra ) {
+	float b	= dot( ro, rd );
+	float c	= dot( ro, ro )	- ra*ra;
+	float h	= b*b -	c;
+	if(	h<0.0 )	return vec2(-1.0); // no intersection
+	h =	sqrt( h	);
+	return vec2( -b-h, -b+h	);
+}
+
+#define ENG_NO_COLOR 0
+#define ENG_NO_BOUNCE_0 0
+#define ENG_NO_BOUNCE_2 0
+#define ENG_NO_BOUNCE_3 0
+#define ENG_NO_BOUNCE_8 0
+#define ENG_NO_COS 0
+#define ENG_NO_MAT 0
+
+#define ENG_LIGHT_SKY 1
+#define ENG_LIGHT_SUN 1
+#define ENG_LIGHT_MAT 1
+
+#include "BRDFcookTorrancePT.glsl"
+
 // traverse_ailalaine -> (dist,u,v,triIdx)
 vec3 shade(Ray r, int iter, vec2 uv, out float primHitdist) {
 	vec3 c = vec3(1.0); // Path throughput (starts at pure white)
@@ -235,12 +259,155 @@ vec3 shade(Ray r, int iter, vec2 uv, out float primHitdist) {
 	primHitdist = -1.;
 
 	Ray rr = r;
-	int bounces = 4;
+	int bounces = 3;
+#if ENG_NO_BOUNCE_0
+	bounces = 1;
+#elif ENG_NO_BOUNCE_2
+	bounces = 2;
+#elif ENG_NO_BOUNCE_3
+	bounces = 3;
+#elif ENG_NO_BOUNCE_8
+	bounces = 8;
+#endif
 	bool firstBounce = true;
 
 	for (int i = 0; i < bounces; ++i) {
-		// Find the closest geometry hit
+		// 1. Find the closest geometry hit
 		vec4 hit = traverse_ailalaine(rr.o, rr.d, vec3(1.0) / rr.d, 1e30f);
+
+		vec3 noiseVec = getBlueNoise(uv, float(i+iter*bounces));
+		vec3 rv = random_on_unit_sphere(noiseVec); 
+
+		{ // sphere refractive (Double-Sided with Fresnel Reflection)
+			vec3 sPos = vec3(-5.25, 0.25, -.65) * 200.; 
+			vec2 s = sphIntersect(rr.o - sPos, rr.d, 50.); 
+			
+			// Usually something like: float d = (s.x > 0.001) ? s.x : s.y; if (d > 0.0 && d < hit.x)
+			if (s.x > 0. && s.x < hit.x) { 
+				// 1. Enter the sphere (Air -> Glass)
+				vec3 pos = rr.o + rr.d * s.x; 
+				vec3 sNorm = alu_normalize(pos - sPos); 
+				
+				#if ENG_NO_MAT
+				vec3 diffuseDir = alu_normalize(sNorm + rv);
+				rr.d = diffuseDir;
+				rr = Ray(pos + rr.d * 0.001, rr.d);
+				continue;
+				#endif
+				
+				// Schlick's Fresnel Approximation
+				float ior = 1.6;
+				float f0 = (1.0 - ior) / (1.0 + ior);
+				f0 = f0 * f0;
+				float fresnel = f0 + (1.0 - f0) * pow(1.0 - max(dot(-rr.d, sNorm), 0.0), 5.0);
+
+				// Stochastic selection using Fresnel probability
+				if (noiseVec.x > fresnel) {
+					// --- REFRACTION ---
+					// Optional: Hardcoded attenuation. (For realism, look into Beer-Lambert Law: exp(-density * distance))
+					
+					#if !ENG_NO_COLOR
+						c *= vec3(0.5);
+					#endif
+					
+					// Use a temporary variable to avoid destroying rr.d
+					vec3 enterDir = refract(rr.d, sNorm, 1.0 / ior); 
+					
+					// Fallback if total internal reflection happens on entry
+					if (dot(enterDir, enterDir) == 0.0) {
+						rr.d = reflect(rr.d, sNorm);
+						rr.o = pos + rr.d * 0.001;
+						continue; // Safe to continue, we stay outside the sphere
+					}
+					
+					rr.d = enterDir;
+					rr.o = pos + rr.d * 0.001; // Nudge inside
+
+					// Find the exit point on the back wall
+					vec2 sInternal = sphIntersect(rr.o - sPos, rr.d, 50.);
+					if (sInternal.y > 0.) {
+						pos = rr.o + rr.d * sInternal.y;
+						sNorm = alu_normalize(pos - sPos); 
+						
+						// Exit the sphere (Glass -> Air)
+						vec3 exitDir = refract(rr.d, -sNorm, ior / 1.0);
+						
+						// If total internal reflection happens inside the sphere
+						if (dot(exitDir, exitDir) == 0.0) {
+							rr.d = reflect(rr.d, -sNorm);
+							// Ray is now inside the sphere. 
+							//TODOf main loop MUST be able to intersect from the inside (s.y) on the next bounce
+						} else {
+							rr.d = exitDir;
+						}
+						rr.o = pos + rr.d * 0.001; 
+					}
+				} else {
+					// REFLECTION
+					rr.d = reflect(rr.d, sNorm); 
+					rr.o = pos + rr.d * 0.001;
+				}
+				
+				continue;
+			}
+		}
+		//
+		//{ // sphere reflective
+		//	vec3 sPos = vec3(-5.4,0.25,1.4)*200.;
+		//	vec2 s = sphIntersect(rr.o - sPos,rr.d,50.);
+		//	if (s.x > 0. && s.x < hit.x) {
+		//		vec3 pos = rr.o + rr.d * s.x;
+		//		vec3 sNorm = alu_normalize(pos-sPos);
+		//		rr.d = reflect(rr.d, sNorm);
+		//		//e += vec3(4.*2.,2.,1.)*1.;
+		//		//c = vec3(1.);
+		//		#if ENG_NO_MAT
+		//		vec3 diffuseDir = alu_normalize(sNorm + rv);
+		//		rr.d = diffuseDir;
+		//		#endif
+		//		rr = Ray(pos + rr.d * 0.001, rr.d);
+		//		continue;
+		//	}
+		//}
+		//{ // sphere reflective
+		//	vec3 sPos = vec3(-5.4,1.,1.4)*200.;
+		//	vec2 s = sphIntersect(rr.o - sPos,rr.d,50.);
+		//	if (s.x > 0. && s.x < hit.x) {
+		//		vec3 pos = rr.o + rr.d * s.x;
+		//		vec3 sNorm = alu_normalize(pos-sPos);
+		//		rr.d = reflect(rr.d, sNorm);
+		//		//e += vec3(4.*2.,2.,1.)*1.;
+		//		//c = vec3(1.);
+		//		
+		//		#if ENG_NO_MAT
+		//		vec3 diffuseDir = alu_normalize(sNorm + rv);
+		//		rr.d = diffuseDir;
+		//		#endif
+		//		rr = Ray(pos + rr.d * 0.001, rr.d);
+		//		continue;
+		//	}
+		//}
+		//{ // sphere emissive
+		//	vec3 sPos = vec3(-5.4,0.15,-2.)*200.;
+		//	vec2 s = sphIntersect(rr.o - sPos,rr.d,30.);
+		//	if (s.x > 0. && s.x < hit.x) {
+		//		vec3 pos = rr.o + rr.d * s.x;
+		//		vec3 sNorm = alu_normalize(pos-sPos);
+		//		rr.d = sNorm;
+		//		#if !ENG_NO_COLOR
+		//			c *= vec3(0.2,.1,0.1);
+		//		#endif
+		//		#if ENG_LIGHT_MAT
+		//		e += c*vec3(30.);
+		//		#endif
+		//		vec3 diffuseDir = alu_normalize(sNorm + rv);
+		//		rr.d = diffuseDir;
+		//		rr = Ray(pos + rr.d * 0.001, rr.d);
+		//		continue;
+		//	}
+		//}
+		
+
 		if (firstBounce && !(hit.x < 1e30f)) {
 			e= vec3(0.5, 0.7, 0.9) * 40.; // sky color
 			break;
@@ -248,7 +415,6 @@ vec3 shade(Ray r, int iter, vec2 uv, out float primHitdist) {
 			primHitdist = hit.x;
 		}
 
-		// Setup hit surface parameters
 		vec3 pos = rr.o + hit.x * rr.d;
 		vec3 n;
 		uint triIdx = floatBitsToUint(hit.w);
@@ -271,9 +437,13 @@ vec3 shade(Ray r, int iter, vec2 uv, out float primHitdist) {
 			uint texId = matData.id[triIdx * 3 + 1];
 
 			//TODO textureLod at lvl 0 here could be better to avoid derviative calc?
-			vec3 tangentNormal = textureLod(u_SceneTextures[texId], texUV,0.).xyz * 2.0 - 1.0;
+			vec3 tangentNormal = texture(u_SceneTextures[texId], texUV).xyz * 2.0 - 1.0;
 
+			#if ENG_NO_MAT
+				n = nt;
+			#else
 			n = alu_normalize(T * tangentNormal.x + B * tangentNormal.y + N * tangentNormal.z); // normalize for correctness
+			#endif
 		}
 #endif
 		
@@ -283,12 +453,10 @@ vec3 shade(Ray r, int iter, vec2 uv, out float primHitdist) {
 		//	mc = vec3(triData.tri[triIdx].uv,1.);
 		//}
 		if (true) {
-			vec4 a = textureLod(u_SceneTextures[matData.id[triIdx*3]],texUV,0.);
-			
-			//a.rgb = pow(a.rgb,vec3(2.2/1.0));
-			//TODO can do srgb -> linear on tex using GL_SRGB8_ALPHA8 instead of GL_RGBA8
-
-			mc = a.rgb;
+			vec4 a = texture(u_SceneTextures[matData.id[triIdx*3]],texUV);
+			#if !ENG_NO_COLOR
+				mc = a.rgb;
+			#endif
 			if (a.w == 0.) {
 				rr = Ray(pos + rr.d * 0.001, rr.d);
 				continue;
@@ -296,44 +464,80 @@ vec3 shade(Ray r, int iter, vec2 uv, out float primHitdist) {
 		}
 
 		firstBounce = false;
-		// geometry miss, sample sky
-		if (!(hit.x < 1e30f)) {
-			e += c * mc * vec3(0.5, 0.7, 0.9) * 40.;
-			break;
-		}
 
 		vec3 me = vec3(0.0);  // Material Emission (Glow)
 		float roughness = 1.; // 1 = Diffuse, 0 = Mirror
+		float metallic = .0;
 		{
 			vec2 m=textureLod(u_SceneTextures[matData.id[triIdx*3+2]],texUV,0.).gb;
 			//m = roughness, metallic
+			#if !ENG_NO_MAT
 			roughness=m.x;
-			//metallic=m.y;
+			#endif
+			metallic=m.y;
 		}
+		
+		Material material; { // material for brdf
+			material.c = mc; // albedo
+			material.n = n; // normal
+			material.roughness = roughness;
+			material.metallic = metallic;
+		}
+		
+		// Determine strategy probabilities using metallicness
+		vec3 V = -rr.d;
+		vec3 F0 = mix(vec3(0.04), material.c, material.metallic);
+		vec3 F_view = fresnelSchlick(V, n, F0);
+		float kS = dot(F_view, vec3(0.2126, 0.7152, 0.0722));
+		float kD = (1.0 - kS) * (1.0 - material.metallic);
+		float totalWeight = kS + kD;
+		float prSpecular = totalWeight > 0.0 ? clamp(kS / totalWeight, 0.05, 0.95) : 0.5;
+
 
 		// Accumulate surface self-emission
+		#if ENG_LIGHT_MAT
 		e += c * me;
+		#endif
 
 		// assemble rand vec
 		//vec3 seed = pos + n * 1.4142 + vec3(uv, float(i)) * 2.7182 + vec3(float(iter), u_time, -float(iter));
-		vec3 noiseVec = getBlueNoise(uv, float(i+iter*bounces));
+		//vec3 noiseVec = getBlueNoise(uv, float(i+iter*bounces));
 		//vec3 rv = random_in_unit_sphere(noiseVec); 
-		vec3 rv = random_on_unit_sphere(noiseVec); 
 		//vec3 rv = normalize(noiseVec);//random_in_unit_sphere(noiseVec); 
 
 		//TODO here importance sampling
 			// At every single bounce, explicitly trace a shadow ray directly toward a random point on your light sources.
 		// NEE NEXT EVENT ESTIMATION (Explicit Sun Shadow Ray):
+
+		// geometry miss, sample sky
+		if (!(hit.x < 1e30f)) {
+			float skyIntensity = 40.;
+#if 0
+			#if ENG_LIGHT_SKY
+			#if !ENG_NO_COLOR
+				e += c * mc * vec3(0.5, 0.7, 0.9) * skyIntensity;
+			#else
+				e += c * mc * vec3(0.7, 0.7, 0.7) * skyIntensity;
+			#endif
+			#endif
+
+#endif
+#if 1
+			e += c * vec3(0.5, 0.7, 0.9) * skyIntensity;
+#endif
+			break;
+		}
+		
 		vec3 shadowOrigin = pos + nt * 0.001;  // offset to avoid self intersec
 		
 		
 #if 1
+		//vec3 sunDir = normalize(vec3(.4, 1., -0.3));
 		vec3 sunDir = normalize(vec3(.4, 1., -0.2));
 
 		{ // approx area sun
 			sunDir = normalize(sunDir + rv*.01);
 		}
-		//vec3 sunDir = normalize(vec3(.4, 1., -0.3));
 		//vec3 sunDir = normalize(vec3(0.,1.,0.));
 		vec4 shadowHit;// = traverse_ailalaine(shadowOrigin, sunDir, vec3(1.0) / sunDir, 1e30f);
 		for (int j = 0; j < bounces; ++j) {
@@ -352,13 +556,33 @@ vec3 shade(Ray r, int iter, vec2 uv, out float primHitdist) {
 		if (!(shadowHit.x < 1e30f)) {
 			// No occlusion: The sun directly illuminates this point
 			float cosTheta = max(0.0, dot(n, sunDir));
-			vec3 sunIntensity = vec3(40.0);
+			#if ENG_NO_COS
+				cosTheta = 1.;
+			#endif
+			vec3 sunIntensity = vec3(90.0);
 			
 			// Direct lighting = throughput * material color * light * cosine law
-			e += c * mc * sunIntensity * cosTheta * vec3(1.,0.9,0.7);
+#if 0
+			#if ENG_LIGHT_SUN
+			#if !ENG_NO_COLOR
+				e += c * mc * sunIntensity * cosTheta * vec3(1.,0.9,0.7);
+			#else
+				e += c * mc * sunIntensity * cosTheta * vec3(.9,0.9,0.9);
+			#endif
+			#endif
+#endif
+#if 1
+			float pdf;
+			vec3 V = -rr.d;
+			vec3 L = sunDir;
+			vec3 f_x = evaluateCookTorranceAndPdf(V, L, n, material,prSpecular,pdf);
+			if (dot(n, L) > 0.0) {
+				//vec3 throughputMultiplier = (f_x * max(dot(n, L), 0.0)) / pdf; //TODO do not use here
+				e += min(c * f_x * sunIntensity * cosTheta * vec3(1.,0.9,0.7),20.);
+				// on IBL clamp e to 20 avoid fireflies, introduces bias but improves convergence
+			}
+#endif
 			//e += c * mc / 3.141592 * sunIntensity * cosTheta * vec3(1.,0.9,0.7); //TODO
-
-			// TODO on IBL clamp e to 20 avoid fireflies, introduces bias but improves convergence
 		}
 #endif
 
@@ -381,9 +605,60 @@ vec3 shade(Ray r, int iter, vec2 uv, out float primHitdist) {
 			// c *= vec3(1.0); // Pure mirrors don't tint the light (unless metal)
 		}
 #endif
-#if 1 // glossy
+#if 0 // glossy
 		nextDir = alu_normalize(diffuseDir*roughness + (1.-roughness)*specDir);
 		c *= mc;
+#endif
+#if 1 // cook torrance
+		{
+			const float pi = 3.14159265359;
+			vec3 L;
+
+			// Use noiseVec.x to cleanly choose between Diffuse and Specular
+			if (noiseVec.x < (1.0 - prSpecular)) {
+				// ---- PRISTINE DIFFUSE SAMPLING (Using uniform noiseVec.y and noiseVec.z) ----
+				float phi = 2.0 * pi * noiseVec.y;
+				float cosTheta = alu_sqrt(noiseVec.z);
+				float sinTheta = alu_sqrt(max(0.0, 1.0 - cosTheta * cosTheta));
+				
+				vec3 localL = vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta);
+				L = alu_normalize(toWorld(n, localL));
+			} 
+			else {
+				// ---- PRISTINE SPECULAR GGX SAMPLING (Using uniform noiseVec.y and noiseVec.z) ----
+				float alpha = material.roughness * material.roughness;
+				float alpha2 = alpha * alpha;
+				
+				float phi = 2.0 * pi * noiseVec.y;
+				// Standard, unbiased GGX mapping from uniform random input
+				float GGX_cosTheta = alu_sqrt((1.0 - noiseVec.z) / (1.0 + (alpha2 - 1.0) * noiseVec.z));
+				float GGX_sinTheta = alu_sqrt(max(0.0, 1.0 - GGX_cosTheta * GGX_cosTheta));
+				
+				vec3 localH = vec3(cos(phi) * GGX_sinTheta, sin(phi) * GGX_sinTheta, GGX_cosTheta);
+				vec3 H = alu_normalize(toWorld(n, localH));
+				L = alu_normalize(reflect(-V, H));
+			}
+			
+			// Guard against invalid back-faced reflections
+			if (dot(n, L) <= 0.0) {
+				L = vec3(0.0);
+			}
+
+			// Evaluate color and calculate correct Monte Carlo throughput weight
+			float pdf;
+			vec3 f_x = evaluateCookTorranceAndPdf(V, L, n, material,prSpecular,pdf);
+			if (pdf > 0.0 && dot(n, L) > 0.0) {
+				vec3 throughputMultiplier = (f_x * max(dot(n, L), 0.0)) / pdf;
+				throughputMultiplier = min(throughputMultiplier, vec3(20.0));
+				c *= throughputMultiplier;
+			} else {
+				//TODOff to support backfaces we arent allowed to break here,
+					// but this breaks sky IBL sampling right now
+				break;
+			}
+
+			nextDir = L;
+		}
 #endif
 
 		// Update the ray for the next bounce iteration
@@ -446,33 +721,6 @@ void main() {
 	vec3 camdir; {
 		vec4 targetWorld = u_invVP * vec4(ndc.x, ndc.y, -1.0, 1.0);
 		targetWorld /= targetWorld.w; // Perspective divide
-		
-		//{ //TODO dof
-		//	//TODO sample sensor randomly
-		//	vec2 k[9] = vec2[](
-		//		vec2(-1.,-1.),
-		//		vec2(-1.,0.),
-		//		vec2(-1.,1.),
-		//		vec2(0.,-1.),
-		//		vec2(0.,0.),
-		//		vec2(0.,1.),
-		//		vec2(1.,-1.),
-		//		vec2(1.,0.),
-		//		vec2(1.,1.)
-		//	);
-		//	vec2 offset = k[int(mod(u_frame,9.))]/u_resolution;
-		//	float dofDist = 1.;
-		//	float dofOffset = 10.;
-
-		//	//camdir = alu_normalize((targetWorld.xyz) * dofDist - u_cPos + vec3(dofOffset * offset,0.));
-		//	
-		//	targetWorld = u_invVP * vec4(ndc.xy, -1.0, 1.0);
-		//	targetWorld /= targetWorld.w; // Perspective divide
-		//	
-		//	campos = u_cPos + (u_invVP * vec4(offset*dofOffset,0.,0.)).xyz;
-		//	campos = (invModel * vec4(campos, 1.0)).xyz;
-		//}
-
 		camdir = alu_normalize(targetWorld.xyz - u_cPos);
 		camdir = alu_normalize((invModel * vec4(camdir, 0.0)).xyz);
 	}
@@ -515,6 +763,41 @@ void main() {
 		color = vec4(color.xyz,1.)*.1 + .9*texture(u_p,uv);
 	}
 #endif
+#if 0
+	{ // reprojection
+		Ray r;
+		r.o=campos;
+		r.d=camdir;
+		float ph = -1.;
+		color.xyz = shade(r,1,uv,ph);
+
+		if (ph> 0.0) {
+			vec3 world_pos = r.o + r.d * ph;
+			vec4 p_clip = u_prevVP * u_m * vec4(world_pos, 1.0);
+			vec3 p_ndc = p_clip.xyz / p_clip.w;
+			vec2 p_uv = p_ndc.xy * 0.5 + 0.5;
+
+			//TODO doesnt account for occlusion and rotation inframe, need depth buffer for that
+			bool off_screen = p_uv.x < 0.0 || p_uv.x > 1.0 || p_uv.y < 0.0 || p_uv.y > 1.0;
+
+			vec4 pp = texture(u_p, p_uv);
+
+			if (u_frame < 10 || off_screen) {
+				// Reset frame counter to 1.0 on clear/offscreen
+				color = vec4(color.rgb, 1.0); 
+			} else {
+				// Lazy accumulation: increment the frame counter stored in alpha
+				float cppa = min(pp.a + 1.0, 32.0); // Cap at 32 to reduce ghosting automatically!
+				
+				// Fix the infinite addition bug with a clean mix()
+				float alpha = 1.0 / cppa;
+				vec3 blended_color = mix(pp.rgb, color.rgb, alpha);
+				
+				color = vec4(blended_color, cppa);
+			}
+		}
+	}
+#endif
 
 #if 1 // accumulate
 	int samples = 1;
@@ -524,7 +807,11 @@ void main() {
 	r.d=camdir;
 	float _;
 	for (int i=0;i<samples;++i)
-		c += shade(r,i,uv,_);
+		#if ENG_NO_COLOR
+			c += shade(r,i,uv,_)*.3;
+		#else
+			c += shade(r,i,uv,_);
+		#endif
 	c /= samples;
 	//color.rgb = c;
 

@@ -19,7 +19,7 @@ in mat4 pv;
 out vec4 color;
 
 #include "brdf inl/LightDef.glsl"
-#include "brdf inl/BRDFcookTorrence.glsl"
+#include "brdf inl/BRDFcookTorrance.glsl"
 #include "brdf inl/blinnPhong.glsl"
 
 layout(binding = 3) uniform sampler2D u_shadowMap;
@@ -120,8 +120,8 @@ void main() {
 		color.rgb += albedoAlpha.rgb*.1;
 	}
 
-	//if (true) { // cook torrence brdf
-	//	color.rgb += BRDFcookTorrence(posV,camPos,l,mat);
+	//if (true) { // cook torrance brdf
+	//	color.rgb += BRDFcookTorrance(posV,camPos,l,mat);
 	//}
 
 	{
@@ -137,7 +137,7 @@ void main() {
 
 	{ // shadow map
 		float shadow = getShadow(posV);
-		vec3 flashlight = BRDFcookTorrence(posV,camPos,l,mat);
+		vec3 flashlight = BRDFcookTorrance(posV,camPos,l,mat);
 		color.rgb += flashlight*shadow;
 		//color = vec4(vec3(shadow),1.);
 	}

@@ -297,7 +297,7 @@ public:
 					glBindTexture(GL_TEXTURE_2D,fbr2.getTexCol());
 				}
 
-				glDrawElements(GL_TRIANGLES,ssmGl.getEBOsize(),GL_UNSIGNED_INT,0);
+				ssmGl.draw();
 			}
 			
 
